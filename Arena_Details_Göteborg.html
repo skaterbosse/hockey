@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_378ac1b9b29f6acdcf2af7549eb5e576 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/leaflet.markercluster.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/MarkerCluster.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/MarkerCluster.Default.css"/>
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_378ac1b9b29f6acdcf2af7549eb5e576" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_378ac1b9b29f6acdcf2af7549eb5e576 = L.map(
+                "map_378ac1b9b29f6acdcf2af7549eb5e576",
+                {
+                    center: [57.7089, 11.9746],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 9,
+  "zoomControl": true,
+  "preferCanvas": true,
+}
+
+                }
+            );
+            L.control.scale().addTo(map_378ac1b9b29f6acdcf2af7549eb5e576);
+
+            
+
+        
+    
+            var tile_layer_15f5bc7bd783eefe53d0ad23c16a1883 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; OpenStreetMap contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_15f5bc7bd783eefe53d0ad23c16a1883.addTo(map_378ac1b9b29f6acdcf2af7549eb5e576);
+        
+    
+            var tile_layer_a62eee491fe827c52e2e5d2f1f79ecb9 = L.tileLayer(
+                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                {
+  "minZoom": 0,
+  "maxZoom": 18,
+  "maxNativeZoom": 18,
+  "noWrap": false,
+  "attribution": "Tiles \u0026copy; Esri \u2014 Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_a62eee491fe827c52e2e5d2f1f79ecb9.addTo(map_378ac1b9b29f6acdcf2af7549eb5e576);
+        
+    
+            var marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9 = L.markerClusterGroup(
+                {
+  "disableClusteringAtZoom": 14,
+}
+            );
+        
+    
+            var marker_bc152ea6e9e8b8ccc9b840dee8ed728f = L.marker(
+                [57.590214281624824, 11.94608216084837],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_6e884d5c0f21fd5bc1f173fa17b572a9 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_aaa3cd8a9c05c173fcf33e2e7a94d9b3 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_d388983c9d23bfd1e828fc0f4782cddc = $(`<div id="html_d388983c9d23bfd1e828fc0f4782cddc" style="width: 100.0%; height: 100.0%;"><div><h4>Askims Ishall</h4><div><strong>Address:</strong> Kruniusvägen 1</div><div><strong>City:</strong> Billdal</div></div></div>`)[0];
+                popup_aaa3cd8a9c05c173fcf33e2e7a94d9b3.setContent(html_d388983c9d23bfd1e828fc0f4782cddc);
+            
+        
+
+        marker_bc152ea6e9e8b8ccc9b840dee8ed728f.bindPopup(popup_aaa3cd8a9c05c173fcf33e2e7a94d9b3)
+        ;
+
+        
+    
+    
+            marker_bc152ea6e9e8b8ccc9b840dee8ed728f.bindTooltip(
+                `<div>
+                     <div><strong>Askims Ishall</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 16:00 — HockeyTrean Herr Syd C , Region Syd: Hovås HC vs Partille HK (Askims Ishall)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_bc152ea6e9e8b8ccc9b840dee8ed728f.setIcon(icon_6e884d5c0f21fd5bc1f173fa17b572a9);
+            
+    
+            var marker_e250e2f38ef3ed9e6a16f782efc0f7ec = L.marker(
+                [57.73372266093135, 12.930365260857682],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_50e18872f0f927105ab16d1d23b0e75f = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_722ff880d3c94d944c5e8441b2051605 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_4e1924db05513f03cf0042e06f1ec4b1 = $(`<div id="html_4e1924db05513f03cf0042e06f1ec4b1" style="width: 100.0%; height: 100.0%;"><div><h4>Borås Ishall</h4><div><strong>Address:</strong> Armbågavägen 6</div><div><strong>City:</strong> Borås</div></div></div>`)[0];
+                popup_722ff880d3c94d944c5e8441b2051605.setContent(html_4e1924db05513f03cf0042e06f1ec4b1);
+            
+        
+
+        marker_e250e2f38ef3ed9e6a16f782efc0f7ec.bindPopup(popup_722ff880d3c94d944c5e8441b2051605)
+        ;
+
+        
+    
+    
+            marker_e250e2f38ef3ed9e6a16f782efc0f7ec.bindTooltip(
+                `<div>
+                     <div><strong>Borås Ishall</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 17:00 — Hockeyettan Södra: Borås HC vs Grums IK (Borås Ishall)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_e250e2f38ef3ed9e6a16f782efc0f7ec.setIcon(icon_50e18872f0f927105ab16d1d23b0e75f);
+            
+    
+            var marker_208b9bebe86204dfb4b4b9a52dc81875 = L.marker(
+                [57.73372266093135, 12.930365260857682],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_5d39ba7e9020f1b924155d469cb94a32 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_a242830f5efd10bad190283605800fbc = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_5f41b87cfafd27d7eaea517b23ee27af = $(`<div id="html_5f41b87cfafd27d7eaea517b23ee27af" style="width: 100.0%; height: 100.0%;"><div><h4>Borås Ishall (B)</h4><div><strong>Address:</strong> Armbågavägen 6</div><div><strong>City:</strong> Borås</div></div></div>`)[0];
+                popup_a242830f5efd10bad190283605800fbc.setContent(html_5f41b87cfafd27d7eaea517b23ee27af);
+            
+        
+
+        marker_208b9bebe86204dfb4b4b9a52dc81875.bindPopup(popup_a242830f5efd10bad190283605800fbc)
+        ;
+
+        
+    
+    
+            marker_208b9bebe86204dfb4b4b9a52dc81875.bindTooltip(
+                `<div>
+                     <div><strong>Borås Ishall (B)</strong><br><em>No games on 2025-09-28</em></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_208b9bebe86204dfb4b4b9a52dc81875.setIcon(icon_5d39ba7e9020f1b924155d469cb94a32);
+            
+    
+            var marker_9c432edc91ed36a697f6dd9fb60a2232 = L.marker(
+                [56.89265180122091, 12.51022255842228],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_bc4e234e5a2f392ec520594017d7741d = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_7bd54a9da3361242562ef6edcc5de65e = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_63c7c9fef64592feb042618df72a8b4a = $(`<div id="html_63c7c9fef64592feb042618df72a8b4a" style="width: 100.0%; height: 100.0%;"><div><h4>Falkenbergs Ishall</h4><div><strong>Address:</strong> Kristineslättsallén 1</div><div><strong>City:</strong> Falkenberg</div></div></div>`)[0];
+                popup_7bd54a9da3361242562ef6edcc5de65e.setContent(html_63c7c9fef64592feb042618df72a8b4a);
+            
+        
+
+        marker_9c432edc91ed36a697f6dd9fb60a2232.bindPopup(popup_7bd54a9da3361242562ef6edcc5de65e)
+        ;
+
+        
+    
+    
+            marker_9c432edc91ed36a697f6dd9fb60a2232.bindTooltip(
+                `<div>
+                     <div><strong>Falkenbergs Ishall</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 16:00 — HockeyTrean Herr Syd C , Region Syd: Falkenbergs HK vs Varberg HK (Falkenbergs Ishall)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_9c432edc91ed36a697f6dd9fb60a2232.setIcon(icon_bc4e234e5a2f392ec520594017d7741d);
+            
+    
+            var marker_97a6a3c449a005f25c031f5fe2e01bb8 = L.marker(
+                [58.38004532428839, 11.938889335767628],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_bcfef4517722a4e3846e81f31df48a04 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ec7f8720f5ed3e9a1ad951fa2f3b452d = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_64609f94b4f28ba0051b587221ee5345 = $(`<div id="html_64609f94b4f28ba0051b587221ee5345" style="width: 100.0%; height: 100.0%;"><div><h4>Fridhemshallen</h4><div><strong>Address:</strong> Svanevägen 2A</div><div><strong>City:</strong> Uddevalla</div></div></div>`)[0];
+                popup_ec7f8720f5ed3e9a1ad951fa2f3b452d.setContent(html_64609f94b4f28ba0051b587221ee5345);
+            
+        
+
+        marker_97a6a3c449a005f25c031f5fe2e01bb8.bindPopup(popup_ec7f8720f5ed3e9a1ad951fa2f3b452d)
+        ;
+
+        
+    
+    
+            marker_97a6a3c449a005f25c031f5fe2e01bb8.bindTooltip(
+                `<div>
+                     <div><strong>Fridhemshallen</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 11:40 — Träningsmatcher U15P Bohuslän/Dal, Bohuslän Dals Ishockeyförbund: Uddevalla HC vs LN 70 HC (Fridhemshallen)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_97a6a3c449a005f25c031f5fe2e01bb8.setIcon(icon_bcfef4517722a4e3846e81f31df48a04);
+            
+    
+            var marker_614114ce0fef88875e73839381eb8a2b = L.marker(
+                [57.67769466768528, 11.935736068790582],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_51780a5101cf0fe8829b778ab63ab894 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_9e9733f832c46c4ca5af49eaff227df9 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_79e62baeb427c509a68cb3f7c762fdda = $(`<div id="html_79e62baeb427c509a68cb3f7c762fdda" style="width: 100.0%; height: 100.0%;"><div><h4>Frölundaborg Isstadion</h4><div><strong>Address:</strong> Slottsskogsgatan 150</div><div><strong>City:</strong> Göteborg</div></div></div>`)[0];
+                popup_9e9733f832c46c4ca5af49eaff227df9.setContent(html_79e62baeb427c509a68cb3f7c762fdda);
+            
+        
+
+        marker_614114ce0fef88875e73839381eb8a2b.bindPopup(popup_9e9733f832c46c4ca5af49eaff227df9)
+        ;
+
+        
+    
+    
+            marker_614114ce0fef88875e73839381eb8a2b.bindTooltip(
+                `<div>
+                     <div><strong>Frölundaborg Isstadion</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 12:00 — SDHL: Frölunda HC vs Brynäs IF (Frölundaborg Isstadion)</li><li>2025-09-28 16:00 — U18 Regional Herr Syd, Region Syd: Frölunda HC vs HV 71 (Frölundaborg Isstadion)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_614114ce0fef88875e73839381eb8a2b.setIcon(icon_51780a5101cf0fe8829b778ab63ab894);
+            
+    
+            var marker_36bac8561883f6d137d57757d3b0aacb = L.marker(
+                [57.67769466768528, 11.935736068790582],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_368dfe1c1a6d2ae4bf1e6567f7504ec1 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_3f9515f4a1a912859a037cf1a075e113 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_4fc9b894cd3b0db79dde29b023451a2b = $(`<div id="html_4fc9b894cd3b0db79dde29b023451a2b" style="width: 100.0%; height: 100.0%;"><div><h4>Slottskogens Ishall</h4><div><strong>Address:</strong> Slottsskogsgatan 150</div><div><strong>City:</strong> Göteborg</div></div></div>`)[0];
+                popup_3f9515f4a1a912859a037cf1a075e113.setContent(html_4fc9b894cd3b0db79dde29b023451a2b);
+            
+        
+
+        marker_36bac8561883f6d137d57757d3b0aacb.bindPopup(popup_3f9515f4a1a912859a037cf1a075e113)
+        ;
+
+        
+    
+    
+            marker_36bac8561883f6d137d57757d3b0aacb.bindTooltip(
+                `<div>
+                     <div><strong>Slottskogens Ishall</strong><br><em>No games on 2025-09-28</em></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_36bac8561883f6d137d57757d3b0aacb.setIcon(icon_368dfe1c1a6d2ae4bf1e6567f7504ec1);
+            
+    
+            var marker_094ae5f599f3fd26f1cacaf42abfcf28 = L.marker(
+                [58.27742633495746, 11.435709921475212],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_6ee39d9b5d0e0c6af4c60baa3b5f4395 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_8d745a3790a80e2c9f83a868d500cdf9 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_2d2a3249a9ff146a2232d95bc2fdb096 = $(`<div id="html_2d2a3249a9ff146a2232d95bc2fdb096" style="width: 100.0%; height: 100.0%;"><div><h4>Gullmarsborgs Ishall</h4><div><strong>Address:</strong> Skolgatan 13</div><div><strong>City:</strong> Lysekil</div></div></div>`)[0];
+                popup_8d745a3790a80e2c9f83a868d500cdf9.setContent(html_2d2a3249a9ff146a2232d95bc2fdb096);
+            
+        
+
+        marker_094ae5f599f3fd26f1cacaf42abfcf28.bindPopup(popup_8d745a3790a80e2c9f83a868d500cdf9)
+        ;
+
+        
+    
+    
+            marker_094ae5f599f3fd26f1cacaf42abfcf28.bindTooltip(
+                `<div>
+                     <div><strong>Gullmarsborgs Ishall</strong><br><em>No games on 2025-09-28</em></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_094ae5f599f3fd26f1cacaf42abfcf28.setIcon(icon_6ee39d9b5d0e0c6af4c60baa3b5f4395);
+            
+    
+            var marker_d500c36676e701454c6d7a2562ef6222 = L.marker(
+                [57.48018488979936, 12.076047906872995],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_d51e851101b1c4a349aca58ed3c370e1 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_8412a3a128b68b9413247d9189ba9bc0 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_ea56c148c082457ecfba5c506ebdd7c1 = $(`<div id="html_ea56c148c082457ecfba5c506ebdd7c1" style="width: 100.0%; height: 100.0%;"><div><h4>Kungsbacka Ishall (A)</h4><div><strong>Address:</strong> Kungsbacka Sportcenter 8</div><div><strong>City:</strong> Kungsbacka</div></div></div>`)[0];
+                popup_8412a3a128b68b9413247d9189ba9bc0.setContent(html_ea56c148c082457ecfba5c506ebdd7c1);
+            
+        
+
+        marker_d500c36676e701454c6d7a2562ef6222.bindPopup(popup_8412a3a128b68b9413247d9189ba9bc0)
+        ;
+
+        
+    
+    
+            marker_d500c36676e701454c6d7a2562ef6222.bindTooltip(
+                `<div>
+                     <div><strong>Kungsbacka Ishall (A)</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 16:00 — HockeyTvåan Herr Syd A , Region Syd: Hanhals IF vs Motala AIF HK (Kungsbacka Ishall (A))</li><li>2025-09-28 19:30 — HockeyTrean Herr Syd C , Region Syd: Kungsbacka HC vs Kållered SK (Kungsbacka Ishall (A))</li><li>2025-09-28 00:00 — U16 P Division 2 Syd, Göteborgs Ishockeyförbund: Hanhals IF S vs Frölunda HC Dam J S (Kungsbacka Ishall (A))</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_d500c36676e701454c6d7a2562ef6222.setIcon(icon_d51e851101b1c4a349aca58ed3c370e1);
+            
+    
+            var marker_dc07876bfd2551ec1041dbbc0ce12b31 = L.marker(
+                [57.48018488979936, 12.076047906872995],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_9c1e3d4b44b3c2d00c468926a8d3d2f6 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_3ce392e6803484c8c92d64d2a3d40471 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_4601da5ce9e10fff49a6d904a2c8249d = $(`<div id="html_4601da5ce9e10fff49a6d904a2c8249d" style="width: 100.0%; height: 100.0%;"><div><h4>Kungsbacka Ishall (B)</h4><div><strong>Address:</strong> Kungsbacka Sportcenter 8</div><div><strong>City:</strong> Kungsbacka</div></div></div>`)[0];
+                popup_3ce392e6803484c8c92d64d2a3d40471.setContent(html_4601da5ce9e10fff49a6d904a2c8249d);
+            
+        
+
+        marker_dc07876bfd2551ec1041dbbc0ce12b31.bindPopup(popup_3ce392e6803484c8c92d64d2a3d40471)
+        ;
+
+        
+    
+    
+            marker_dc07876bfd2551ec1041dbbc0ce12b31.bindTooltip(
+                `<div>
+                     <div><strong>Kungsbacka Ishall (B)</strong><br><em>No games on 2025-09-28</em></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_dc07876bfd2551ec1041dbbc0ce12b31.setIcon(icon_9c1e3d4b44b3c2d00c468926a8d3d2f6);
+            
+    
+            var marker_b7a895498b25ba0cacb0b0373bd06fb5 = L.marker(
+                [57.736561863387095, 12.03410002230139],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_d9cb2f9b61677d7654b63b046ba5eea5 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_f7dd5382804db5d9db060a8230ff0ac8 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_eee68df1326d0dabf5e3df0bef593d38 = $(`<div id="html_eee68df1326d0dabf5e3df0bef593d38" style="width: 100.0%; height: 100.0%;"><div><h4>nan</h4><div><strong>Address:</strong> Kvibergs Port 6</div><div><strong>City:</strong> Göteborg</div></div></div>`)[0];
+                popup_f7dd5382804db5d9db060a8230ff0ac8.setContent(html_eee68df1326d0dabf5e3df0bef593d38);
+            
+        
+
+        marker_b7a895498b25ba0cacb0b0373bd06fb5.bindPopup(popup_f7dd5382804db5d9db060a8230ff0ac8)
+        ;
+
+        
+    
+    
+            marker_b7a895498b25ba0cacb0b0373bd06fb5.bindTooltip(
+                `<div>
+                     <div><strong>nan</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 16:00 — HockeyTvåan Herr Syd A , Region Syd: Göteborgs IK vs Gislaveds SK (Kvibergs Parks is- och sporthall)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_b7a895498b25ba0cacb0b0373bd06fb5.setIcon(icon_d9cb2f9b61677d7654b63b046ba5eea5);
+            
+    
+            var marker_a038f3fc665278ca2be2ecfd48eb2663 = L.marker(
+                [57.61143338972315, 12.074564029848048],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_88508b22975153938ba402ae1cabc780 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_1e05786e85c25bfe3826894f94d91db1 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_5fb03776ad849468a09a59c42fcf5b7c = $(`<div id="html_5fb03776ad849468a09a59c42fcf5b7c" style="width: 100.0%; height: 100.0%;"><div><h4>Kållereds Ishall</h4><div><strong>Address:</strong> Tulebovägen 17</div><div><strong>City:</strong> Kållered</div></div></div>`)[0];
+                popup_1e05786e85c25bfe3826894f94d91db1.setContent(html_5fb03776ad849468a09a59c42fcf5b7c);
+            
+        
+
+        marker_a038f3fc665278ca2be2ecfd48eb2663.bindPopup(popup_1e05786e85c25bfe3826894f94d91db1)
+        ;
+
+        
+    
+    
+            marker_a038f3fc665278ca2be2ecfd48eb2663.bindTooltip(
+                `<div>
+                     <div><strong>Kållereds Ishall</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 12:30 — Träningsmatcher U18 H Göteborg, Göteborgs Ishockeyförbund: Kållered SK vs Hovås HC (Kållereds Ishall)</li><li>2025-09-28 15:00 — U16 P Division 2 Syd, Göteborgs Ishockeyförbund: Kållered SK S vs Partille HK S (Kållereds Ishall)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_a038f3fc665278ca2be2ecfd48eb2663.setIcon(icon_88508b22975153938ba402ae1cabc780);
+            
+    
+            var marker_3063153050ad7033ce624bfba6e8fc84 = L.marker(
+                [57.6860271778434, 12.217370822230274],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_31306e55c14efd17076d6efc9066bd12 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_9239a740bc5f95e9b7be4be519d8b4c3 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_37fc542054426f8b9522af99c3c51392 = $(`<div id="html_37fc542054426f8b9522af99c3c51392" style="width: 100.0%; height: 100.0%;"><div><h4>Landvetters Ishall</h4><div><strong>Address:</strong> Idrottsvägen 1</div><div><strong>City:</strong> Landvetter</div></div></div>`)[0];
+                popup_9239a740bc5f95e9b7be4be519d8b4c3.setContent(html_37fc542054426f8b9522af99c3c51392);
+            
+        
+
+        marker_3063153050ad7033ce624bfba6e8fc84.bindPopup(popup_9239a740bc5f95e9b7be4be519d8b4c3)
+        ;
+
+        
+    
+    
+            marker_3063153050ad7033ce624bfba6e8fc84.bindTooltip(
+                `<div>
+                     <div><strong>Landvetters Ishall</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 17:30 — HockeyTrean Herr Syd C , Region Syd: Härryda HC vs Lerums BK (Landvetters Ishall)</li><li>2025-09-28 12:30 — U16 P Division 2 Syd, Göteborgs Ishockeyförbund: Härryda HC S vs Hovås HC S (Landvetters Ishall)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_3063153050ad7033ce624bfba6e8fc84.setIcon(icon_31306e55c14efd17076d6efc9066bd12);
+            
+    
+            var marker_5c9cb9e0ea6d6e2863d86dec23b1cc53 = L.marker(
+                [58.92495874403073, 11.266393789771689],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_e741b01614e82f09f3bef254ca8d920b = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_3953bd13d06f4d7b41687671abd35991 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_b62fdde6cb6714066e5a424fbdeed990 = $(`<div id="html_b62fdde6cb6714066e5a424fbdeed990" style="width: 100.0%; height: 100.0%;"><div><h4>Lionshov Ishall</h4><div><strong>Address:</strong> Hjältsgårdsvägen 4</div><div><strong>City:</strong> Skee</div></div></div>`)[0];
+                popup_3953bd13d06f4d7b41687671abd35991.setContent(html_b62fdde6cb6714066e5a424fbdeed990);
+            
+        
+
+        marker_5c9cb9e0ea6d6e2863d86dec23b1cc53.bindPopup(popup_3953bd13d06f4d7b41687671abd35991)
+        ;
+
+        
+    
+    
+            marker_5c9cb9e0ea6d6e2863d86dec23b1cc53.bindTooltip(
+                `<div>
+                     <div><strong>Lionshov Ishall</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 12:00 — U14, Bohuslän Dals Ishockeyförbund: Lions HC Strömstad vs Stenungsund HF (Lionshov Ishall)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_5c9cb9e0ea6d6e2863d86dec23b1cc53.setIcon(icon_e741b01614e82f09f3bef254ca8d920b);
+            
+    
+            var marker_1563d602f0c9320ce7414084f608981a = L.marker(
+                [57.65848860672468, 11.920990506884545],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_d85fc93634ecd81bcde8e5f8e951fce3 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_484b1a88881ae720c88e6eedca7f0492 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_26169c96facea3d4993af305a0b49a51 = $(`<div id="html_26169c96facea3d4993af305a0b49a51" style="width: 100.0%; height: 100.0%;"><div><h4>Marconihallen</h4><div><strong>Address:</strong> Transistorgatan 5</div><div><strong>City:</strong> Västra Frölunda</div></div></div>`)[0];
+                popup_484b1a88881ae720c88e6eedca7f0492.setContent(html_26169c96facea3d4993af305a0b49a51);
+            
+        
+
+        marker_1563d602f0c9320ce7414084f608981a.bindPopup(popup_484b1a88881ae720c88e6eedca7f0492)
+        ;
+
+        
+    
+    
+            marker_1563d602f0c9320ce7414084f608981a.bindTooltip(
+                `<div>
+                     <div><strong>Marconihallen</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 16:00 — HockeyTvåan Herr Syd A , Region Syd: Bäcken HC vs Vänersborgs HC (Marconihallen)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_1563d602f0c9320ce7414084f608981a.setIcon(icon_d85fc93634ecd81bcde8e5f8e951fce3);
+            
+    
+            var marker_b813bdd6096a9fafa3472226c8c9e5d2 = L.marker(
+                [57.87203655989136, 11.972914422242386],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_2d32848e9efab15fb0e15de2c5725c2e = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ab9a779664573ac376d58109e6ad14aa = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_21ee0ec9553d1abca5e39e0f9b368c97 = $(`<div id="html_21ee0ec9553d1abca5e39e0f9b368c97" style="width: 100.0%; height: 100.0%;"><div><h4>Oasen</h4><div><strong>Address:</strong> Rosendalsgatan 1</div><div><strong>City:</strong> Kungälv</div></div></div>`)[0];
+                popup_ab9a779664573ac376d58109e6ad14aa.setContent(html_21ee0ec9553d1abca5e39e0f9b368c97);
+            
+        
+
+        marker_b813bdd6096a9fafa3472226c8c9e5d2.bindPopup(popup_ab9a779664573ac376d58109e6ad14aa)
+        ;
+
+        
+    
+    
+            marker_b813bdd6096a9fafa3472226c8c9e5d2.bindTooltip(
+                `<div>
+                     <div><strong>Oasen</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 14:10 — Träningsmatcher U18 H Göteborg, Göteborgs Ishockeyförbund: Kungälvs IK vs Bäcken HC (Oasen)</li><li>2025-09-28 11:30 — U16 P Division 2 Norr, Göteborgs Ishockeyförbund: Kungälvs IK N vs Stenungsund HF N (Oasen)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_b813bdd6096a9fafa3472226c8c9e5d2.setIcon(icon_2d32848e9efab15fb0e15de2c5725c2e);
+            
+    
+            var marker_652141693b5302898a9021a8f5937e42 = L.marker(
+                [57.71843081512222, 11.930318210592162],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_9604d9633244743df0bd3cdd37b4a8c1 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_731d883ed006ed1553c388023d21070d = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_e5934aec5944c5bf5890350f7dc748ae = $(`<div id="html_e5934aec5944c5bf5890350f7dc748ae" style="width: 100.0%; height: 100.0%;"><div><h4>Rambergsrinken</h4><div><strong>Address:</strong> Lantmannagatan 3</div><div><strong>City:</strong> Göteborg</div></div></div>`)[0];
+                popup_731d883ed006ed1553c388023d21070d.setContent(html_e5934aec5944c5bf5890350f7dc748ae);
+            
+        
+
+        marker_652141693b5302898a9021a8f5937e42.bindPopup(popup_731d883ed006ed1553c388023d21070d)
+        ;
+
+        
+    
+    
+            marker_652141693b5302898a9021a8f5937e42.bindTooltip(
+                `<div>
+                     <div><strong>Rambergsrinken</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 17:00 — Träningsmatcher U13 Pojk, Göteborgs Ishockeyförbund: Bäcken HC vs Hovås HC (Rambergsrinken)</li><li>2025-09-28 09:00 — U16 P Division 2 Norr, Göteborgs Ishockeyförbund: Frölunda HC N vs Lerums BK N (Rambergsrinken)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_652141693b5302898a9021a8f5937e42.setIcon(icon_9604d9633244743df0bd3cdd37b4a8c1);
+            
+    
+            var marker_4ac9e00bb57bd31308c92d80600a4b84 = L.marker(
+                [57.71843081512222, 11.930318210592162],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_30ca5c4454c48b257c3958524ff93565 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b50e847bf57d1edcbe221386b26e6727 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_1a92ae34eb691a9c88b3a9e14a71bc43 = $(`<div id="html_1a92ae34eb691a9c88b3a9e14a71bc43" style="width: 100.0%; height: 100.0%;"><div><h4>Rambergsrinken</h4><div><strong>Address:</strong> Lantmannagatan 3</div><div><strong>City:</strong> Göteborg</div></div></div>`)[0];
+                popup_b50e847bf57d1edcbe221386b26e6727.setContent(html_1a92ae34eb691a9c88b3a9e14a71bc43);
+            
+        
+
+        marker_4ac9e00bb57bd31308c92d80600a4b84.bindPopup(popup_b50e847bf57d1edcbe221386b26e6727)
+        ;
+
+        
+    
+    
+            marker_4ac9e00bb57bd31308c92d80600a4b84.bindTooltip(
+                `<div>
+                     <div><strong>Rambergsrinken</strong><br><em>No games on 2025-09-28</em></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_4ac9e00bb57bd31308c92d80600a4b84.setIcon(icon_30ca5c4454c48b257c3958524ff93565);
+            
+    
+            var marker_47dfe1801f2a406525398841e9a60851 = L.marker(
+                [57.699409701671584, 11.987712512971887],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_e710c63d97853cdabb798e35694e116c = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_f5521685c0f68ac69c000175e2ccc448 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_46a50b22dc95eaeaeed4c8720c343cb2 = $(`<div id="html_46a50b22dc95eaeaeed4c8720c343cb2" style="width: 100.0%; height: 100.0%;"><div><h4>Scandinavium</h4><div><strong>Address:</strong> Valhallagatan 1</div><div><strong>City:</strong> Göteborg</div></div></div>`)[0];
+                popup_f5521685c0f68ac69c000175e2ccc448.setContent(html_46a50b22dc95eaeaeed4c8720c343cb2);
+            
+        
+
+        marker_47dfe1801f2a406525398841e9a60851.bindPopup(popup_f5521685c0f68ac69c000175e2ccc448)
+        ;
+
+        
+    
+    
+            marker_47dfe1801f2a406525398841e9a60851.bindTooltip(
+                `<div>
+                     <div><strong>Scandinavium</strong><br><em>No games on 2025-09-28</em></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_47dfe1801f2a406525398841e9a60851.setIcon(icon_e710c63d97853cdabb798e35694e116c);
+            
+    
+            var marker_8aa6570a44724ab5cd4a229165effd9e = L.marker(
+                [58.46867863386836, 11.66890194556181],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_e2fec05f5282ca89cc01fa2258200719 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_338e33b61abae479cf63e73263af4548 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_d4f632ed25652f1daeb2d766b140cc2d = $(`<div id="html_d4f632ed25652f1daeb2d766b140cc2d" style="width: 100.0%; height: 100.0%;"><div><h4>Skogsvallen</h4><div><strong>Address:</strong> Kung Östens väg 22</div><div><strong>City:</strong> Munkedal</div></div></div>`)[0];
+                popup_338e33b61abae479cf63e73263af4548.setContent(html_d4f632ed25652f1daeb2d766b140cc2d);
+            
+        
+
+        marker_8aa6570a44724ab5cd4a229165effd9e.bindPopup(popup_338e33b61abae479cf63e73263af4548)
+        ;
+
+        
+    
+    
+            marker_8aa6570a44724ab5cd4a229165effd9e.bindTooltip(
+                `<div>
+                     <div><strong>Skogsvallen</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 11:00 — Träningsmatcher U14P Bohuslän/Dal, Bohuslän Dals Ishockeyförbund: Munkedals BK vs Hisingens IK (Skogsvallen)</li><li>2025-09-28 06:00 — U14, Bohuslän Dals Ishockeyförbund: Kungälvs IK vs Uddevalla HC (Skogsvallen)</li><li>2025-09-28 06:00 — U14, Bohuslän Dals Ishockeyförbund: Munkedals BK vs Rönnängs IK (Skogsvallen)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_8aa6570a44724ab5cd4a229165effd9e.setIcon(icon_e2fec05f5282ca89cc01fa2258200719);
+            
+    
+            var marker_0a71a38e359ee0fd41213dd8b33d2b5a = L.marker(
+                [58.05650482074068, 11.827599320402532],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_59cc9fb5178cdf2e6d45afc2f689f446 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_2a21b7af6afad9700b7c1f94a78505e7 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_1d24102cc4324759212cd5ba5a33275b = $(`<div id="html_1d24102cc4324759212cd5ba5a33275b" style="width: 100.0%; height: 100.0%;"><div><h4>Stenungsund Arena</h4><div><strong>Address:</strong> Nösnäsvägen 2</div><div><strong>City:</strong> Stenungsund</div></div></div>`)[0];
+                popup_2a21b7af6afad9700b7c1f94a78505e7.setContent(html_1d24102cc4324759212cd5ba5a33275b);
+            
+        
+
+        marker_0a71a38e359ee0fd41213dd8b33d2b5a.bindPopup(popup_2a21b7af6afad9700b7c1f94a78505e7)
+        ;
+
+        
+    
+    
+            marker_0a71a38e359ee0fd41213dd8b33d2b5a.bindTooltip(
+                `<div>
+                     <div><strong>Stenungsund Arena</strong><br><em>No games on 2025-09-28</em></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_0a71a38e359ee0fd41213dd8b33d2b5a.setIcon(icon_59cc9fb5178cdf2e6d45afc2f689f446);
+            
+    
+            var marker_01ae337a3024c80c5d107c5182b9949f = L.marker(
+                [57.943493084286, 11.575144105051285],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_fe67198c883e1c0ba0f8bcbf917c4827 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_be67c6eb392c204147f3b8fde6b5c768 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_b0c27dc6a3f745ea16c712daa6bea522 = $(`<div id="html_b0c27dc6a3f745ea16c712daa6bea522" style="width: 100.0%; height: 100.0%;"><div><h4>Tjörns Ishall</h4><div><strong>Address:</strong> Stansviks industriområde</div><div><strong>City:</strong> Rönnäng</div></div></div>`)[0];
+                popup_be67c6eb392c204147f3b8fde6b5c768.setContent(html_b0c27dc6a3f745ea16c712daa6bea522);
+            
+        
+
+        marker_01ae337a3024c80c5d107c5182b9949f.bindPopup(popup_be67c6eb392c204147f3b8fde6b5c768)
+        ;
+
+        
+    
+    
+            marker_01ae337a3024c80c5d107c5182b9949f.bindTooltip(
+                `<div>
+                     <div><strong>Tjörns Ishall</strong><br><em>No games on 2025-09-28</em></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_01ae337a3024c80c5d107c5182b9949f.setIcon(icon_fe67198c883e1c0ba0f8bcbf917c4827);
+            
+    
+            var marker_75dad09c2e0736571610cd8d8f9c51ff = L.marker(
+                [57.74930622946852, 11.914479798953932],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_58c577ebb62e4a01b1709f835ceb196b = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b62dd9c2f717bc750b63b09d1b493706 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_b82fd33cf9506a8bf6aa8fa7239fe835 = $(`<div id="html_b82fd33cf9506a8bf6aa8fa7239fe835" style="width: 100.0%; height: 100.0%;"><div><h4>Tuve Ishall</h4><div><strong>Address:</strong> Västra Tuvevägen 70</div><div><strong>City:</strong> Göteborg</div></div></div>`)[0];
+                popup_b62dd9c2f717bc750b63b09d1b493706.setContent(html_b82fd33cf9506a8bf6aa8fa7239fe835);
+            
+        
+
+        marker_75dad09c2e0736571610cd8d8f9c51ff.bindPopup(popup_b62dd9c2f717bc750b63b09d1b493706)
+        ;
+
+        
+    
+    
+            marker_75dad09c2e0736571610cd8d8f9c51ff.bindTooltip(
+                `<div>
+                     <div><strong>Tuve Ishall</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 16:00 — HockeyTrean Herr Syd C , Region Syd: Hisingens IK vs Skärgårdens SK (Tuve Ishall)</li><li>2025-09-28 18:30 — U16 P Division 2 Norr, Göteborgs Ishockeyförbund: Hisingens IK N vs Munkedals BK N (Tuve Ishall)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_75dad09c2e0736571610cd8d8f9c51ff.setIcon(icon_58c577ebb62e4a01b1709f835ceb196b);
+            
+    
+            var marker_500919e0795db7565460da11f9125c21 = L.marker(
+                [57.70004423348098, 11.989026835723257],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_674bc8f8e93709184e8320199165c50c = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_92c3bb282022985e78d457a8f06c0820 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_aa95b640390ccfcedd33c182c685b517 = $(`<div id="html_aa95b640390ccfcedd33c182c685b517" style="width: 100.0%; height: 100.0%;"><div><h4>Valhallarinken</h4><div><strong>Address:</strong> Valhallagatan</div><div><strong>City:</strong> Göteborg</div></div></div>`)[0];
+                popup_92c3bb282022985e78d457a8f06c0820.setContent(html_aa95b640390ccfcedd33c182c685b517);
+            
+        
+
+        marker_500919e0795db7565460da11f9125c21.bindPopup(popup_92c3bb282022985e78d457a8f06c0820)
+        ;
+
+        
+    
+    
+            marker_500919e0795db7565460da11f9125c21.bindTooltip(
+                `<div>
+                     <div><strong>Valhallarinken</strong><br><em>No games on 2025-09-28</em></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_500919e0795db7565460da11f9125c21.setIcon(icon_674bc8f8e93709184e8320199165c50c);
+            
+    
+            var marker_5a9e375e9666c5c0ee90e6af6ee4959e = L.marker(
+                [57.72452127246488, 12.080511456624295],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_78d3c9243157df227972e38a431b0ac9 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_0299186aa7ca99179aadc55c0a4aff46 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_623f1a14ff54f0efbe3894545f4826d0 = $(`<div id="html_623f1a14ff54f0efbe3894545f4826d0" style="width: 100.0%; height: 100.0%;"><div><h4>Vallhamra Ishall</h4><div><strong>Address:</strong> Hultvägen 2</div><div><strong>City:</strong> Sävedalen</div></div></div>`)[0];
+                popup_0299186aa7ca99179aadc55c0a4aff46.setContent(html_623f1a14ff54f0efbe3894545f4826d0);
+            
+        
+
+        marker_5a9e375e9666c5c0ee90e6af6ee4959e.bindPopup(popup_0299186aa7ca99179aadc55c0a4aff46)
+        ;
+
+        
+    
+    
+            marker_5a9e375e9666c5c0ee90e6af6ee4959e.bindTooltip(
+                `<div>
+                     <div><strong>Vallhamra Ishall</strong><br><em>No games on 2025-09-28</em></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_5a9e375e9666c5c0ee90e6af6ee4959e.setIcon(icon_78d3c9243157df227972e38a431b0ac9);
+            
+    
+            var marker_1bdf0e9b78fd3f7faeac632c9608f876 = L.marker(
+                [57.11876249452898, 12.280583685421014],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_0097fb4c0aeb77a7e3a019e93509a5fd = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_4110bc28ee5fa17d3f071895cdda82ed = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_230b118d69c549df0e66043be8cea189 = $(`<div id="html_230b118d69c549df0e66043be8cea189" style="width: 100.0%; height: 100.0%;"><div><h4>Varbergs Ishall</h4><div><strong>Address:</strong> Simhallsgatan 5</div><div><strong>City:</strong> Varberg</div></div></div>`)[0];
+                popup_4110bc28ee5fa17d3f071895cdda82ed.setContent(html_230b118d69c549df0e66043be8cea189);
+            
+        
+
+        marker_1bdf0e9b78fd3f7faeac632c9608f876.bindPopup(popup_4110bc28ee5fa17d3f071895cdda82ed)
+        ;
+
+        
+    
+    
+            marker_1bdf0e9b78fd3f7faeac632c9608f876.bindTooltip(
+                `<div>
+                     <div><strong>Varbergs Ishall</strong><br><em>No games on 2025-09-28</em></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_1bdf0e9b78fd3f7faeac632c9608f876.setIcon(icon_0097fb4c0aeb77a7e3a019e93509a5fd);
+            
+    
+            var marker_37e6c5d1265de3b564dcabf927cd30e4 = L.marker(
+                [57.26446240530151, 12.334052649187042],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_80f07e0c10698c323ed40499690ed890 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ed4178585e9f579042ec25b7091b9997 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_4b7ce1d8d8195e16b6681b46709798ef = $(`<div id="html_4b7ce1d8d8195e16b6681b46709798ef" style="width: 100.0%; height: 100.0%;"><div><h4>Veddige Ishall</h4><div><strong>Address:</strong> Kapmansvägen 12</div><div><strong>City:</strong> Veddige</div></div></div>`)[0];
+                popup_ed4178585e9f579042ec25b7091b9997.setContent(html_4b7ce1d8d8195e16b6681b46709798ef);
+            
+        
+
+        marker_37e6c5d1265de3b564dcabf927cd30e4.bindPopup(popup_ed4178585e9f579042ec25b7091b9997)
+        ;
+
+        
+    
+    
+            marker_37e6c5d1265de3b564dcabf927cd30e4.bindTooltip(
+                `<div>
+                     <div><strong>Veddige Ishall</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 16:40 — Träningsmatcher U18 H Göteborg, Göteborgs Ishockeyförbund: Varberg HK vs Lerums BK (Veddige Ishall)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_37e6c5d1265de3b564dcabf927cd30e4.setIcon(icon_80f07e0c10698c323ed40499690ed890);
+            
+    
+            var marker_b64dc99cdde79a0400c914c1b4047835 = L.marker(
+                [57.793774254806586, 12.309584668269034],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_ffc4d787180124269c1b0c55142cf2b2 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_607ae34924d611d547e51bedff378cb4 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_785d523d52bd76f51ea492d3c311fee0 = $(`<div id="html_785d523d52bd76f51ea492d3c311fee0" style="width: 100.0%; height: 100.0%;"><div><h4>Vättlehallen</h4><div><strong>Address:</strong> Gråbovägen 19</div><div><strong>City:</strong> Stenkullen</div></div></div>`)[0];
+                popup_607ae34924d611d547e51bedff378cb4.setContent(html_785d523d52bd76f51ea492d3c311fee0);
+            
+        
+
+        marker_b64dc99cdde79a0400c914c1b4047835.bindPopup(popup_607ae34924d611d547e51bedff378cb4)
+        ;
+
+        
+    
+    
+            marker_b64dc99cdde79a0400c914c1b4047835.bindTooltip(
+                `<div>
+                     <div><strong>Vättlehallen</strong><br><em>No games on 2025-09-28</em></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_b64dc99cdde79a0400c914c1b4047835.setIcon(icon_ffc4d787180124269c1b0c55142cf2b2);
+            
+    
+            var marker_264d6f25ce7d35b9cb8d273b219d2211 = L.marker(
+                [57.646238234609534, 12.000228744978976],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_539ae5f5afa6435016bc3faa3ef13f13 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_735ee81f3d8675545a61524dce915787 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_b05c923bfb061381dedc576bf4ffe951 = $(`<div id="html_b05c923bfb061381dedc576bf4ffe951" style="width: 100.0%; height: 100.0%;"><div><h4>Åby Ishall</h4><div><strong>Address:</strong> Idrottsvägen 3</div><div><strong>City:</strong> Mölndal</div></div></div>`)[0];
+                popup_735ee81f3d8675545a61524dce915787.setContent(html_b05c923bfb061381dedc576bf4ffe951);
+            
+        
+
+        marker_264d6f25ce7d35b9cb8d273b219d2211.bindPopup(popup_735ee81f3d8675545a61524dce915787)
+        ;
+
+        
+    
+    
+            marker_264d6f25ce7d35b9cb8d273b219d2211.bindTooltip(
+                `<div>
+                     <div><strong>Åby Ishall</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 16:00 — HockeyTvåan Herr Syd A , Region Syd: IF Mölndal Hockey vs HC Lidköping Red Roosters (Åby Ishall)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_264d6f25ce7d35b9cb8d273b219d2211.setIcon(icon_539ae5f5afa6435016bc3faa3ef13f13);
+            
+    
+            var marker_01c81a0e44c30df7d75b008e0e921df1 = L.marker(
+                [57.71682712305029, 11.642820712973029],
+                {
+}
+            ).addTo(marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9);
+        
+    
+            var icon_f08b1c92d9adedad5a21b84ded0b221d = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_3ee0ad7c53f6cafe72af79e2d1a311d0 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_a29520258236546770b3c5accc5518a7 = $(`<div id="html_a29520258236546770b3c5accc5518a7" style="width: 100.0%; height: 100.0%;"><div><h4>Öckerö Ishall</h4><div><strong>Address:</strong> PRÄSTÄNGEN 1</div><div><strong>City:</strong> Öckerö</div></div></div>`)[0];
+                popup_3ee0ad7c53f6cafe72af79e2d1a311d0.setContent(html_a29520258236546770b3c5accc5518a7);
+            
+        
+
+        marker_01c81a0e44c30df7d75b008e0e921df1.bindPopup(popup_3ee0ad7c53f6cafe72af79e2d1a311d0)
+        ;
+
+        
+    
+    
+            marker_01c81a0e44c30df7d75b008e0e921df1.bindTooltip(
+                `<div>
+                     <div><strong>Öckerö Ishall</strong><br><em>Games on 2025-09-28</em><ul><li>2025-09-28 15:30 — U16 P Division 2 Syd, Göteborgs Ishockeyförbund: Skärgårdens SK S vs Varberg HK S (Öckerö Ishall)</li></ul></div>
+                 </div>`,
+                {
+  "direction": "top",
+  "opacity": 0.9,
+  "sticky": false,
+}
+            );
+        
+    
+                marker_01c81a0e44c30df7d75b008e0e921df1.setIcon(icon_f08b1c92d9adedad5a21b84ded0b221d);
+            
+    
+            marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9.addTo(map_378ac1b9b29f6acdcf2af7549eb5e576);
+        
+    
+            var layer_control_b0c2975cefa5d3c5f2da6b38582a899e_layers = {
+                base_layers : {
+                    "openstreetmap" : tile_layer_15f5bc7bd783eefe53d0ad23c16a1883,
+                    "Esri Satellite" : tile_layer_a62eee491fe827c52e2e5d2f1f79ecb9,
+                },
+                overlays :  {
+                    "Arenas" : marker_cluster_6f6fd94ad2f00b7efe5d1a05bd79b7d9,
+                },
+            };
+            let layer_control_b0c2975cefa5d3c5f2da6b38582a899e = L.control.layers(
+                layer_control_b0c2975cefa5d3c5f2da6b38582a899e_layers.base_layers,
+                layer_control_b0c2975cefa5d3c5f2da6b38582a899e_layers.overlays,
+                {
+  "position": "topright",
+  "collapsed": false,
+  "autoZIndex": true,
+}
+            ).addTo(map_378ac1b9b29f6acdcf2af7549eb5e576);
+
+        
+</script>
+</html>
