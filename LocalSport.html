@@ -7,12 +7,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport – Full Screen Sticky (30 matcher)</title>
+<title>LocalSport – Full Screen Sticky (30 matcher v2)</title>
 <style>
 :root{
-  --topbar-h: 56px;
-  --hint-h: 26px;
-  --arena-h: 42px;
+  --topbar-h:56px;
+  --hint-h:26px;
+  --arena-h:42px;
   --hair:#e2e8f0;
   --bg:#f0f3f8;
   --card:#fff;
@@ -22,100 +22,70 @@
   --link:#2563eb;
 }
 html,body{
-  margin:0; padding:0; height:100%;
+  margin:0;padding:0;height:100%;
   background:var(--bg);
   font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,Helvetica,sans-serif;
   overscroll-behavior:none;
 }
 .device{
-  width:428px; height:100dvh;
-  margin:0 auto; overflow:hidden;
-  display:flex; flex-direction:column; border:none;
+  width:428px;height:100dvh;margin:0 auto;overflow:hidden;
+  display:flex;flex-direction:column;border:none;
 }
-.scroll{
-  flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
-  padding-bottom:40px;
-}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:40px;}
 
 /* Top bar */
-.topbar{
-  position:sticky; top:0; z-index:300;
-  background:#fff; border-bottom:1px solid var(--hair);
-}
-.topbar-inner{
-  display:grid; grid-template-columns:1fr auto 1fr;
-  align-items:center; gap:6px; padding:6px 8px; height:var(--topbar-h);
-}
-.cluster-left,.cluster-right{ display:flex; align-items:center; gap:8px; }
-.cluster-center{ display:flex; align-items:center; justify-content:center; gap:8px; }
-.icon-btn{
-  width:32px; height:32px; display:grid; place-items:center;
-  border-radius:10px; border:1px solid var(--hair); background:#f1f5f9; color:var(--text);
-}
-.date-block{ display:flex; flex-direction:column; align-items:center; line-height:1.1; font-weight:700; font-size:14px; }
+.topbar{position:sticky;top:0;z-index:300;background:#fff;border-bottom:1px solid var(--hair);}
+.topbar-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:6px 8px;height:var(--topbar-h);}
+.cluster-left,.cluster-right{display:flex;align-items:center;gap:8px;}
+.cluster-center{display:flex;align-items:center;justify-content:center;gap:8px;}
+.icon-btn{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--hair);background:#f1f5f9;color:var(--text);}
+.date-block{display:flex;flex-direction:column;align-items:center;line-height:1.1;font-weight:700;font-size:14px;}
+.sort-stack{transform:scale(.9);display:flex;flex-direction:column;align-items:center;padding:4px 6px;border:1px solid var(--hair);border-radius:10px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.sort-top{font-size:12px;font-weight:600;margin-bottom:2px;text-align:center;}
+.sort-bottom{display:flex;gap:4px;}
+.pill{padding:4px 8px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--hair);}
+.pill.on{background:#dcfce7;color:var(--accent);border-color:#86efac;}
+.pill.off{background:#f1f5f9;color:#94a3b8;border-color:#cbd5e1;}
 
-.sort-stack{
-  transform:scale(.9);
-  display:flex; flex-direction:column; align-items:center; padding:4px 6px;
-  border:1px solid var(--hair); border-radius:10px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.04);
-}
-.sort-top{ font-size:12px; font-weight:600; margin-bottom:2px; text-align:center; }
-.sort-bottom{ display:flex; gap:4px; }
-.pill{ padding:4px 8px; border-radius:999px; font-size:11px; font-weight:600; border:1px solid var(--hair); }
-.pill.on{ background:#dcfce7; color:var(--accent); border-color:#86efac; }
-.pill.off{ background:#f1f5f9; color:#94a3b8; border-color:#cbd5e1; }
-
-/* Static hint */
-.hint{
-  position:sticky; top:var(--topbar-h); z-index:250;
-  color:var(--muted); font-size:12px; text-align:center;
-  line-height:var(--hint-h); height:var(--hint-h);
-  background:#fff; border-bottom:1px solid var(--hair);
-}
+/* Static hint under top bar */
+.hint{position:sticky;top:var(--topbar-h);z-index:250;color:var(--muted);font-size:12px;text-align:center;line-height:var(--hint-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair);}
 
 /* Arenas */
-.arena{
-  margin:10px; border:1px solid var(--hair); border-radius:14px;
-  background:var(--card); box-shadow:0 2px 6px rgba(0,0,0,.05);
-}
+.arena{margin:10px;border:1px solid var(--hair);border-radius:14px;background:var(--card);box-shadow:0 2px 6px rgba(0,0,0,.05);}
 .arena-header{
   position:sticky;
-  top:calc(var(--topbar-h) + var(--hint-h) - 0.9 * var(--arena-h));
-  z-index:200; background:#fff; height:var(--arena-h);
-  padding:10px 12px; border-bottom:1px dashed var(--hair);
-  display:flex; justify-content:space-between; align-items:center;
+  top:calc(var(--topbar-h) + var(--hint-h) - var(--arena-h)); /* flush to hint divider */
+  z-index:200;background:#fff;height:var(--arena-h);
+  padding:10px 12px;border-bottom:1px dashed var(--hair);
+  display:flex;justify-content:space-between;align-items:center;
 }
-.arena-title{ font-weight:700; }
-.arena-distance{ font-size:12px; color:var(--muted); }
+.arena-title{font-weight:700;}
+.arena-distance{font-size:12px;color:var(--muted);}
 
 /* Games */
-.game{ padding:8px 12px; border-top:1px dashed #e5e7eb; display:grid; gap:6px; }
-.game:first-child{ margin-top:6px; }
-.game-top{ display:flex; justify-content:space-between; font-weight:600; }
-.game-series a{ color:var(--link); text-decoration:none; font-weight:600; }
-.game-bottom{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:6px; }
+.game{padding:8px 12px;border-top:1px dashed #e5e7eb;display:grid;gap:6px;}
+.game:first-child{margin-top:6px;}
+/* Top row: time + series, side-by-side left with medium gap */
+.game-top{display:flex;align-items:center;gap:12px;font-weight:600;}
+.game-time{font-weight:700;}
+.game-series a{color:var(--link);text-decoration:none;font-weight:600;}
 
-.team{ display:inline-flex; align-items:center; gap:6px; font-weight:600; }
-.team.right{ justify-self:end; flex-direction:row-reverse; text-align:right; }
-.team-logo{
-  width:26px; height:26px; border-radius:50%; border:1px solid var(--hair);
-  object-fit:cover; background:#f1f5f9;
-}
-.team-name{
-  max-width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  font-size:clamp(10px, 2.5vw, 13px);
-}
+/* Bottom row: 3 columns; both teams left-aligned in their cells */
+.game-bottom{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;}
+.team{display:inline-flex;align-items:center;gap:6px;font-weight:600;}
+.team.right{justify-self:start;text-align:left;} /* left aligned away team */
+.team-logo{width:26px;height:26px;border-radius:50%;border:1px solid var(--hair);object-fit:cover;background:#f1f5f9;}
+.team-name{max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,2.5vw,13px);}
 
-/* Center the score dash exactly */
+/* Center the dash in the score */
 .result a{
-  display:inline-flex; justify-content:center; align-items:center;
-  min-width:72px; height:26px; padding:0 8px;
-  border-radius:8px; border:1px solid var(--hair);
-  background:#f1f5f9; color:var(--text); font-weight:700; text-decoration:none; text-align:center;
+  display:inline-flex;justify-content:center;align-items:center;
+  min-width:72px;height:26px;padding:0 8px;border-radius:8px;border:1px solid var(--hair);
+  background:#f1f5f9;color:var(--text);font-weight:700;text-decoration:none;text-align:center;
 }
 
-/* Simple icon fallback (keep for now) */
-.icon-btn span{ font-size:14px; }
+/* Simple emoji icons */
+.icon-btn span{font-size:14px;}
 </style>
 </head>
 <body>
@@ -136,17 +106,21 @@ html,body{
       <div class="cluster-right">
         <div class="sort-stack">
           <div class="sort-top">Sortering</div>
-          <div class="sort-bottom"><span class="pill on">Plats</span><span class="pill on">Serie</span><span class="pill off">Tid</span></div>
+          <div class="sort-bottom">
+            <span class="pill on">Plats</span>
+            <span class="pill on">Serie</span>
+            <span class="pill off">Tid</span>
+          </div>
         </div>
         <button class="icon-btn" aria-label="Inställningar"><span>⚙️</span></button>
       </div>
     </div>
   </header>
 
-  <!-- Static hint (non-scrollable under topbar) -->
+  <!-- Static hint (non-scrolling) -->
   <div class="hint">Visar matcher nära: Kruniusvägen 1, Billdal (57.590214, 11.946082)</div>
 
-  <!-- Scrollable list -->
+  <!-- Scrollable content -->
   <main class="scroll">
 
     <!-- ===== Arena 1: Kungsbacka Ishall A (15 matcher) ===== -->
@@ -164,7 +138,10 @@ html,body{
 
       <!-- 09:00 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">09:00</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">09:00</div>
+          <div class="game-series"><a href="#">HockeyTvåan Södra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hanhals IF</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -174,7 +151,10 @@ html,body{
 
       <!-- 09:40 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">09:40</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">09:40</div>
+          <div class="game-series"><a href="#">J18 Region Södra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK</span></div>
           <div class="result"><a href="#">3 - 2</a></div>
@@ -184,7 +164,10 @@ html,body{
 
       <!-- 10:20 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">10:20</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div>
+        <div class="game-top">
+          <div class="game-time">10:20</div>
+          <div class="game-series"><a href="#">J20 Region Syd</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC U20</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -194,7 +177,10 @@ html,body{
 
       <!-- 11:00 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">11:00</div><div class="game-series"><a href="#">Träningsmatch</a></div></div>
+        <div class="game-top">
+          <div class="game-time">11:00</div>
+          <div class="game-series"><a href="#">Träningsmatch</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK J18</span></div>
           <div class="result"><a href="#">2 - 4</a></div>
@@ -204,7 +190,10 @@ html,body{
 
       <!-- 11:40 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">11:40</div><div class="game-series"><a href="#">HockeyTvåan Västra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">11:40</div>
+          <div class="game-series"><a href="#">HockeyTvåan Västra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hisingen Hockey</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -214,7 +203,10 @@ html,body{
 
       <!-- 12:20 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">12:20</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div>
+        <div class="game-top">
+          <div class="game-time">12:20</div>
+          <div class="game-series"><a href="#">J20 Region Syd</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK U20</span></div>
           <div class="result"><a href="#">5 - 1</a></div>
@@ -224,7 +216,10 @@ html,body{
 
       <!-- 13:00 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">13:00</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">13:00</div>
+          <div class="game-series"><a href="#">J18 Region Södra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC J18</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -234,7 +229,10 @@ html,body{
 
       <!-- 13:40 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">13:40</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">13:40</div>
+          <div class="game-series"><a href="#">HockeyTvåan Södra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -244,7 +242,10 @@ html,body{
 
       <!-- 14:20 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">14:20</div><div class="game-series"><a href="#">Träningsmatch</a></div></div>
+        <div class="game-top">
+          <div class="game-time">14:20</div>
+          <div class="game-series"><a href="#">Träningsmatch</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">IF Mölndal Hockey</span></div>
           <div class="result"><a href="#">1 - 1</a></div>
@@ -254,7 +255,10 @@ html,body{
 
       <!-- 15:00 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">15:00</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div>
+        <div class="game-top">
+          <div class="game-time">15:00</div>
+          <div class="game-series"><a href="#">J20 Region Syd</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK U20</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -264,7 +268,10 @@ html,body{
 
       <!-- 15:40 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">15:40</div><div class="game-series"><a href="#">HockeyTvåan Västra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">15:40</div>
+          <div class="game-series"><a href="#">HockeyTvåan Västra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC</span></div>
           <div class="result"><a href="#">4 - 3</a></div>
@@ -274,7 +281,10 @@ html,body{
 
       <!-- 16:20 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">16:20</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">16:20</div>
+          <div class="game-series"><a href="#">J18 Region Södra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Mörrums GoIS IK</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -284,7 +294,10 @@ html,body{
 
       <!-- 17:00 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">17:00</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">17:00</div>
+          <div class="game-series"><a href="#">HockeyTvåan Södra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hanhals IF</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -294,7 +307,10 @@ html,body{
 
       <!-- 17:40 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">17:40</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div>
+        <div class="game-top">
+          <div class="game-time">17:40</div>
+          <div class="game-series"><a href="#">J20 Region Syd</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK</span></div>
           <div class="result"><a href="#">1 - 2</a></div>
@@ -304,7 +320,10 @@ html,body{
 
       <!-- 18:20 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">18:20</div><div class="game-series"><a href="#">Träningsmatch</a></div></div>
+        <div class="game-top">
+          <div class="game-time">18:20</div>
+          <div class="game-series"><a href="#">Träningsmatch</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">IF Mölndal Hockey</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -322,7 +341,10 @@ html,body{
 
       <!-- 09:20 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">09:20</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">09:20</div>
+          <div class="game-series"><a href="#">HockeyTvåan Södra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -332,7 +354,10 @@ html,body{
 
       <!-- 10:00 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">10:00</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div>
+        <div class="game-top">
+          <div class="game-time">10:00</div>
+          <div class="game-series"><a href="#">J20 Region Syd</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hanhals IF</span></div>
           <div class="result"><a href="#">2 - 2</a></div>
@@ -342,7 +367,10 @@ html,body{
 
       <!-- 10:40 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">10:40</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">10:40</div>
+          <div class="game-series"><a href="#">J18 Region Södra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK J18</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -352,7 +380,10 @@ html,body{
 
       <!-- 11:20 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">11:20</div><div class="game-series"><a href="#">HockeyTvåan Västra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">11:20</div>
+          <div class="game-series"><a href="#">HockeyTvåan Västra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -362,7 +393,10 @@ html,body{
 
       <!-- 12:00 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">12:00</div><div class="game-series"><a href="#">Träningsmatch</a></div></div>
+        <div class="game-top">
+          <div class="game-time">12:00</div>
+          <div class="game-series"><a href="#">Träningsmatch</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK</span></div>
           <div class="result"><a href="#">4 - 1</a></div>
@@ -372,7 +406,10 @@ html,body{
 
       <!-- 12:40 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">12:40</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div>
+        <div class="game-top">
+          <div class="game-time">12:40</div>
+          <div class="game-series"><a href="#">J20 Region Syd</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hanhals IF U20</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -382,7 +419,10 @@ html,body{
 
       <!-- 13:20 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">13:20</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">13:20</div>
+          <div class="game-series"><a href="#">HockeyTvåan Södra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -392,7 +432,10 @@ html,body{
 
       <!-- 14:00 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">14:00</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">14:00</div>
+          <div class="game-series"><a href="#">J18 Region Södra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC J18</span></div>
           <div class="result"><a href="#">3 - 0</a></div>
@@ -402,7 +445,10 @@ html,body{
 
       <!-- 14:40 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">14:40</div><div class="game-series"><a href="#">HockeyTvåan Västra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">14:40</div>
+          <div class="game-series"><a href="#">HockeyTvåan Västra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -412,7 +458,10 @@ html,body{
 
       <!-- 15:20 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">15:20</div><div class="game-series"><a href="#">Träningsmatch</a></div></div>
+        <div class="game-top">
+          <div class="game-time">15:20</div>
+          <div class="game-series"><a href="#">Träningsmatch</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">IF Mölndal Hockey</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -422,7 +471,10 @@ html,body{
 
       <!-- 16:00 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">16:00</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div>
+        <div class="game-top">
+          <div class="game-time">16:00</div>
+          <div class="game-series"><a href="#">J20 Region Syd</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK U20</span></div>
           <div class="result"><a href="#">1 - 4</a></div>
@@ -432,7 +484,10 @@ html,body{
 
       <!-- 16:40 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">16:40</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">16:40</div>
+          <div class="game-series"><a href="#">HockeyTvåan Södra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -442,7 +497,10 @@ html,body{
 
       <!-- 17:20 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">17:20</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">17:20</div>
+          <div class="game-series"><a href="#">J18 Region Södra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK J18</span></div>
           <div class="result"><a href="#">–</a></div>
@@ -452,7 +510,10 @@ html,body{
 
       <!-- 18:00 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">18:00</div><div class="game-series"><a href="#">Träningsmatch</a></div></div>
+        <div class="game-top">
+          <div class="game-time">18:00</div>
+          <div class="game-series"><a href="#">Träningsmatch</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hanhals IF</span></div>
           <div class="result"><a href="#">0 - 3</a></div>
@@ -462,7 +523,10 @@ html,body{
 
       <!-- 18:40 -->
       <article class="game">
-        <div class="game-top"><div class="game-time">18:40</div><div class="game-series"><a href="#">HockeyTvåan Västra</a></div></div>
+        <div class="game-top">
+          <div class="game-time">18:40</div>
+          <div class="game-series"><a href="#">HockeyTvåan Västra</a></div>
+        </div>
         <div class="game-bottom">
           <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK</span></div>
           <div class="result"><a href="#">–</a></div>
