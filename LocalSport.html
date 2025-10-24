@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport – Full Screen Sticky (30 matcher v3)</title>
+<title>LocalSport – Full Screen Sticky (30 matcher v4)</title>
 <style>
 :root{
   --topbar-h:56px;
@@ -44,17 +44,26 @@ html,body{
 .pill{padding:4px 8px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--hair);}
 .pill.on{background:#dcfce7;color:var(--accent);border-color:#86efac;}
 .pill.off{background:#f1f5f9;color:#94a3b8;border-color:#cbd5e1;}
-.hint{position:sticky;top:var(--topbar-h);z-index:250;color:var(--muted);font-size:12px;text-align:center;line-height:var(--hint-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair);}
 
-/* --- Arena & Game fixes --- */
+/* Static hint under the topbar */
+.hint{
+  position:sticky; top:var(--topbar-h); z-index:250;
+  color:var(--muted); font-size:12px; text-align:center;
+  line-height:var(--hint-h); height:var(--hint-h);
+  background:#fff; border-bottom:1px solid var(--hair);
+}
+
+/* Arena cards */
 .arena{
-  margin:0 10px 10px 10px; /* remove top margin */
+  margin:0 10px 10px 10px;           /* no top margin to avoid any gap */
   border:1px solid var(--hair);
-  border-radius:0 0 14px 14px; /* flat top, rounded bottom */
+  border-radius:0 0 14px 14px;        /* flat top, rounded bottom */
   background:var(--card);
   box-shadow:0 2px 6px rgba(0,0,0,.05);
-  padding-top:var(--arena-h); /* reserve space for sticky header */
+  overflow:hidden;                    /* prevent content from showing above header */
 }
+
+/* Sticky header: sticks directly under the hint */
 .arena-header{
   position:sticky;
   top:calc(var(--topbar-h) + var(--hint-h));
@@ -63,34 +72,33 @@ html,body{
   height:var(--arena-h);
   padding:10px 12px;
   border-bottom:1px dashed var(--hair);
-  display:flex;justify-content:space-between;align-items:center;
+  display:flex; justify-content:space-between; align-items:center;
 }
 .arena-title{font-weight:700;}
 .arena-distance{font-size:12px;color:var(--muted);}
 
 /* Games */
-.game{padding:8px 12px;border-top:1px dashed #e5e7eb;display:grid;gap:6px;}
+.game{padding:8px 12px; border-top:1px dashed #e5e7eb; display:grid; gap:6px;}
 .game:first-child{margin-top:6px;}
-/* Top row: time + series, side-by-side left with medium gap */
-.game-top{display:flex;align-items:center;gap:12px;font-weight:600;}
+/* Top row: time + series (left aligned, medium gap) */
+.game-top{display:flex; align-items:center; gap:12px; font-weight:600;}
 .game-time{font-weight:700;}
-.game-series a{color:var(--link);text-decoration:none;font-weight:600;}
+.game-series a{color:var(--link); text-decoration:none; font-weight:600;}
 
-/* Bottom row: 3 columns; both teams left-aligned in their cells */
-.game-bottom{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;}
-.team{display:inline-flex;align-items:center;gap:6px;font-weight:600;}
-.team.right{justify-self:start;text-align:left;} /* left aligned away team */
-.team-logo{width:26px;height:26px;border-radius:50%;border:1px solid var(--hair);object-fit:cover;background:#f1f5f9;}
-.team-name{max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,2.5vw,13px);}
+/* Bottom row: teams + centered score; away team also left-aligned */
+.game-bottom{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:6px;}
+.team{display:inline-flex; align-items:center; gap:6px; font-weight:600;}
+.team.right{justify-self:start; text-align:left;}
+.team-logo{width:26px; height:26px; border-radius:50%; border:1px solid var(--hair); object-fit:cover; background:#f1f5f9;}
+.team-name{max-width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:clamp(10px,2.5vw,13px);}
 
 /* Center the dash in the score */
 .result a{
-  display:inline-flex;justify-content:center;align-items:center;
-  min-width:72px;height:26px;padding:0 8px;border-radius:8px;border:1px solid var(--hair);
-  background:#f1f5f9;color:var(--text);font-weight:700;text-decoration:none;text-align:center;
+  display:inline-flex; justify-content:center; align-items:center;
+  min-width:72px; height:26px; padding:0 8px;
+  border-radius:8px; border:1px solid var(--hair);
+  background:#f1f5f9; color:var(--text); font-weight:700; text-decoration:none; text-align:center;
 }
-
-/* Simple emoji icons */
 .icon-btn span{font-size:14px;}
 </style>
 </head>
@@ -539,7 +547,6 @@ html,body{
           <div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK</span></div>
         </div>
       </article>
-
     </section>
 
   </main>
