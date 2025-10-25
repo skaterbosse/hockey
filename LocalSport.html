@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport – Full Screen Sticky (30 matcher v5)</title>
+<title>LocalSport – Full Screen Sticky (30 matcher v6)</title>
 <style>
 :root{
   --topbar-h:56px;
@@ -21,51 +21,41 @@
   --accent:#16a34a;
   --link:#2563eb;
 }
-html,body{
-  margin:0;padding:0;height:100%;
-  background:var(--bg);
-  font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,Helvetica,sans-serif;
-  overscroll-behavior:none;
-}
-.device{
-  width:428px;height:100dvh;margin:0 auto;overflow:hidden;
-  display:flex;flex-direction:column;border:none;
-}
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:40px;}
-.topbar{position:sticky;top:0;z-index:300;background:#fff;border-bottom:1px solid var(--hair);}
-.topbar-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:6px 8px;height:var(--topbar-h);}
-.cluster-left,.cluster-right{display:flex;align-items:center;gap:8px;}
-.cluster-center{display:flex;align-items:center;justify-content:center;gap:8px;}
-.icon-btn{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--hair);background:#f1f5f9;color:var(--text);}
-.date-block{display:flex;flex-direction:column;align-items:center;line-height:1.1;font-weight:700;font-size:14px;}
-.sort-stack{transform:scale(.9);display:flex;flex-direction:column;align-items:center;padding:4px 6px;border:1px solid var(--hair);border-radius:10px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);}
-.sort-top{font-size:12px;font-weight:600;margin-bottom:2px;text-align:center;}
-.sort-bottom{display:flex;gap:4px;}
-.pill{padding:4px 8px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--hair);}
-.pill.on{background:#dcfce7;color:var(--accent);border-color:#86efac;}
-.pill.off{background:#f1f5f9;color:#94a3b8;border-color:#cbd5e1;}
-
-/* Static hint under the topbar (non-scrolling) */
-.hint{
-  position:sticky; top:var(--topbar-h); z-index:250;
-  color:var(--muted); font-size:12px; text-align:center;
-  line-height:var(--hint-h); height:var(--hint-h);
-  background:#fff; border-bottom:1px solid var(--hair);
-}
-
-/* Arena cards */
+/* Base */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,Helvetica,sans-serif;overscroll-behavior:none;color:var(--text)}
+/* App wrapper: responsive */
+.device{width:100%;height:100dvh;margin:0 auto;overflow:hidden;display:flex;flex-direction:column}
+/* Scroller */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:40px}
+/* Top bar */
+.topbar{position:sticky;top:0;z-index:300;background:#fff;border-bottom:1px solid var(--hair)}
+.topbar-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:6px 8px;height:var(--topbar-h)}
+.cluster-left,.cluster-right{display:flex;align-items:center;gap:8px}
+.cluster-center{display:flex;align-items:center;justify-content:center;gap:8px}
+.icon-btn{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--hair);background:#f1f5f9;color:var(--text)}
+.icon-btn span{font-size:14px}
+.date-block{display:flex;flex-direction:column;align-items:center;line-height:1.1;font-weight:700;font-size:14px}
+.sort-stack{transform:scale(.9);display:flex;flex-direction:column;align-items:center;padding:4px 6px;border:1px solid var(--hair);border-radius:10px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.sort-top{font-size:12px;font-weight:600;margin-bottom:2px;text-align:center}
+.sort-bottom{display:flex;gap:4px}
+.pill{padding:4px 8px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--hair)}
+.pill.on{background:#dcfce7;color:var(--accent);border-color:#86efac}
+.pill.off{background:#f1f5f9;color:#94a3b8;border-color:#cbd5e1}
+/* Hint (non-scrolling anchor below topbar) */
+.hint{position:sticky;top:var(--topbar-h);z-index:250;color:var(--muted);font-size:12px;text-align:center;line-height:var(--hint-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair)}
+/* Arenas */
 .arena{
-  margin:0 10px 10px 10px;          /* no top margin to avoid any visual gap */
+  margin:0 10px 10px 10px;           /* no top margin -> no gap above header */
   border:1px solid var(--hair);
-  border-radius:0 0 14px 14px;       /* flat top, rounded bottom */
+  border-radius:0 0 14px 14px;        /* flat top, rounded bottom */
   background:var(--card);
   box-shadow:0 2px 6px rgba(0,0,0,.05);
-  /* IMPORTANT for layout: allow sticky to work and make room for header */
-  overflow:visible;                  /* sticky needs this (not hidden) */
-  padding-top:var(--arena-h);        /* ensures first game sits below header */
+  overflow:visible;                   /* allow sticky to work */
+  padding-top:0;                      /* important for v6: no padding hack */
 }
-
-/* Sticky header: sticks directly under the hint, and next header pushes it */
+.arena:first-of-type{border-top:none;border-radius:0 0 14px 14px}
+/* Sticky header: sits flush under the hint */
 .arena-header{
   position:sticky;
   top:calc(var(--topbar-h) + var(--hint-h));
@@ -74,34 +64,32 @@ html,body{
   height:var(--arena-h);
   padding:10px 12px;
   border-bottom:1px dashed var(--hair);
-  display:flex; justify-content:space-between; align-items:center;
+  display:flex;justify-content:space-between;align-items:center;
 }
-.arena-title{font-weight:700;}
-.arena-distance{font-size:12px;color:var(--muted);}
-
+.arena-title{font-weight:700}
+.arena-distance{font-size:12px;color:var(--muted)}
 /* Games */
-.game{padding:8px 12px; border-top:1px dashed #e5e7eb; display:grid; gap:6px;}
-.game:first-child{margin-top:6px;}
-/* Top row: time + series (left aligned, medium gap) */
-.game-top{display:flex; align-items:center; gap:12px; font-weight:600;}
-.game-time{font-weight:700;}
-.game-series a{color:var(--link); text-decoration:none; font-weight:600;}
-
-/* Bottom row: teams + centered score; away team also left-aligned */
-.game-bottom{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:6px;}
-.team{display:inline-flex; align-items:center; gap:6px; font-weight:600;}
-.team.right{justify-self:start; text-align:left;}
-.team-logo{width:26px; height:26px; border-radius:50%; border:1px solid var(--hair); object-fit:cover; background:#f1f5f9;}
-.team-name{max-width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:clamp(10px,2.5vw,13px);}
-
-/* Center the dash in the score */
-.result a{
-  display:inline-flex; justify-content:center; align-items:center;
-  min-width:72px; height:26px; padding:0 8px;
-  border-radius:8px; border:1px solid var(--hair);
-  background:#f1f5f9; color:var(--text); font-weight:700; text-decoration:none; text-align:center;
+.game{padding:8px 12px;border-top:1px dashed #e5e7eb;display:grid;gap:6px;background:#fff}
+/* Key: make room for the sticky header without padding the entire section */
+.game:first-child{margin-top:var(--arena-h)}
+/* Top row: time + series left with medium gap */
+.game-top{display:flex;align-items:center;gap:12px;font-weight:600}
+.game-time{font-weight:700}
+.game-series a{color:var(--link);text-decoration:none;font-weight:600}
+/* Bottom row: both teams left-aligned; centered score */
+.game-bottom{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px}
+.team{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+.team.right{justify-self:start;text-align:left}
+.team-logo{width:26px;height:26px;border-radius:50%;border:1px solid var(--hair);object-fit:cover;background:#f1f5f9}
+.team-name{max-width:min(36vw,160px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,2.5vw,13px)}
+.result a{display:inline-flex;justify-content:center;align-items:center;min-width:72px;height:26px;padding:0 8px;border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;color:var(--text);font-weight:700;text-decoration:none;text-align:center}
+/* Wider screens: add natural max-width without breaking responsiveness */
+@media (min-width:768px){
+  .device{max-width:720px}
 }
-.icon-btn span{font-size:14px;}
+@media (min-width:1024px){
+  .device{max-width:840px}
+}
 </style>
 </head>
 <body>
@@ -146,11 +134,11 @@ html,body{
         <div class="arena-distance">Avstånd 8 km</div>
       </div>
 
-      <!-- Helper: known logo file paths -->
-      <!-- Hanhals: logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png -->
-      <!-- Bäcken:  logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png -->
-      <!-- Grästorp:logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png -->
-      <!-- Kungälv: logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png -->
+      <!-- Helper: known logo file paths
+           Hanhals: logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png
+           Bäcken:  logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png
+           Grästorp:logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png
+           Kungälv: logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png -->
 
       <!-- 09:00 -->
       <article class="game">
@@ -159,9 +147,15 @@ html,body{
           <div class="game-series"><a href="#">HockeyTvåan Södra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hanhals IF</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">Hanhals IF</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Bäcken HC</span>
+          </div>
         </div>
       </article>
 
@@ -172,9 +166,15 @@ html,body{
           <div class="game-series"><a href="#">J18 Region Södra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kungälvs IK</span>
+          </div>
           <div class="result"><a href="#">3 - 2</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Grästorps IK</span>
+          </div>
         </div>
       </article>
 
@@ -185,9 +185,15 @@ html,body{
           <div class="game-series"><a href="#">J20 Region Syd</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC U20</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Bäcken HC U20</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">IF Mölndal Hockey</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">IF Mölndal Hockey</span>
+          </div>
         </div>
       </article>
 
@@ -198,9 +204,15 @@ html,body{
           <div class="game-series"><a href="#">Träningsmatch</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK J18</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Grästorps IK J18</span>
+          </div>
           <div class="result"><a href="#">2 - 4</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK J18</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kungälvs IK J18</span>
+          </div>
         </div>
       </article>
 
@@ -211,9 +223,15 @@ html,body{
           <div class="game-series"><a href="#">HockeyTvåan Västra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hisingen Hockey</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">Hisingen Hockey</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Partille HK</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Partille HK</span>
+          </div>
         </div>
       </article>
 
@@ -224,9 +242,15 @@ html,body{
           <div class="game-series"><a href="#">J20 Region Syd</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK U20</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kungälvs IK U20</span>
+          </div>
           <div class="result"><a href="#">5 - 1</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Mörrums GoIS IK</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Mörrums GoIS IK</span>
+          </div>
         </div>
       </article>
 
@@ -237,9 +261,15 @@ html,body{
           <div class="game-series"><a href="#">J18 Region Södra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC J18</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Bäcken HC J18</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Kållereds SK</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">Kållereds SK</span>
+          </div>
         </div>
       </article>
 
@@ -250,9 +280,15 @@ html,body{
           <div class="game-series"><a href="#">HockeyTvåan Södra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Grästorps IK</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kalmar HC</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kalmar HC</span>
+          </div>
         </div>
       </article>
 
@@ -263,9 +299,15 @@ html,body{
           <div class="game-series"><a href="#">Träningsmatch</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">IF Mölndal Hockey</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">IF Mölndal Hockey</span>
+          </div>
           <div class="result"><a href="#">1 - 1</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Nybro Vikings IF</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Nybro Vikings IF</span>
+          </div>
         </div>
       </article>
 
@@ -276,9 +318,15 @@ html,body{
           <div class="game-series"><a href="#">J20 Region Syd</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK U20</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kungälvs IK U20</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Halmstad Hammers</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Halmstad Hammers</span>
+          </div>
         </div>
       </article>
 
@@ -289,9 +337,15 @@ html,body{
           <div class="game-series"><a href="#">HockeyTvåan Västra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Bäcken HC</span>
+          </div>
           <div class="result"><a href="#">4 - 3</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Troja-Ljungby</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">Troja-Ljungby</span>
+          </div>
         </div>
       </article>
 
@@ -302,9 +356,15 @@ html,body{
           <div class="game-series"><a href="#">J18 Region Södra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Mörrums GoIS IK</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Mörrums GoIS IK</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kållereds SK</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kållereds SK</span>
+          </div>
         </div>
       </article>
 
@@ -315,9 +375,15 @@ html,body{
           <div class="game-series"><a href="#">HockeyTvåan Södra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hanhals IF</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">Hanhals IF</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Kalmar HC</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Kalmar HC</span>
+          </div>
         </div>
       </article>
 
@@ -328,9 +394,15 @@ html,body{
           <div class="game-series"><a href="#">J20 Region Syd</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kungälvs IK</span>
+          </div>
           <div class="result"><a href="#">1 - 2</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Hisingen Hockey</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Hisingen Hockey</span>
+          </div>
         </div>
       </article>
 
@@ -341,9 +413,15 @@ html,body{
           <div class="game-series"><a href="#">Träningsmatch</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">IF Mölndal Hockey</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">IF Mölndal Hockey</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Partille HK</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">Partille HK</span>
+          </div>
         </div>
       </article>
     </section>
@@ -362,9 +440,15 @@ html,body{
           <div class="game-series"><a href="#">HockeyTvåan Södra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Grästorps IK</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kungälvs IK</span>
+          </div>
         </div>
       </article>
 
@@ -375,9 +459,15 @@ html,body{
           <div class="game-series"><a href="#">J20 Region Syd</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hanhals IF</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">Hanhals IF</span>
+          </div>
           <div class="result"><a href="#">2 - 2</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Bäcken HC</span>
+          </div>
         </div>
       </article>
 
@@ -388,9 +478,15 @@ html,body{
           <div class="game-series"><a href="#">J18 Region Södra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK J18</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kungälvs IK J18</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK J18</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Grästorps IK J18</span>
+          </div>
         </div>
       </article>
 
@@ -401,9 +497,15 @@ html,body{
           <div class="game-series"><a href="#">HockeyTvåan Västra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Bäcken HC</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Nybro Vikings IF</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">Nybro Vikings IF</span>
+          </div>
         </div>
       </article>
 
@@ -414,9 +516,15 @@ html,body{
           <div class="game-series"><a href="#">Träningsmatch</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Grästorps IK</span>
+          </div>
           <div class="result"><a href="#">4 - 1</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Hisingen Hockey</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Hisingen Hockey</span>
+          </div>
         </div>
       </article>
 
@@ -427,9 +535,15 @@ html,body{
           <div class="game-series"><a href="#">J20 Region Syd</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hanhals IF U20</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">Hanhals IF U20</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">IF Mölndal Hockey</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">IF Mölndal Hockey</span>
+          </div>
         </div>
       </article>
 
@@ -440,9 +554,15 @@ html,body{
           <div class="game-series"><a href="#">HockeyTvåan Södra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kungälvs IK</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Troja-Ljungby</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Troja-Ljungby</span>
+          </div>
         </div>
       </article>
 
@@ -453,9 +573,15 @@ html,body{
           <div class="game-series"><a href="#">J18 Region Södra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC J18</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Bäcken HC J18</span>
+          </div>
           <div class="result"><a href="#">3 - 0</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Kalmar HC</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">Kalmar HC</span>
+          </div>
         </div>
       </article>
 
@@ -466,9 +592,15 @@ html,body{
           <div class="game-series"><a href="#">HockeyTvåan Västra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Grästorps IK</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Partille HK</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Partille HK</span>
+          </div>
         </div>
       </article>
 
@@ -479,9 +611,15 @@ html,body{
           <div class="game-series"><a href="#">Träningsmatch</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">IF Mölndal Hockey</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">IF Mölndal Hockey</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Kållereds SK</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Kållereds SK</span>
+          </div>
         </div>
       </article>
 
@@ -492,9 +630,15 @@ html,body{
           <div class="game-series"><a href="#">J20 Region Syd</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK U20</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kungälvs IK U20</span>
+          </div>
           <div class="result"><a href="#">1 - 4</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Mörrums GoIS IK</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Mörrums GoIS IK</span>
+          </div>
         </div>
       </article>
 
@@ -505,9 +649,15 @@ html,body{
           <div class="game-series"><a href="#">HockeyTvåan Södra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Bäcken HC</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hanhals IF</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">Hanhals IF</span>
+          </div>
         </div>
       </article>
 
@@ -518,9 +668,15 @@ html,body{
           <div class="game-series"><a href="#">J18 Region Södra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK J18</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Grästorps IK J18</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK J18</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kungälvs IK J18</span>
+          </div>
         </div>
       </article>
 
@@ -531,9 +687,15 @@ html,body{
           <div class="game-series"><a href="#">Träningsmatch</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt=""><span class="team-name">Hanhals IF</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png" alt="">
+            <span class="team-name">Hanhals IF</span>
+          </div>
           <div class="result"><a href="#">0 - 3</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt=""><span class="team-name">Bäcken HC</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png" alt="">
+            <span class="team-name">Bäcken HC</span>
+          </div>
         </div>
       </article>
 
@@ -544,11 +706,18 @@ html,body{
           <div class="game-series"><a href="#">HockeyTvåan Västra</a></div>
         </div>
         <div class="game-bottom">
-          <div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt=""><span class="team-name">Kungälvs IK</span></div>
+          <div class="team">
+            <img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png" alt="">
+            <span class="team-name">Kungälvs IK</span>
+          </div>
           <div class="result"><a href="#">–</a></div>
-          <div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt=""><span class="team-name">Grästorps IK</span></div>
+          <div class="team right">
+            <img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png" alt="">
+            <span class="team-name">Grästorps IK</span>
+          </div>
         </div>
       </article>
+
     </section>
 
   </main>
