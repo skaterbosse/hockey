@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport – Full Screen Sticky (30 matcher v4)</title>
+<title>LocalSport – Full Screen Sticky (30 matcher v5)</title>
 <style>
 :root{
   --topbar-h:56px;
@@ -45,7 +45,7 @@ html,body{
 .pill.on{background:#dcfce7;color:var(--accent);border-color:#86efac;}
 .pill.off{background:#f1f5f9;color:#94a3b8;border-color:#cbd5e1;}
 
-/* Static hint under the topbar */
+/* Static hint under the topbar (non-scrolling) */
 .hint{
   position:sticky; top:var(--topbar-h); z-index:250;
   color:var(--muted); font-size:12px; text-align:center;
@@ -55,15 +55,17 @@ html,body{
 
 /* Arena cards */
 .arena{
-  margin:0 10px 10px 10px;           /* no top margin to avoid any gap */
+  margin:0 10px 10px 10px;          /* no top margin to avoid any visual gap */
   border:1px solid var(--hair);
-  border-radius:0 0 14px 14px;        /* flat top, rounded bottom */
+  border-radius:0 0 14px 14px;       /* flat top, rounded bottom */
   background:var(--card);
   box-shadow:0 2px 6px rgba(0,0,0,.05);
-  overflow:hidden;                    /* prevent content from showing above header */
+  /* IMPORTANT for layout: allow sticky to work and make room for header */
+  overflow:visible;                  /* sticky needs this (not hidden) */
+  padding-top:var(--arena-h);        /* ensures first game sits below header */
 }
 
-/* Sticky header: sticks directly under the hint */
+/* Sticky header: sticks directly under the hint, and next header pushes it */
 .arena-header{
   position:sticky;
   top:calc(var(--topbar-h) + var(--hint-h));
