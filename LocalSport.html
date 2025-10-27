@@ -7,16 +7,16 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport – 4-lager sticky (30 matcher v7)</title>
+<title>LocalSport – 4 lager (Series-slot) – 30 matcher v8</title>
 <style>
 :root{
   --topbar-h:56px;
   --hint-h:26px;
-  --arena-h:42px;
+  --series-h:42px;   /* height of the fixed Series slot (Arena header) */
   --hair:#e2e8f0;
   --bg:#f0f3f8;
   --card:#fff;
-  --text:#1e293b;
+  --text:#0f172a;
   --muted:#64748b;
   --accent:#16a34a;
   --link:#2563eb;
@@ -35,11 +35,8 @@ html,body{
 /* App wrapper: responsive */
 .device{width:100%;height:100dvh;margin:0 auto;overflow:hidden;display:flex;flex-direction:column}
 
-/* Layer 4 (scrolling content) */
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:40px}
-
-/* Layer 1: Top bar */
-.topbar{position:sticky;top:0;z-index:300;background:#fff;border-bottom:1px solid var(--hair)}
+/* LAYER 1: Top header (sticky to viewport) */
+.topbar{position:sticky;top:0;z-index:500;background:#fff;border-bottom:1px solid var(--hair)}
 .topbar-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:6px 8px;height:var(--topbar-h)}
 .cluster-left,.cluster-right{display:flex;align-items:center;gap:8px}
 .cluster-center{display:flex;align-items:center;justify-content:center;gap:8px}
@@ -53,51 +50,63 @@ html,body{
 .pill.on{background:#dcfce7;color:var(--accent);border-color:#86efac}
 .pill.off{background:#f1f5f9;color:#94a3b8;border-color:#cbd5e1}
 
-/* Layer 2: Hint (non-scrolling anchor below topbar) */
+/* LAYER 2: Hint line (sticky under header) */
 .hint{
-  position:sticky;top:var(--topbar-h);z-index:250;
+  position:sticky;top:var(--topbar-h);z-index:450;
   color:var(--muted);font-size:12px;text-align:center;
   line-height:var(--hint-h);height:var(--hint-h);
   background:#fff;border-bottom:1px solid var(--hair)
 }
 
-/* Arenas */
+/* LAYER 3: Fixed Series slot (always just under hint) */
+.series-slot{
+  position:sticky; top:calc(var(--topbar-h) + var(--hint-h)); z-index:425;
+  height:var(--series-h);
+  background:#fff; border-bottom:1px dashed var(--hair);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 12px;
+}
+.series-title{font-weight:700}
+.series-dist{font-size:12px;color:var(--muted)}
+
+/* LAYER 4: Scrollable content (only this area scrolls) */
+.scroll{
+  flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  background:var(--bg);
+  /* Ensure content starts immediately below the fixed layers (no gap) */
+  padding-top:0; margin-top:0;
+}
+
+/* Arenas and games inside the scroll */
 .arena{
   margin:0 10px 10px 10px;
   border:1px solid var(--hair);
   border-radius:0 0 14px 14px;
   background:var(--card);
   box-shadow:0 2px 6px rgba(0,0,0,.05);
-  overflow:visible;    /* allow sticky to work */
+  overflow:clip;   /* clips inner borders, no bleed */
 }
-.arena:first-of-type{border-top:none;border-radius:0 0 14px 14px}
 
-/* Layer 3: Sticky arena header that occupies the fixed "series slot" */
-.arena-header{
-  position:sticky;
-  top:calc(var(--topbar-h) + var(--hint-h)); /* sits directly under hint */
-  z-index:300;
-  background:#fff;
-  height:var(--arena-h);
+/* Non-sticky per-arena header (only inside scroller, for context before games).
+   This is NOT sticky anymore; the fixed .series-slot above mirrors the current arena. */
+.arena-header-scroll{
+  height:var(--series-h);
+  display:flex; align-items:center; justify-content:space-between;
   padding:10px 12px;
   border-bottom:1px dashed var(--hair);
-  display:flex;justify-content:space-between;align-items:center;
+  background:#fff;
 }
 .arena-title{font-weight:700}
 .arena-distance{font-size:12px;color:var(--muted)}
 
-/* Games wrapper: create space UNDER the sticky header, not above it */
-.games{
-  padding-top:var(--arena-h); /* ensures first game never sits under header */
-}
+.games{display:block}
 
-/* Games (Layer 4 content) */
+/* Game item */
 .game{padding:8px 12px;border-top:1px dashed #e5e7eb;display:grid;gap:6px;background:#fff}
 .game-top{display:flex;align-items:center;gap:12px;font-weight:600}
 .game-time{font-weight:700}
 .game-series a{color:var(--link);text-decoration:none;font-weight:600}
 
-/* Bottom row: both teams left-aligned; centered score */
 .game-bottom{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px}
 .team{display:inline-flex;align-items:center;gap:6px;font-weight:600}
 .team.right{justify-self:start;text-align:left}
@@ -105,7 +114,7 @@ html,body{
 .team-name{max-width:min(36vw,160px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,2.5vw,13px)}
 .result a{display:inline-flex;justify-content:center;align-items:center;min-width:72px;height:26px;padding:0 8px;border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;color:var(--text);font-weight:700;text-decoration:none;text-align:center}
 
-/* Wider screens: add natural max-width without breaking responsiveness */
+/* Wider screens: optional max-width centering */
 @media (min-width:768px){ .device{max-width:720px} }
 @media (min-width:1024px){ .device{max-width:840px} }
 </style>
@@ -142,21 +151,24 @@ html,body{
   <!-- Layer 2: Static hint -->
   <div class="hint">Visar matcher nära: Kruniusvägen 1, Billdal (57.590214, 11.946082)</div>
 
-  <!-- Layer 4: Scrollable content (Layer 3 sits inside sections as sticky) -->
-  <main class="scroll">
+  <!-- Layer 3: Fixed Series slot (updated via JS on scroll) -->
+  <div class="series-slot" id="seriesSlot">
+    <div class="series-title">Kungsbacka Ishall A</div>
+    <div class="series-dist">Avstånd 8 km</div>
+  </div>
+
+  <!-- Layer 4: Scrollable games -->
+  <main class="scroll" id="scrollArea">
 
     <!-- ===== Arena 1: Kungsbacka Ishall A (15 matcher) ===== -->
-    <section class="arena">
-      <!-- Layer 3: sticky header sits in the header slot -->
-      <div class="arena-header">
+    <section class="arena" data-arena="Kungsbacka Ishall A" data-distance="Avstånd 8 km">
+      <div class="arena-header-scroll">
         <div class="arena-title">Kungsbacka Ishall A</div>
         <div class="arena-distance">Avstånd 8 km</div>
       </div>
-
-      <!-- Games list with internal top padding (so first game is never covered) -->
       <div class="games">
 
-        <!-- Helper: logo paths
+        <!-- Helper: logo paths:
              Hanhals: logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png
              Bäcken:  logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png
              Grästorp:logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png
@@ -447,17 +459,17 @@ html,body{
           </div>
         </article>
 
-      </div><!-- /.games -->
+      </div>
     </section>
 
     <!-- ===== Arena 2: Åse & Viste Arena (15 matcher) ===== -->
-    <section class="arena">
-      <div class="arena-header">
+    <section class="arena" data-arena="Åse & Viste Arena" data-distance="Avstånd 104 km">
+      <div class="arena-header-scroll">
         <div class="arena-title">Åse &amp; Viste Arena</div>
         <div class="arena-distance">Avstånd 104 km</div>
       </div>
-
       <div class="games">
+
         <!-- 09:20 -->
         <article class="game">
           <div class="game-top">
@@ -742,11 +754,60 @@ html,body{
             </div>
           </div>
         </article>
-      </div><!-- /.games -->
+
+      </div>
     </section>
 
   </main>
 </div>
+
+<script>
+(function(){
+  const scroll = document.getElementById('scrollArea');
+  const slot   = document.getElementById('seriesSlot');
+
+  // Read heights from CSS custom properties (fallbacks match CSS)
+  const topbarH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--topbar-h')) || 56;
+  const hintH   = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--hint-h'))   || 26;
+  const seriesH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--series-h')) || 42;
+
+  // Sections (arenas)
+  const arenas = Array.from(scroll.querySelectorAll('.arena'));
+
+  // Helper: set series slot text
+  function setSlot(title, dist){
+    slot.querySelector('.series-title').textContent = title || '';
+    slot.querySelector('.series-dist').textContent  = dist  || '';
+  }
+
+  // Compute which arena is "current" based on its top relative to the scroll area.
+  function updateSlot(){
+    const scrollRect = scroll.getBoundingClientRect();
+    let current = arenas[0];
+
+    for (const arena of arenas){
+      const rect = arena.getBoundingClientRect();
+      const relTop = rect.top - scrollRect.top; // px from top of scroll area
+
+      // As soon as arena top is <= series slot top (0), it becomes current
+      if (relTop <= 0 + 1) current = arena; // +1 px tolerance
+      else break;
+    }
+
+    const title = current.getAttribute('data-arena') || current.querySelector('.arena-title')?.textContent || '';
+    const dist  = current.getAttribute('data-distance') || current.querySelector('.arena-distance')?.textContent || '';
+    setSlot(title, dist);
+  }
+
+  // Initial set
+  updateSlot();
+
+  // Update on scroll
+  scroll.addEventListener('scroll', updateSlot, {passive:true});
+
+  // Also update on resize (orientation change)
+  window.addEventListener('resize', updateSlot, {passive:true});
+})();
+</script>
 </body>
 </html>
-
