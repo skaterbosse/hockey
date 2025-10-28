@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport v17.5 – Uppåt-växling m. riktning + 5+15 matcher</title>
+<title>LocalSport v17.6 – Uppåtväxling på current-header</title>
 <style>
 :root{
   --topbar-h:56px; --hint-h:26px; --slot-h:42px;
@@ -43,7 +43,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
 /* Scroll area */
 .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:var(--bg);padding:0;margin:0;width:100%}
 
-/* Arena header (bara i Plats) */
+/* Arena header (scroll-listan) */
 .arena-header{background:#fff;font-weight:700;padding:10px 12px;border-bottom:1px dashed var(--hair);display:flex;justify-content:space-between}
 .arena-header.active-hidden{height:0;padding:0;border:0;margin:0;overflow:hidden}
 
@@ -122,7 +122,7 @@ const LOGOS = {
 };
 /* Avstånd (km) */
 const ARENAS = {"Kungsbacka Ishall A":8,"Åse & Viste Arena":104};
-/* Matcher 5 + 15 (Åse & Viste har 10 extra längre ner på dagen) */
+/* Matcher 5 + 15 */
 const GAMES = [
   // Kungsbacka (5)
   { arena:"Kungsbacka Ishall A", series:"HockeyTvåan Södra", time:"09:00", home:{name:"Hanhals IF",logo:LOGOS.hanhals}, away:{name:"Bäcken HC",logo:LOGOS.backen}, result:"–" },
@@ -131,7 +131,7 @@ const GAMES = [
   { arena:"Kungsbacka Ishall A", series:"Träningsmatch",      time:"11:00", home:{name:"Grästorps IK J18",logo:LOGOS.grastorp}, away:{name:"Kungälvs IK J18",logo:LOGOS.kungalv}, result:"2 - 4" },
   { arena:"Kungsbacka Ishall A", series:"HockeyTvåan Västra", time:"11:40", home:{name:"Hisingen Hockey",logo:LOGOS.hanhals}, away:{name:"Partille HK",logo:LOGOS.backen}, result:"–" },
 
-  // Åse & Viste (15) – original 10
+  // Åse & Viste (15) – original 10 + 5 senare
   { arena:"Åse & Viste Arena",   series:"HockeyTvåan Södra", time:"09:20", home:{name:"Grästorps IK",logo:LOGOS.grastorp}, away:{name:"Kungälvs IK",logo:LOGOS.kungalv}, result:"–" },
   { arena:"Åse & Viste Arena",   series:"J20 Region Syd",     time:"10:00", home:{name:"Hanhals IF",logo:LOGOS.hanhals}, away:{name:"Bäcken HC",logo:LOGOS.backen}, result:"2 - 2" },
   { arena:"Åse & Viste Arena",   series:"J18 Region Södra",   time:"10:40", home:{name:"Kungälvs IK J18",logo:LOGOS.kungalv}, away:{name:"Grästorps IK J18",logo:LOGOS.grastorp}, result:"–" },
@@ -142,8 +142,6 @@ const GAMES = [
   { arena:"Åse & Viste Arena",   series:"J18 Region Södra",   time:"14:00", home:{name:"Bäcken HC J18",logo:LOGOS.backen}, away:{name:"Kalmar HC",logo:LOGOS.backen}, result:"3 - 0" },
   { arena:"Åse & Viste Arena",   series:"HockeyTvåan Västra", time:"14:40", home:{name:"Grästorps IK",logo:LOGOS.grastorp}, away:{name:"Partille HK",logo:LOGOS.backen}, result:"–" },
   { arena:"Åse & Viste Arena",   series:"Träningsmatch",      time:"15:20", home:{name:"IF Mölndal Hockey",logo:LOGOS.hanhals}, away:{name:"Kållereds SK",logo:LOGOS.hanhals}, result:"–" },
-
-  // Åse & Viste – 10 extra (senare tider)
   { arena:"Åse & Viste Arena",   series:"J18 Region Södra",   time:"16:00", home:{name:"Grästorps IK J18",logo:LOGOS.grastorp}, away:{name:"Kungälvs IK J18",logo:LOGOS.kungalv}, result:"–" },
   { arena:"Åse & Viste Arena",   series:"J20 Region Syd",     time:"16:40", home:{name:"Bäcken HC U20",logo:LOGOS.backen}, away:{name:"Hanhals IF U20",logo:LOGOS.hanhals}, result:"–" },
   { arena:"Åse & Viste Arena",   series:"HockeyTvåan Södra",  time:"17:20", home:{name:"Kungälvs IK",logo:LOGOS.kungalv}, away:{name:"Grästorps IK",logo:LOGOS.grastorp}, result:"–" },
@@ -210,10 +208,10 @@ function sortGames(){
   }
 }
 
-/* ===== Sticky arena växling (med riktning) =====
-   Nedåt: byt när sticky täcker >= 50% av NÄSTA arenas HEADER.
-   Uppåt: (1) lägg tillbaka AKTUELL arenas header när dess första match når sticky-bottom,
-          (2) byt när FÖREGÅENDE arenas header är 100% synlig i scroll-ytan (scrollTop/offsetTop).
+/* ===== Sticky arena växling =====
+   Nedåt: byt när sticky täcker >= 50% av NÄSTA arenas HEADER (via getBoundingClientRect).
+   Uppåt: byt när den NUVARANDE arenans HEADER är 100% synlig i scroll-arean
+          – mätt uteslutande via scrollTop/offsetTop (robust på iOS/Mac).
 */
 let currentArena=null, lastChangeTs=0;
 let arenaOrder=[];
@@ -229,6 +227,23 @@ function updateScrollDirection(){
   return (scrollDirection=dir);
 }
 
+function currentHeaderFullyVisibleInScroll(currHeader){
+  // Headerns absoluta position i scrollinnehållet
+  const top = currHeader.offsetTop;
+  const bottom = top + currHeader.offsetHeight;
+  const viewTop = scroll.scrollTop;
+  const viewBottom = viewTop + scroll.clientHeight;
+  return (top >= viewTop) && (bottom <= viewBottom);
+}
+
+function showHideHeadersForActive(){
+  // Dölj endast den aktiva arenans header (övriga visas)
+  arenaOrder.forEach(name=>{
+    const h=headerEl(name); if(!h) return;
+    h.classList.toggle('active-hidden', name===currentArena);
+  });
+}
+
 function updateStickyArena(force=false){
   if(mode!==MODE.PLACE || !arenaOrder.length) return;
 
@@ -236,64 +251,59 @@ function updateStickyArena(force=false){
   const dir=updateScrollDirection();
   const slotBottom = groupSlot.getBoundingClientRect().bottom;
 
-  // Synlig scroll-ytas topp/botten i content-koordinater
-  const viewTop    = scroll.scrollTop;
-  const viewBottom = viewTop + scroll.clientHeight;
-
   let next = currentArena || arenaOrder[0];
   const idx = arenaOrder.indexOf(currentArena);
 
-  // UPPÅT (1): lägg tillbaka aktuell arenas header precis när dess första match når sticky-bottom
-  if(idx>=0){
-    const curr = arenaOrder[idx];
-    const currHeader = headerEl(curr);
-    const first = firstCardEl(curr);
-    if(currHeader && first){
-      const fr = first.getBoundingClientRect();
-      if(fr.top >= slotBottom){ currHeader.classList.remove('active-hidden'); }
-      else { currHeader.classList.add('active-hidden'); }
-    }
-  }
-
-  if(dir==='down'){
-    // NEDÅT: 50% täckning av nästa header
-    if(idx>=0 && idx<arenaOrder.length-1){
-      const nh = headerEl(arenaOrder[idx+1]);
-      if(nh){
-        const r = nh.getBoundingClientRect();
-        const overlap = Math.max(0, slotBottom - r.top);
-        if(overlap >= r.height*0.5){ next = arenaOrder[idx+1]; }
-      }
-    }
-  } else { // dir==='up'
-    // UPPÅT (2): byt när föregående header är 100% synlig i scroll-ytan (content-koordinater)
-    if(idx>0){
-      const prev = arenaOrder[idx-1];
-      const ph = headerEl(prev);
-      if(ph){
-        const headerTop    = ph.offsetTop;
-        const headerBottom = headerTop + ph.offsetHeight;
-        const fullyVisible = (headerTop >= viewTop) && (headerBottom <= viewBottom);
-        if(fullyVisible){ next = prev; }
+  // --- Uppåt: om den aktuella arenans header är 100% synlig i scroll-ytan -> byt till föregående arena
+  if(dir==='up' && idx>0){
+    const currHeader = headerEl(arenaOrder[idx]);
+    if(currHeader){
+      // När vi rullar upp ska den aktiva headern *inte* vara dold i listan
+      currHeader.classList.remove('active-hidden');
+      if(currentHeaderFullyVisibleInScroll(currHeader)){
+        next = arenaOrder[idx-1];
       }
     }
   }
 
+  // --- Nedåt: byt när sticky täcker >= 50% av nästa header
+  if(dir==='down' && idx>=0 && idx<arenaOrder.length-1){
+    const nh = headerEl(arenaOrder[idx+1]);
+    if(nh){
+      const r = nh.getBoundingClientRect();
+      const overlap = Math.max(0, slotBottom - r.top);
+      if(overlap >= r.height*0.5){ next = arenaOrder[idx+1]; }
+    }
+  }
+
+  // --- Håll list-headern för icke-aktiva arenor synliga, den aktivas dold (utom när vi är på väg upp över den)
   if(next!==currentArena || force){
-    if(!force && (now-lastChangeTs<18)) return; // mild debounce mot flipp
+    if(!force && (now-lastChangeTs<18)) return;
     lastChangeTs=now;
     currentArena=next;
 
-    // uppdatera sticky text
+    // Uppdatera sticky text
     document.querySelector('.group-title').textContent=currentArena;
     document.querySelector('.group-sub').textContent=`Avst ${km(currentArena)} km`;
 
-    // Dölj endast aktiva arenans header
-    arenaOrder.forEach(name=>{
-      const h=headerEl(name);
-      if(!h) return;
-      h.classList.toggle('active-hidden', name===currentArena);
-    });
+    // Dölj endast aktivas header
+    showHideHeadersForActive();
+  } else {
+    // Särskilt fall: om vi rullar upp och är kvar i samma arena, se till att aktivas header är synlig runt listtopp
+    if(dir==='up' && idx>=0){
+      const curr = arenaOrder[idx];
+      const currHeader = headerEl(curr);
+      const firstCard  = firstCardEl(curr);
+      if(currHeader && firstCard){
+        // Om första kortets topp hamnar under sticky-kanten är vi nere i arenan → dölja aktiv header i listan
+        const fr = firstCard.getBoundingClientRect();
+        if(fr.top > slotBottom + 1){
+          currHeader.classList.remove('active-hidden');
+        } else {
+          currHeader.classList.add('active-hidden');
+        }
+      }
+    }
   }
 }
 
@@ -330,7 +340,7 @@ function render(){
 
     updateStickyArena(true);
   } else {
-    // Serie-lägen: inga arena-headers alls
+    // Serie-lägen: inga arena-headers i listan
     arenaOrder=[];
     const seriesMode=true;
     if(mode===MODE.SERIES){
