@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="theme-color" content="#ffffff"/>
-<title>LocalSport v14 – 30 matcher (smidig sticky + snap)</title>
+<title>LocalSport v15 – 30 matcher (smidig sticky, no flicker)</title>
 <style>
 :root{
   --topbar-h:56px;
@@ -121,42 +121,21 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);font-family:-apple
       </div>
       <div class="games">
 
-        <!-- LOGOS USED:
-             Hanhals:  logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png
-             Bäcken:   logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png
-             Grästorp: logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png
-             Kungälv:  logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png -->
-
-        <!-- Times: 09:00 → 18:20 (every 40 min) -->
-        <!-- 01/15 09:00 -->
+        <!-- Kungsbacka: 15 matcher -->
         <article class="game"><div class="game-top"><div class="game-time">09:00</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Hanhals IF</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Bäcken HC</span></div></div></article>
-        <!-- 02/15 09:40 -->
         <article class="game"><div class="game-top"><div class="game-time">09:40</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK</span></div><div class="result"><a href="#">3 - 2</a></div><div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Grästorps IK</span></div></div></article>
-        <!-- 03/15 10:20 -->
         <article class="game"><div class="game-top"><div class="game-time">10:20</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Hanhals IF U20</span></div><div class="result"><a href="#">2 - 1</a></div><div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Bäcken HC U20</span></div></div></article>
-        <!-- 04/15 11:00 -->
         <article class="game"><div class="game-top"><div class="game-time">11:00</div><div class="game-series"><a href="#">Träningsmatch</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK U16</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Grästorps IK U16</span></div></div></article>
-        <!-- 05/15 11:40 -->
         <article class="game"><div class="game-top"><div class="game-time">11:40</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Hanhals IF</span></div><div class="result"><a href="#">4 - 3</a></div><div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Bäcken HC</span></div></div></article>
-        <!-- 06/15 12:20 -->
         <article class="game"><div class="game-top"><div class="game-time">12:20</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK U20</span></div><div class="result"><a href="#">5 - 1</a></div><div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Mörrums GoIS IK</span></div></div></article>
-        <!-- 07/15 13:00 -->
         <article class="game"><div class="game-top"><div class="game-time">13:00</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Bäcken HC J18</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Kållereds SK</span></div></div></article>
-        <!-- 08/15 13:40 -->
         <article class="game"><div class="game-top"><div class="game-time">13:40</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Grästorps IK</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kalmar HC</span></div></div></article>
-        <!-- 09/15 14:20 -->
         <article class="game"><div class="game-top"><div class="game-time">14:20</div><div class="game-series"><a href="#">Träningsmatch</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">IF Mölndal Hockey</span></div><div class="result"><a href="#">1 - 1</a></div><div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Nybro Vikings IF</span></div></div></article>
-        <!-- 10/15 15:00 -->
         <article class="game"><div class="game-top"><div class="game-time">15:00</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK U20</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Halmstad Hammers</span></div></div></article>
-        <!-- 11/15 15:40 -->
         <article class="game"><div class="game-top"><div class="game-time">15:40</div><div class="game-series"><a href="#">HockeyTvåan Västra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Bäcken HC</span></div><div class="result"><a href="#">4 - 3</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Troja-Ljungby</span></div></div></article>
-        <!-- 12/15 16:20 -->
         <article class="game"><div class="game-top"><div class="game-time">16:20</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Mörrums GoIS IK</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kållereds SK</span></div></div></article>
-        <!-- 13/15 17:00 -->
         <article class="game"><div class="game-top"><div class="game-time">17:00</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Hanhals IF</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Kalmar HC</span></div></div></article>
-        <!-- 14/15 17:40 -->
         <article class="game"><div class="game-top"><div class="game-time">17:40</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK</span></div><div class="result"><a href="#">1 - 2</a></div><div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Hisingen Hockey</span></div></div></article>
-        <!-- 15/15 18:20 -->
         <article class="game"><div class="game-top"><div class="game-time">18:20</div><div class="game-series"><a href="#">Träningsmatch</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">IF Mölndal Hockey</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Partille HK</span></div></div></article>
 
       </div><!-- /.games -->
@@ -170,36 +149,21 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);font-family:-apple
       </div>
       <div class="games">
 
-        <!-- Times: 09:20 → 18:40 (every 40 min) -->
-        <!-- 01/15 09:20 -->
+        <!-- Åse & Viste: 15 matcher -->
         <article class="game"><div class="game-top"><div class="game-time">09:20</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Grästorps IK</span></div><div class="result"><a href="#">2 - 3</a></div><div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK</span></div></div></article>
-        <!-- 02/15 10:00 -->
         <article class="game"><div class="game-top"><div class="game-time">10:00</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Bäcken HC J18</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Hanhals IF J18</span></div></div></article>
-        <!-- 03/15 10:40 -->
         <article class="game"><div class="game-top"><div class="game-time">10:40</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Grästorps IK U20</span></div><div class="result"><a href="#">4 - 1</a></div><div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK U20</span></div></div></article>
-        <!-- 04/15 11:20 -->
         <article class="game"><div class="game-top"><div class="game-time">11:20</div><div class="game-series"><a href="#">Träningsmatch</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Hanhals IF U16</span></div><div class="result"><a href="#">1 - 0</a></div><div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Bäcken HC U16</span></div></div></article>
-        <!-- 05/15 12:00 -->
         <article class="game"><div class="game-top"><div class="game-time">12:00</div><div class="game-series"><a href="#">HockeyTvåan Västra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Grästorps IK</span></div></div></article>
-        <!-- 06/15 12:40 -->
         <article class="game"><div class="game-top"><div class="game-time">12:40</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Bäcken HC U20</span></div><div class="result"><a href="#">3 - 4</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Hanhals IF U20</span></div></div></article>
-        <!-- 07/15 13:20 -->
         <article class="game"><div class="game-top"><div class="game-time">13:20</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Grästorps IK J18</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK J18</span></div></div></article>
-        <!-- 08/15 14:00 -->
         <article class="game"><div class="game-top"><div class="game-time">14:00</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Hanhals IF</span></div><div class="result"><a href="#">5 - 2</a></div><div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Bäcken HC</span></div></div></article>
-        <!-- 09/15 14:40 -->
         <article class="game"><div class="game-top"><div class="game-time">14:40</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK U20</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Grästorps IK U20</span></div></div></article>
-        <!-- 10/15 15:20 -->
         <article class="game"><div class="game-top"><div class="game-time">15:20</div><div class="game-series"><a href="#">Träningsmatch</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Bäcken HC</span></div><div class="result"><a href="#">2 - 2</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Hanhals IF</span></div></div></article>
-        <!-- 11/15 16:00 -->
         <article class="game"><div class="game-top"><div class="game-time">16:00</div><div class="game-series"><a href="#">HockeyTvåan Västra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Grästorps IK</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK</span></div></div></article>
-        <!-- 12/15 16:40 -->
         <article class="game"><div class="game-top"><div class="game-time">16:40</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Hanhals IF U20</span></div><div class="result"><a href="#">4 - 5</a></div><div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Bäcken HC U20</span></div></div></article>
-        <!-- 13/15 17:20 -->
         <article class="game"><div class="game-top"><div class="game-time">17:20</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK J18</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Grästorps IK J18</span></div></div></article>
-        <!-- 14/15 18:00 -->
         <article class="game"><div class="game-top"><div class="game-time">18:00</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png"><span class="team-name">Bäcken HC</span></div><div class="result"><a href="#">3 - 1</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png"><span class="team-name">Hanhals IF</span></div></div></article>
-        <!-- 15/15 18:40 -->
         <article class="game"><div class="game-top"><div class="game-time">18:40</div><div class="game-series"><a href="#">Träningsmatch</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png"><span class="team-name">Grästorps IK</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png"><span class="team-name">Kungälvs IK</span></div></div></article>
 
       </div><!-- /.games -->
@@ -214,66 +178,59 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);font-family:-apple
   const slot   = document.getElementById('seriesSlot');
   const arenas = Array.from(scroll.querySelectorAll('.arena'));
 
-  // Tuning
-  const HYSTERESIS = 8;          // small buffer against jitter
-  const ACTIVATION_OFFSET = 50;  // switch earlier (~half a game)
-  const SNAP_DELAY = 250;        // ms after scroll end to snap-align
-
+  const HYSTERESIS = 8;
+  const ACTIVATION_OFFSET = 50;
+  const SNAP_DELAY = 400;
   let lastActive = null;
-  let scrollTimer = null;
+  let isUserScrolling = false;
+  let scrollEndTimer = null;
 
   function setSlot(arena){
     slot.querySelector('.series-title').textContent = arena.dataset.arena || '';
     slot.querySelector('.series-dist').textContent  = arena.dataset.distance || '';
   }
 
-  // Decide which arena should be active based on scrollTop/offsetTop math.
   function findActiveArena(){
     const scrollTop = scroll.scrollTop;
-    const headerOffset = slot.offsetHeight; // distance from top of scroll area to start of content
+    const headerOffset = slot.offsetHeight;
     let current = arenas[0];
-
-    // Choose the last arena whose top is within header + early offset
     for(const a of arenas){
-      const relTop = a.offsetTop - scrollTop; // px from top of list viewport
-      if (relTop - HYSTERESIS <= headerOffset + ACTIVATION_OFFSET) {
-        current = a;
-      }
+      const relTop = a.offsetTop - scrollTop;
+      if (relTop - HYSTERESIS <= headerOffset + ACTIVATION_OFFSET) current = a;
     }
     return current;
   }
 
-  function update(){
+  function updateActive(){
     const active = findActiveArena();
     if (active !== lastActive) {
-      // Toggle only the active arena's in-list header (remove duplicate feeling)
       arenas.forEach(a => a.classList.toggle('active', a === active));
       setSlot(active);
       lastActive = active;
     }
+  }
 
-    // Debounced snap after scrolling stops — remove "defensive" feeling
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => {
+  function handleScroll(){
+    isUserScrolling = true;
+    updateActive();
+    clearTimeout(scrollEndTimer);
+    scrollEndTimer = setTimeout(()=>{
+      isUserScrolling = false;
       const headerOffset = slot.offsetHeight;
       const desiredTop = lastActive.offsetTop - headerOffset;
       const delta = Math.abs(scroll.scrollTop - desiredTop);
-
-      // Snap only if we're meaningfully off by > half of ACTIVATION_OFFSET
-      if (delta > ACTIVATION_OFFSET / 2) {
+      if (delta > ACTIVATION_OFFSET) {
         scroll.scrollTo({ top: desiredTop, behavior: 'smooth' });
       }
     }, SNAP_DELAY);
   }
 
-  scroll.addEventListener('scroll', update, { passive: true });
-  window.addEventListener('resize', update, { passive: true });
+  scroll.addEventListener('scroll', handleScroll, { passive:true });
+  window.addEventListener('resize', updateActive, { passive:true });
 
-  // Initial state
   arenas.forEach(a => a.classList.toggle('active', a === arenas[0]));
   setSlot(arenas[0]);
 })();
 </script>
 </body>
 </html>
-
