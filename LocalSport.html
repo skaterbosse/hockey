@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport v14.2 – Stabil sticky & Serie+Tid</title>
+<title>LocalSport v14.3 – Stabil sticky, Serie+Tid-grön, no-dup</title>
 <style>
 :root{
   --topbar-h:56px;
@@ -194,9 +194,11 @@ function seriesPriority(name){
 
 /* -------- UI: pills -------- */
 function applyPills(){
-  pillPlace.className  = (mode===MODE.PLACE)      ? "pill on"      : "pill off";
-  pillSeries.className = (mode!==MODE.PLACE && mode!==MODE.SERIES_TIME) ? "pill on" : (mode===MODE.PLACE ? "pill off" : "pill off");
-  // Visuellt: Tid ON i PLATS, annars ON i SERIES_TIME
+  // Plats
+  pillPlace.className  = (mode===MODE.PLACE) ? "pill on" : "pill off";
+  // Serie (grön i både SERIES och SERIES_TIME)
+  pillSeries.className = (mode===MODE.SERIES || mode===MODE.SERIES_TIME) ? "pill on" : "pill off";
+  // Tid (låst grön i PLATS, annars grön endast i SERIES_TIME)
   if (mode===MODE.PLACE) pillTime.className = "pill on lock";
   else pillTime.className = (mode===MODE.SERIES_TIME ? "pill on" : "pill off");
 }
@@ -204,7 +206,7 @@ function applyPills(){
 pillPlace.onclick  = ()=> setMode(MODE.PLACE);
 pillSeries.onclick = ()=> setMode(MODE.SERIES);
 pillTime.onclick   = ()=>{
-  if (mode===MODE.PLACE) return; // låst
+  if (mode===MODE.PLACE) return; // låst i Plats
   setMode(mode===MODE.SERIES ? MODE.SERIES_TIME : MODE.SERIES);
 };
 
@@ -230,27 +232,37 @@ function gameCard(g, seriesMode){
   return a;
 }
 
-/* -------- Sticky med hysteresis (stabil) -------- */
+/* -------- Sticky med hysteresis & riktning -------- */
 let currentArena = null;
+let lastScrollY = 0;
+
 function updateStickyFromHeaders(){
   const headers = Array.from(scroll.querySelectorAll('.arena-header'));
   if (!headers.length) return;
 
-  const threshold = scroll.getBoundingClientRect().top + 40; // hysteresis (px nedanför slot)
-  let newArena = currentArena ?? headers[0].dataset.arenaHeader;
+  const dirDown = scroll.scrollTop >= lastScrollY; // true = nedåt
+  lastScrollY = scroll.scrollTop;
+
+  // olika trösklar för ned/upp för att ge stabilare växling
+  const baseTop = scroll.getBoundingClientRect().top;
+  const enterThreshold = baseTop + (dirDown ? 64 : 40); // bli nästa när den är lite längre inne
+  const exitThreshold  = baseTop + (dirDown ? 40 : 64); // byt tillbaka först när gamla kommit tydligt tillbaka
+
+  let candidate = currentArena ?? headers[0].dataset.arenaHeader;
 
   for (const h of headers){
     const topY = h.getBoundingClientRect().top;
-    // byt arena först när headern passerat tröskeln
-    if (topY <= threshold){
-      newArena = h.dataset.arenaHeader;
+    if (dirDown){
+      // På väg ned: byt först när nästa header kommit under enterThreshold
+      if (topY <= enterThreshold) candidate = h.dataset.arenaHeader;
     } else {
-      break;
+      // På väg upp: byt tillbaka först när föregående header kommit under exitThreshold
+      if (topY <= exitThreshold) candidate = h.dataset.arenaHeader;
     }
   }
 
-  if (newArena !== currentArena){
-    currentArena = newArena;
+  if (candidate !== currentArena){
+    currentArena = candidate;
     document.querySelector('.group-title').textContent = currentArena;
     document.querySelector('.group-sub').textContent   = `Avst ${km(currentArena)} km`;
     headers.forEach(h => h.classList.toggle('active-hidden', h.dataset.arenaHeader === currentArena));
@@ -278,13 +290,10 @@ function render(){
   scroll.innerHTML = "";
 
   if (mode===MODE.PLACE){
-    // Sticky slot synlig
     slot.style.display = "flex";
-
-    // Scroll listener (en gång)
     if (!scrollBound){ scroll.addEventListener('scroll', updateStickyFromHeaders, {passive:true}); scrollBound = true; }
 
-    // Grupp: Arena → sort by distance; inom arena sortera strikt på tid
+    // Grupp: Arena → sort by distance; inom arena: tid
     const byArena = {};
     for (const g of GAMES) (byArena[g.arena] ||= []).push(g);
     const arenas = Object.keys(byArena).sort((a,b)=> km(a)-km(b));
@@ -296,63 +305,60 @@ function render(){
       document.querySelector('.group-sub').textContent   = `Avst ${km(currentArena)} km`;
     }
 
-    // render: arena-header i listan + tidssorterade matcher
-    for (const aName of arenas){
+    // render: divider innan arena 2+, samt dölja första headern direkt (no-dup)
+    arenas.forEach((aName, idx)=>{
+      if (idx>0){
+        const d = document.createElement('div'); d.className = 'divider'; scroll.appendChild(d);
+      }
       const header = document.createElement('div');
       header.className = 'arena-header';
       header.dataset.arenaHeader = aName;
       header.innerHTML = `<div>${aName}</div><div>Avst ${km(aName)} km</div>`;
+      if (idx===0) header.classList.add('active-hidden'); // döljer list-headern för första arenan direkt
       scroll.appendChild(header);
 
       const list = byArena[aName].slice().sort((x,y)=> parseTime(x.time)-parseTime(y.time));
       for (const g of list) scroll.appendChild(gameCard(g, /*seriesMode=*/false));
-    }
+    });
 
+    // init hysteresis state
+    lastScrollY = scroll.scrollTop;
     updateStickyFromHeaders();
   }
   else if (mode===MODE.SERIES){
-    // DÖLJ sticky slot
     slot.style.display = "none";
     if (scrollBound){ scroll.removeEventListener('scroll', updateStickyFromHeaders); scrollBound = false; }
 
-    // Grupp: Serie → divider mellan serier (Tid grå)
     const bySeries = {};
     for (const g of GAMES) (bySeries[g.series] ||= []).push(g);
     const keys = Object.keys(bySeries).sort((a,b)=> seriesPriority(a)-seriesPriority(b) || a.localeCompare(b,'sv'));
 
     let first = true;
     for (const s of keys){
-      const list = bySeries[s].slice()
-        .sort((a,b)=> {
-          const p = seriesPriority(a.series) - seriesPriority(b.series);
-          if (p !== 0) return p;
-          return parseTime(a.time) - parseTime(b.time);
-        });
-
+      const list = bySeries[s].slice().sort((a,b)=> {
+        const p = seriesPriority(a.series) - seriesPriority(b.series);
+        if (p !== 0) return p;
+        return parseTime(a.time) - parseTime(b.time);
+      });
       if (!first){
         const d = document.createElement('div'); d.className='divider'; scroll.appendChild(d);
       }
       first = false;
-
       for (const g of list) scroll.appendChild(gameCard(g, /*seriesMode=*/true));
     }
-
     autoScaleTopRows();
   }
   else if (mode===MODE.SERIES_TIME){
-    // DÖLJ sticky slot
     slot.style.display = "none";
     if (scrollBound){ scroll.removeEventListener('scroll', updateStickyFromHeaders); scrollBound = false; }
 
-    // 🔑 GLOBAL lista sorterad primärt på TID (inte grupperad per serie)
+    // Global tidsordning, serie-prio sekundär
     const list = GAMES.slice().sort((a,b)=>{
       const t = parseTime(a.time) - parseTime(b.time);
       if (t !== 0) return t;
       return seriesPriority(a.series) - seriesPriority(b.series);
     });
-
     for (const g of list) scroll.appendChild(gameCard(g, /*seriesMode=*/true));
-
     autoScaleTopRows();
   }
 }
