@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport v15 – 50% synlighet växling</title>
+<title>LocalSport v16 – Naturlig arenaväxling</title>
 <style>
 :root{
   --topbar-h:56px; --hint-h:26px; --slot-h:42px;
@@ -24,6 +24,8 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
 .cluster-center{display:flex;align-items:center;justify-content:center;gap:8px}
 .icon-btn{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--hair);background:#f1f5f9}
 .date-block{display:flex;flex-direction:column;align-items:center;line-height:1.1;font-weight:700;font-size:14px}
+
+/* Sortering */
 .sort-stack{transform:scale(.9);display:flex;flex-direction:column;align-items:center;padding:4px 6px;border:1px solid var(--hair);border-radius:10px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .sort-top{font-size:12px;font-weight:600;margin-bottom:2px;text-align:center}
 .sort-bottom{display:flex;gap:4px}
@@ -36,8 +38,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
 .hint{position:sticky;top:var(--topbar-h);z-index:450;color:var(--muted);font-size:12px;text-align:center;line-height:var(--hint-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair)}
 
 /* Sticky slot (Plats) */
-.group-slot{position:sticky;top:calc(var(--topbar-h)+var(--hint-h));z-index:425;height:var(--slot-h);background:#fff;border-bottom:1px dashed var(--hair);display:flex;align-items:center;justify-content:space-between;padding:10px 12px;font-weight:700;transition:opacity .18s ease}
-.group-slot.swap{opacity:.3}
+.group-slot{position:sticky;top:calc(var(--topbar-h)+var(--hint-h));z-index:425;height:var(--slot-h);background:#fff;border-bottom:1px dashed var(--hair);display:flex;align-items:center;justify-content:space-between;padding:10px 12px;font-weight:700}
 
 /* Scroll area */
 .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:var(--bg);padding:0;margin:0;width:100%}
@@ -196,45 +197,63 @@ function sortGames(){
   }
 }
 
-/* Sticky arena växling: 50% synlighet av NÄSTA arenas första kort */
+/* ===== Naturlig arenaväxling =====
+   - NER: byt när sticky header täcker ≥ 50% av nästa arenas första spelkort
+   - UPP: byt när föregående arenas header når precis under sticky-ytan (top >= slotBottom)
+*/
 let currentArena=null, lastChangeTs=0;
-let arenaOrder=[]; // i render() för Plats
+let arenaOrder=[];
+
 function updateStickyArena(force=false){
   if(mode!==MODE.PLACE) return;
   if(!arenaOrder.length) return;
 
-  const slotBottom = groupSlot.getBoundingClientRect().bottom;
-  const tolerance = 2; // px
+  const slotRect = groupSlot.getBoundingClientRect();
+  const slotBottom = slotRect.bottom;
 
-  // Aktiv = sista arena vars första korts MITT är ovanför (eller på) slotBottom
-  let next = arenaOrder[0];
-  for(const aName of arenaOrder){
-    const firstCard = document.querySelector(`.game[data-arena="${aName}"]`);
-    if(!firstCard) continue;
-    const r = firstCard.getBoundingClientRect();
-    const mid = r.top + r.height/2;
-    if (mid <= slotBottom + tolerance){
-      next = aName;
-    } else {
-      break;
+  let next = currentArena || arenaOrder[0];
+
+  // Index för current
+  const idx = arenaOrder.indexOf(currentArena);
+  const hasCurrent = idx >= 0;
+
+  // --- Scroll NEDÅT: kolla NÄSTA arena ---
+  if(hasCurrent && idx < arenaOrder.length - 1){
+    const nextArena = arenaOrder[idx + 1];
+    const firstCard = document.querySelector(`.game[data-arena="${nextArena}"]`);
+    if(firstCard){
+      const r = firstCard.getBoundingClientRect();
+      const overlap = Math.max(0, slotBottom - r.top); // hur mycket sticky överlappar kortet
+      if(overlap >= 0.5 * r.height){ // 50% täckning
+        next = nextArena;
+      }
     }
   }
 
-  if(next!==currentArena || force){
-    const now=performance.now();
-    if(now-lastChangeTs<40 && !force) return;
-    lastChangeTs=now;
+  // --- Scroll UPPÅT: kolla FÖREGÅENDE arena ---
+  if(hasCurrent && idx > 0){
+    const prevArena = arenaOrder[idx - 1];
+    const prevHeader = document.querySelector(`.arena-header[data-arena-header="${prevArena}"]`);
+    if(prevHeader){
+      const hr = prevHeader.getBoundingClientRect();
+      if(hr.top >= slotBottom){ // tidigare header ligger överst (precis under sticky)
+        next = prevArena;
+      }
+    }
+  }
 
-    currentArena=next;
-    groupSlot.classList.add('swap');
-    document.querySelector('.group-title').textContent=currentArena;
-    document.querySelector('.group-sub').textContent=`Avst ${km(currentArena)} km`;
+  if(next !== currentArena || force){
+    const now = performance.now();
+    if(now - lastChangeTs < 30 && !force) return; // liten debounce
+    lastChangeTs = now;
 
-    // Dölj in-list-header för aktiv arena, visa övriga
+    currentArena = next;
+    document.querySelector('.group-title').textContent = currentArena;
+    document.querySelector('.group-sub').textContent = `Avst ${km(currentArena)} km`;
+
+    // Dölj in-list-header för aktiv arena
     const headers=[...scroll.querySelectorAll('.arena-header')];
     headers.forEach(h=> h.classList.toggle('active-hidden', h.dataset.arenaHeader===currentArena));
-
-    setTimeout(()=> groupSlot.classList.remove('swap'),140);
   }
 }
 
@@ -264,12 +283,11 @@ function render(){
       games.forEach(g=> scroll.appendChild(gameCard(g,false)));
     });
 
-    // första beräkning
     updateStickyArena(true);
   } else {
     // Serie / Serie+Tid: INGA arena-headers alls
     const seriesMode = true;
-    arenaOrder = []; // inte relevant här
+    arenaOrder = [];
     if(mode===MODE.SERIES){
       const bySeries={};
       for(const g of list)(bySeries[g.series]??=[]).push(g);
