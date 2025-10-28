@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport v14.4 – iPhone-sticky, Serie+Tid-grön</title>
+<title>LocalSport v14.5 – Exakt sticky-byteslogik</title>
 <style>
 :root{
   --topbar-h:56px;
@@ -107,7 +107,7 @@ html,body{
 }
 .result a{
   display:inline-flex;justify-content:center;align-items:center;min-width:72px;height:26px;padding:0 8px;
-  border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;color:var(--text);font-weight:700;text-decoration:none;text-align:center
+  border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;color:#0f172a;font-weight:700;text-decoration:none;text-align:center
 }
 .divider{height:8px;background:var(--bg);border-top:1px dashed var(--hair)}
 
@@ -116,7 +116,7 @@ html,body{
 .game-top.dynamic-scale .game-series a,
 .game-top.dynamic-scale .game-mid{font-size:var(--dyn-font,14px)}
 
-/* Respons */
+/* Respons (maxbredd på breda skärmar) */
 @media(min-width:768px){.device{max-width:720px;margin:auto}}
 @media(min-width:1024px){.device{max-width:840px}}
 </style>
@@ -217,8 +217,8 @@ const GAMES = [
 const MODE = { PLACE:'place', SERIES:'series', SERIES_TIME:'series_time' };
 let mode = MODE.PLACE;
 
-const slot = document.getElementById('groupSlot');
-const scroll = document.getElementById('scrollArea');
+const groupSlot = document.getElementById('groupSlot');
+const scroll    = document.getElementById('scrollArea');
 const pillPlace  = document.getElementById('pillPlace');
 const pillSeries = document.getElementById('pillSeries');
 const pillTime   = document.getElementById('pillTime');
@@ -255,74 +255,63 @@ pillTime.onclick   = ()=>{
 
 /* -------- Game card -------- */
 function gameCard(g, seriesMode){
-  const a = document.createElement('article'); a.className='game';
-  const top = document.createElement('div'); top.className = seriesMode ? 'game-top dynamic-scale' : 'game-top';
+  const a = document.createElement('article'); 
+  a.className='game';
+  a.dataset.arena = g.arena; // <- för exakt sticky-beslut
+
+  const top = document.createElement('div'); 
+  top.className = seriesMode ? 'game-top dynamic-scale' : 'game-top';
+
   const t = document.createElement('div'); t.className='game-time'; t.textContent = g.time;
   const s = document.createElement('div'); s.className='game-series'; s.innerHTML = `<a href="#">${g.series}</a>`;
   top.appendChild(t); top.appendChild(s);
+
   if (seriesMode){
     const mid = document.createElement('div'); mid.className='game-mid'; mid.textContent = g.arena;
     const right = document.createElement('div'); right.className='game-right'; right.textContent = `Avst ${km(g.arena)} km`;
     top.appendChild(mid); top.appendChild(right);
   }
+
   const bottom = document.createElement('div'); bottom.className='game-bottom';
   bottom.innerHTML = `
     <div class="team"><img class="team-logo" src="${g.home.logo}" alt=""><span class="team-name">${g.home.name}</span></div>
     <div class="result"><a href="#">${g.result}</a></div>
     <div class="team right"><img class="team-logo" src="${g.away.logo}" alt=""><span class="team-name">${g.away.name}</span></div>
   `;
+
   a.appendChild(top); a.appendChild(bottom);
   return a;
 }
 
-/* -------- Sticky med iPhone-hysteresis 14.4 -------- */
+/* -------- NY: Exakt sticky-byteslogik (ingen hysteresis-offset) -------- */
 let currentArena = null;
-let lastScrollY = 0;
-let lastSwitchTime = 0;
-let stableDirection = null;
 
-function updateStickyFromHeaders(){
+function updateStickyArena(){
   const headers = Array.from(scroll.querySelectorAll('.arena-header'));
   if (!headers.length) return;
 
-  const y = scroll.scrollTop;
-  const now = performance.now();
+  const slotBottom = groupSlot.getBoundingClientRect().bottom;
+  let active = headers[0].dataset.arenaHeader;
 
-  // 1) Direction debounce (kräv stabil riktning)
-  const dirNow = (y > lastScrollY) ? "down" : "up";
-  if (stableDirection !== dirNow) {
-    stableDirection = dirNow;
-    lastSwitchTime = now;          // börja räkna stabilitetstid
-    lastScrollY = y;
-    return;                        // vänta till riktningen är stabil
-  }
+  // Gå igenom arenor i ordning — byt först när sista matchen i arenan passerat slotBottom
+  for (const header of headers){
+    const arenaName = header.dataset.arenaHeader;
+    const games = scroll.querySelectorAll(`.game[data-arena="${arenaName}"]`);
+    if (!games.length) continue;
 
-  // 2) Kräver 60ms stabil riktning innan byte
-  if (now - lastSwitchTime < 60) {
-    lastScrollY = y;
-    return;
-  }
+    const lastGame = games[games.length - 1];
+    const lastBottom = lastGame.getBoundingClientRect().bottom;
 
-  lastScrollY = y;
-
-  // 3) Större hysteresis (enter/exit) för iPhone “bounce”
-  const baseTop = scroll.getBoundingClientRect().top;
-  const enter = baseTop + (stableDirection === "down" ? 95 : 65);
-  const exit  = baseTop + (stableDirection === "down" ? 65 : 95);
-
-  let candidate = currentArena ?? headers[0].dataset.arenaHeader;
-
-  for (const h of headers){
-    const topY = h.getBoundingClientRect().top;
-    if (stableDirection === "down") {
-      if (topY <= enter) candidate = h.dataset.arenaHeader;
+    // Byt arena först när sista spelet är HELT förbi slot-ytan
+    if (lastBottom < slotBottom){
+      active = arenaName;
     } else {
-      if (topY <= exit)  candidate = h.dataset.arenaHeader;
+      break; // så fort vi hittar en arena vars sista match inte passerat helt, stanna
     }
   }
 
-  if (candidate !== currentArena){
-    currentArena = candidate;
+  if (active !== currentArena){
+    currentArena = active;
     document.querySelector('.group-title').textContent = currentArena;
     document.querySelector('.group-sub').textContent   = `Avst ${km(currentArena)} km`;
     headers.forEach(h => h.classList.toggle('active-hidden', h.dataset.arenaHeader === currentArena));
@@ -350,8 +339,8 @@ function render(){
   scroll.innerHTML = "";
 
   if (mode===MODE.PLACE){
-    slot.style.display = "flex";
-    if (!scrollBound){ scroll.addEventListener('scroll', updateStickyFromHeaders, {passive:true}); scrollBound = true; }
+    groupSlot.style.display = "flex";
+    if (!scrollBound){ scroll.addEventListener('scroll', updateStickyArena, {passive:true}); scrollBound = true; }
 
     // Grupp: Arena → sortera på avstånd; inom arena sortera på tid
     const byArena = {};
@@ -365,7 +354,7 @@ function render(){
       document.querySelector('.group-sub').textContent   = `Avst ${km(currentArena)} km`;
     }
 
-    // Render: divider inför arena 2+, göm första headern i listan (no dup)
+    // Render: divider inför arena 2+, göm första headern i listan (no-dup)
     arenas.forEach((aName, idx)=>{
       if (idx>0){
         const d = document.createElement('div'); d.className='divider'; scroll.appendChild(d);
@@ -381,15 +370,11 @@ function render(){
       for (const g of list) scroll.appendChild(gameCard(g, /*seriesMode=*/false));
     });
 
-    // Init hysteresis-state
-    lastScrollY = scroll.scrollTop;
-    lastSwitchTime = performance.now();
-    stableDirection = null; // tvinga stabilitetsdetektion vid första scroll
-    updateStickyFromHeaders();
+    updateStickyArena();
 
   } else if (mode===MODE.SERIES){
-    slot.style.display = "none";
-    if (scrollBound){ scroll.removeEventListener('scroll', updateStickyFromHeaders); scrollBound = false; }
+    groupSlot.style.display = "none";
+    if (scrollBound){ scroll.removeEventListener('scroll', updateStickyArena); scrollBound = false; }
 
     // Grupp: Serie → divider mellan serier, sortering: serieprio → tid
     const bySeries = {};
@@ -412,8 +397,8 @@ function render(){
     autoScaleTopRows();
 
   } else if (mode===MODE.SERIES_TIME){
-    slot.style.display = "none";
-    if (scrollBound){ scroll.removeEventListener('scroll', updateStickyFromHeaders); scrollBound = false; }
+    groupSlot.style.display = "none";
+    if (scrollBound){ scroll.removeEventListener('scroll', updateStickyArena); scrollBound = false; }
 
     // Global tidsordning (serieprio sekundär)
     const list = GAMES.slice().sort((a,b)=>{
