@@ -7,12 +7,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport v12 – Sorting</title>
-
+<title>LocalSport v12 – 5+10 matcher, sorting fix</title>
 <style>
 :root{
   --topbar-h:56px;
   --hint-h:26px;
+  --slot-h:42px;
   --hair:#e2e8f0;
   --bg:#f0f3f8;
   --card:#fff;
@@ -22,242 +22,336 @@
   --link:#2563eb;
 }
 *{box-sizing:border-box}
-html,body{
-  margin:0;padding:0;height:100%;
-  background:var(--bg);
-  font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,Helvetica,sans-serif;
-  color:var(--text);
-  overscroll-behavior:none;
-}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,Helvetica,sans-serif;overscroll-behavior:none}
 .device{width:100%;height:100dvh;overflow:hidden;display:flex;flex-direction:column}
 
-/* TOP BAR */
+/* LAYER 1: topbar */
 .topbar{position:sticky;top:0;z-index:500;background:#fff;border-bottom:1px solid var(--hair)}
 .topbar-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:6px 8px;height:var(--topbar-h)}
 .cluster-left,.cluster-right{display:flex;align-items:center;gap:8px}
 .cluster-center{display:flex;align-items:center;justify-content:center;gap:8px}
 .icon-btn{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--hair);background:#f1f5f9}
 .date-block{display:flex;flex-direction:column;align-items:center;line-height:1.1;font-weight:700;font-size:14px}
-
-/* SORTING */
-.sort-stack{transform:scale(.9);display:flex;flex-direction:column;align-items:center;padding:4px 6px;border:1px solid var(--hair);border-radius:10px;background:#fff}
+.sort-stack{transform:scale(.9);display:flex;flex-direction:column;align-items:center;padding:4px 6px;border:1px solid var(--hair);border-radius:10px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .sort-top{font-size:12px;font-weight:600;margin-bottom:2px;text-align:center}
 .sort-bottom{display:flex;gap:4px}
 .pill{padding:4px 8px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--hair);cursor:pointer;user-select:none}
 .pill.on{background:#dcfce7;color:var(--accent);border-color:#86efac}
 .pill.off{background:#f1f5f9;color:#94a3b8;border-color:#cbd5e1}
+.pill.lock{opacity:.6;cursor:not-allowed}
 
-/* HINT */
-.hint{position:sticky;top:var(--topbar-h);z-index:450;color:var(--muted);font-size:12px;text-align:center;line-height:var(--hint-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair)}
+/* LAYER 2: hint */
+.hint{position:sticky;top:var(--topbar-h);z-index:450;color:var(--muted);font-size:12px;text-align:center;
+  line-height:var(--hint-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair)}
 
-/* STICKY GROUP HEADER (ARENA – ONLY PLATS-VIEW) */
-.group-slot{position:sticky;top:calc(var(--topbar-h) + var(--hint-h));z-index:425;height:42px;background:#fff;border-bottom:1px dashed var(--hair);display:flex;align-items:center;justify-content:space-between;padding:10px 12px;font-weight:700}
+/* LAYER 3: sticky group slot (only shown in PLACE mode) */
+.group-slot{position:sticky;top:calc(var(--topbar-h)+var(--hint-h));z-index:425;height:var(--slot-h);
+  background:#fff;border-bottom:1px dashed var(--hair);display:flex;align-items:center;justify-content:space-between;padding:10px 12px;font-weight:700}
 
-/* SCROLL */
-.scroll{flex:1;overflow-y:auto;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;background:var(--bg);width:100%}
+/* LAYER 4: scroll list */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);padding:0;margin:0;width:100%}
 
-/* ARENAS / GAME CARDS */
-.arena{margin:0 0 10px 0;width:100%;border:1px solid var(--hair);border-radius:0 0 14px 14px;background:var(--card)}
-.games{display:block}
-.game{padding:8px 12px;border-top:1px dashed #e5e7eb;background:#fff;width:100%;display:grid;gap:6px}
-.game-top{display:grid;grid-template-columns: 1fr auto auto;gap:6px;align-items:center}
+/* Game cards */
+.game{padding:8px 12px;border-top:1px dashed #e5e7eb;display:grid;gap:6px;background:#fff;width:100%}
+.game-top{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}
 .game-time{font-weight:700}
 .game-series a{color:var(--link);text-decoration:none;font-weight:600}
 .game-mid{font-weight:700;text-align:center}
-.game-right{font-size:12px;color:var(--muted);text-align:right}
+.game-right{margin-left:auto;white-space:nowrap;color:var(--muted);font-size:12px}
 .game-bottom{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px}
 .team{display:inline-flex;align-items:center;gap:6px;font-weight:600}
-.team.right{text-align:left;justify-self:start}
+.team.right{justify-self:start;text-align:left}
 .team-logo{width:26px;height:26px;border-radius:50%;border:1px solid var(--hair);object-fit:cover;background:#f1f5f9}
 .team-name{max-width:min(36vw,160px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,2.5vw,13px)}
-.result a{display:inline-flex;justify-content:center;align-items:center;min-width:72px;height:26px;padding:0 8px;border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;font-weight:700;color:var(--text);text-decoration:none}
+.result a{display:inline-flex;justify-content:center;align-items:center;min-width:72px;height:26px;padding:0 8px;border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;color:var(--text);font-weight:700;text-decoration:none;text-align:center}
 .divider{height:8px;background:var(--bg);border-top:1px dashed var(--hair)}
 
 @media(min-width:768px){.device{max-width:720px;margin:auto}}
-@media(min-width:1024px){.device{max-width:860px}}
+@media(min-width:1024px){.device{max-width:840px}}
 </style>
 </head>
-
 <body>
 <div class="device">
 
-<header class="topbar">
-  <div class="topbar-inner">
-    <div class="cluster-left">
-      <button class="icon-btn">🏠</button><button class="icon-btn">🗺️</button>
-    </div>
-    <div class="cluster-center">
-      <button class="icon-btn">◀</button>
-      <div class="date-block"><span>Idag</span><span>Tors</span><span>23 okt</span></div>
-      <button class="icon-btn">▶</button>
-    </div>
-    <div class="cluster-right">
-      <div class="sort-stack">
-        <div class="sort-top">Sortering</div>
-        <div class="sort-bottom">
-          <span id="sortPlace" class="pill on">Plats</span>
-          <span id="sortSeries" class="pill off">Serie</span>
-          <span id="sortTime" class="pill off">Tid</span>
-        </div>
+  <!-- Layer 1 -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="cluster-left">
+        <button class="icon-btn" aria-label="Hem">🏠</button>
+        <button class="icon-btn" aria-label="Karta">🗺️</button>
       </div>
-      <button class="icon-btn">⚙️</button>
+      <div class="cluster-center">
+        <button class="icon-btn" aria-label="Föregående dag">◀</button>
+        <div class="date-block"><span>Idag</span><span>Tors</span><span>23 okt</span></div>
+        <button class="icon-btn" aria-label="Nästa dag">▶</button>
+      </div>
+      <div class="cluster-right">
+        <div class="sort-stack">
+          <div class="sort-top">Sortering</div>
+          <div class="sort-bottom">
+            <span id="pillPlace" class="pill on">Plats</span>
+            <span id="pillSeries" class="pill off">Serie</span>
+            <span id="pillTime" class="pill off">Tid</span>
+          </div>
+        </div>
+        <button class="icon-btn" aria-label="Inställningar">⚙️</button>
+      </div>
     </div>
+  </header>
+
+  <!-- Layer 2 -->
+  <div class="hint">Visar matcher nära: Kruniusvägen 1, Billdal (57.590214, 11.946082)</div>
+
+  <!-- Layer 3 (hidden in Series modes) -->
+  <div id="groupSlot" class="group-slot">
+    <div class="group-title">Kungsbacka Ishall A</div>
+    <div class="group-sub">Avst 8 km</div>
   </div>
-</header>
 
-<div class="hint">Visar matcher nära: Kruniusvägen 1, Billdal (57.590214, 11.946082)</div>
-<div class="group-slot" id="groupSlot">Kungsbacka Ishall A <span>Avst 8 km</span></div>
+  <!-- Layer 4 -->
+  <main id="scrollArea" class="scroll"></main>
 
-<main class="scroll" id="scrollArea">
-
-<!-- ✅ ARENA 1 — 5 MATCHER -->
-<section class="arena" data-arena="Kungsbacka Ishall A" data-distance="8">
-<div class="games">
-
-<article class="game"><div class="game-top"><div class="game-time">09:00</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8.png"><span class="team-name">Hanhals IF</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af.png"><span class="team-name">Bäcken HC</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">10:00</div><div class="game-series"><a href="#">J18 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f.png"><span class="team-name">Grästorps IK</span></div><div class="result"><a href="#">2 - 1</a></div><div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2.png"><span class="team-name">Kungälvs IK</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">12:20</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af.png"><span class="team-name">Bäcken HC</span></div><div class="result"><a href="#">3 - 5</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8.png"><span class="team-name">Hanhals IF</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">15:10</div><div class="game-series"><a href="#">Träningsmatch</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2.png"><span class="team-name">Kungälvs IK</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f.png"><span class="team-name">Grästorps IK</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">18:20</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af.png"><span class="team-name">Bäcken HC</span></div><div class="result"><a href="#">1 - 0</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8.png"><span class="team-name">Hanhals IF</span></div></div></article>
-
-</div>
-</section>
-
-<!-- ✅ ARENA 2 — 10 MATCHER -->
-<section class="arena" data-arena="Åse & Viste Arena" data-distance="72">
-<div class="games">
-
-<article class="game"><div class="game-top"><div class="game-time">09:00</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f.png"><span class="team-name">Grästorps IK</span></div><div class="result"><a href="#">2 - 2</a></div><div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af.png"><span class="team-name">Bäcken HC</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">10:00</div><div class="game-series"><a href="#">J18 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2.png"><span class="team-name">Kungälvs IK</span></div><div class="result"><a href="#">0 - 3</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8.png"><span class="team-name">Hanhals IF</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">11:30</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8.png"><span class="team-name">Hanhals IF</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2.png"><span class="team-name">Kungälvs IK</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">12:45</div><div class="game-series"><a href="#">Träningsmatch</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af.png"><span class="team-name">Bäcken HC</span></div><div class="result"><a href="#">3 - 1</a></div><div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f.png"><span class="team-name">Grästorps IK</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">14:30</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2.png"><span class="team-name">Kungälvs IK</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8.png"><span class="team-name">Hanhals IF</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">15:50</div><div class="game-series"><a href="#">J18 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f.png"><span class="team-name">Grästorps IK</span></div><div class="result"><a href="#">0 - 0</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8.png"><span class="team-name">Hanhals IF</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">16:40</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af.png"><span class="team-name">Bäcken HC</span></div><div class="result"><a href="#">1 - 4</a></div><div class="team right"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2.png"><span class="team-name">Kungälvs IK</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">17:40</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Hanhals_IF__b65395a8.png"><span class="team-name">Hanhals IF</span></div><div class="result"><a href="#">6 - 2</a></div><div class="team right"><img class="team-logo" src="logos/Bäcken_HC__119055af.png"><span class="team-name">Bäcken HC</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">18:20</div><div class="game-series"><a href="#">Träningsmatch</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Kungälvs_IK__620a9df2.png"><span class="team-name">Kungälvs IK</span></div><div class="result"><a href="#">–</a></div><div class="team right"><img class="team-logo" src="logos/Grästorps_IK__c6811c5f.png"><span class="team-name">Grästorps IK</span></div></div></article>
-
-<article class="game"><div class="game-top"><div class="game-time">19:40</div><div class="game-series"><a href="#">J18 Region Syd</a></div></div><div class="game-bottom"><div class="team"><img class="team-logo" src="logos/Bäcken_HC__119055af.png"><span class="team-name">Bäcken HC</span></div><div class="result"><a href="#">1 - 2</a></div><div class="team right"><img class="team-logo" src="logos/Hanhals_IF__b65395a8.png"><span class="team-name">Hanhals IF</span></div></div></article>
-
-</div>
-</section>
-
-</main>
 </div>
 
 <script>
-const MODE = { PLACE:1, SERIES:2, SERIES_TIME:3 };
-let currentMode = MODE.PLACE;
+/* =================== DATA: exact 5 + 10 matches =================== */
+const LOGOS = {
+  backen:  "logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png",
+  grastorp:"logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png",
+  hanhals: "logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png",
+  kungalv: "logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png",
+};
 
-const scroll = document.getElementById("scrollArea");
-const groupSlot = document.getElementById("groupSlot");
-const btnPlace   = document.getElementById("sortPlace");
-const btnSeries  = document.getElementById("sortSeries");
-const btnTime    = document.getElementById("sortTime");
+const ARENAS = {
+  "Kungsbacka Ishall A": 8,
+  "Åse & Viste Arena": 104,
+};
 
-function parseTime(t){return parseInt(t.replace(":",""),10);}
-function km(arena){return parseInt(document.querySelector(`[data-arena='${arena}']`)?.dataset.distance || 0,10);}
-function seriesPriority(s){
-  if (s.includes("HockeyTvåan")) return 10;
-  if (s.includes("J20")) return 20;
-  if (s.includes("J18")) return 30;
-  if (s.includes("Tränings")) return 40;
-  return 999;
+const GAMES = [
+  // ----- Kungsbacka (5) -----
+  { arena:"Kungsbacka Ishall A", series:"HockeyTvåan Södra", time:"09:00",
+    home:{name:"Hanhals IF",logo:LOGOS.hanhals}, away:{name:"Bäcken HC",logo:LOGOS.backen}, result:"–" },
+
+  { arena:"Kungsbacka Ishall A", series:"J18 Region Södra", time:"09:40",
+    home:{name:"Kungälvs IK",logo:LOGOS.kungalv}, away:{name:"Grästorps IK",logo:LOGOS.grastorp}, result:"3 - 2" },
+
+  { arena:"Kungsbacka Ishall A", series:"J20 Region Syd", time:"10:20",
+    home:{name:"Bäcken HC U20",logo:LOGOS.backen}, away:{name:"IF Mölndal Hockey",logo:LOGOS.hanhals}, result:"–" },
+
+  { arena:"Kungsbacka Ishall A", series:"Träningsmatch", time:"11:00",
+    home:{name:"Grästorps IK J18",logo:LOGOS.grastorp}, away:{name:"Kungälvs IK J18",logo:LOGOS.kungalv}, result:"2 - 4" },
+
+  { arena:"Kungsbacka Ishall A", series:"HockeyTvåan Västra", time:"11:40",
+    home:{name:"Hisingen Hockey",logo:LOGOS.hanhals}, away:{name:"Partille HK",logo:LOGOS.backen}, result:"–" },
+
+  // ----- Åse & Viste (10) -----
+  { arena:"Åse & Viste Arena", series:"HockeyTvåan Södra", time:"09:20",
+    home:{name:"Grästorps IK",logo:LOGOS.grastorp}, away:{name:"Kungälvs IK",logo:LOGOS.kungalv}, result:"–" },
+
+  { arena:"Åse & Viste Arena", series:"J20 Region Syd", time:"10:00",
+    home:{name:"Hanhals IF",logo:LOGOS.hanhals}, away:{name:"Bäcken HC",logo:LOGOS.backen}, result:"2 - 2" },
+
+  { arena:"Åse & Viste Arena", series:"J18 Region Södra", time:"10:40",
+    home:{name:"Kungälvs IK J18",logo:LOGOS.kungalv}, away:{name:"Grästorps IK J18",logo:LOGOS.grastorp}, result:"–" },
+
+  { arena:"Åse & Viste Arena", series:"HockeyTvåan Västra", time:"11:20",
+    home:{name:"Bäcken HC",logo:LOGOS.backen}, away:{name:"Nybro Vikings IF",logo:LOGOS.backen}, result:"–" },
+
+  { arena:"Åse & Viste Arena", series:"Träningsmatch", time:"12:00",
+    home:{name:"Grästorps IK",logo:LOGOS.grastorp}, away:{name:"Hisingen Hockey",logo:LOGOS.hanhals}, result:"4 - 1" },
+
+  { arena:"Åse & Viste Arena", series:"J20 Region Syd", time:"12:40",
+    home:{name:"Hanhals IF U20",logo:LOGOS.hanhals}, away:{name:"IF Mölndal Hockey",logo:LOGOS.hanhals}, result:"–" },
+
+  { arena:"Åse & Viste Arena", series:"HockeyTvåan Södra", time:"13:20",
+    home:{name:"Kungälvs IK",logo:LOGOS.kungalv}, away:{name:"Troja-Ljungby",logo:LOGOS.hanhals}, result:"–" },
+
+  { arena:"Åse & Viste Arena", series:"J18 Region Södra", time:"14:00",
+    home:{name:"Bäcken HC J18",logo:LOGOS.backen}, away:{name:"Kalmar HC",logo:LOGOS.backen}, result:"3 - 0" },
+
+  { arena:"Åse & Viste Arena", series:"HockeyTvåan Västra", time:"14:40",
+    home:{name:"Grästorps IK",logo:LOGOS.grastorp}, away:{name:"Partille HK",logo:LOGOS.backen}, result:"–" },
+
+  { arena:"Åse & Viste Arena", series:"Träningsmatch", time:"15:20",
+    home:{name:"IF Mölndal Hockey",logo:LOGOS.hanhals}, away:{name:"Kållereds SK",logo:LOGOS.hanhals}, result:"–" },
+];
+
+/* =================== Helpers & sorting =================== */
+const MODE = { PLACE:'place', SERIES:'series', SERIES_TIME:'series_time' };
+let mode = MODE.PLACE;
+
+const slot = document.getElementById('groupSlot');
+const scroll = document.getElementById('scrollArea');
+const pillPlace  = document.getElementById('pillPlace');
+const pillSeries = document.getElementById('pillSeries');
+const pillTime   = document.getElementById('pillTime');
+
+function parseTime(t){ const [H,M]=t.split(':').map(Number); return H*60+M; }
+function km(arena){ return ARENAS[arena] ?? 0; }
+
+function seriesPriority(name){
+  const n = name.toLowerCase();
+  if (n.includes("hockeytvåan")) return 10;
+  if (n.includes("ndhl")) return 11;
+  if (n.includes("hockeytrean")) return 12;
+  if (n.includes("damtvåan")) return 13;
+  if (n.includes("j20") || n.includes("u20")) return 14;
+  if (n.includes("j18") || n.includes("u18")) return 15;
+  if (n.includes("hockeyfyran")) return 16;
+  if (n.includes("tränings")) return 99;
+  return 50;
+}
+
+/* =================== Rendering =================== */
+function applyPills(){
+  // Place pill
+  pillPlace.classList.toggle('on',  mode===MODE.PLACE);
+  pillPlace.classList.toggle('off', mode!==MODE.PLACE);
+
+  // Series pill
+  pillSeries.classList.toggle('on',  mode!==MODE.PLACE);
+  pillSeries.classList.toggle('off', mode===MODE.PLACE);
+
+  // Time pill
+  const timeOn = (mode===MODE.PLACE) || (mode===MODE.SERIES_TIME);
+  pillTime.classList.toggle('on', timeOn);
+  pillTime.classList.toggle('off', !timeOn);
+  pillTime.classList.toggle('lock', mode===MODE.PLACE);
 }
 
 function render(){
-  scroll.innerHTML="";
+  scroll.innerHTML = "";
 
-  const games = Array.from(document.querySelectorAll(".game")).map(g=>{
-    const arena = g.closest(".arena").dataset.arena;
-    return {
-      elem:g,
-      arena,
-      dist: km(arena),
-      time: parseTime(g.querySelector(".game-time").innerText),
-      series: g.querySelector(".game-series").innerText.trim()
-    };
-  });
+  if (mode===MODE.PLACE){
+    // show sticky slot, group by arena, sort by distance then time
+    slot.style.display = "flex";
+    const byArena = {};
+    for (const g of GAMES) (byArena[g.arena] ||= []).push(g);
 
-  let groups = {};
+    const arenas = Object.keys(byArena).sort((a,b)=> km(a)-km(b));
 
-  if(currentMode === MODE.PLACE){
-    groupSlot.style.display="flex";
-    games.forEach(g=> (groups[g.arena] ||= []).push(g));
-    Object.entries(groups)
-      .sort((a,b)=> a[1][0].dist - b[1][0].dist)
-      .forEach(([arena,list])=>{
-        groupSlot.innerHTML = `${arena} <span>Avst ${km(arena)} km</span>`;
-        list.sort((a,b)=> a.time - b.time);
-        list.forEach(g=> scroll.appendChild(g.elem));
-      });
-  }
+    // start slot with nearest arena
+    if (arenas.length){
+      document.querySelector('.group-title').textContent = arenas[0];
+      document.querySelector('.group-sub').textContent   = `Avst ${km(arenas[0])} km`;
+    }
 
-  else {
-    groupSlot.style.display="none";
-    games.forEach(g=> (groups[g.series] ||= []).push(g));
+    for (const arena of arenas){
+      const list = byArena[arena].slice().sort((a,b)=> parseTime(a.time)-parseTime(b.time));
+      // render group header inside scroller? (we keep clean — no inner header, since sticky slot shows current)
+      for (const g of list) scroll.appendChild(gameCard(g, /*seriesMode=*/false));
+    }
 
-    Object.entries(groups)
-      .sort((a,b)=> seriesPriority(a[0]) - seriesPriority(b[0]))
-      .forEach(([series,list], idx)=>{
+    // track active arena for sticky name
+    scroll.addEventListener('scroll', updateSlot, {passive:true});
+    updateSlot();
 
-        if(currentMode === MODE.SERIES && idx>0){
-          let d=document.createElement("div");d.className="divider";scroll.appendChild(d);
-        }
+  } else {
+    // series modes: hide slot, no sticky header
+    slot.style.display = "none";
+    scroll.removeEventListener('scroll', updateSlot);
 
-        if(currentMode === MODE.SERIES_TIME)
-          list.sort((a,b)=> a.time - b.time || seriesPriority(a.series)-seriesPriority(b.series));
-        else
-          list.sort((a,b)=> seriesPriority(a.series)-seriesPriority(b.series) || a.time - b.time);
+    const bySeries = {};
+    for (const g of GAMES) (bySeries[g.series] ||= []).push(g);
 
-        list.forEach(g=> scroll.appendChild(g.elem));
-      });
+    const seriesKeys = Object.keys(bySeries)
+      .sort((a,b)=> seriesPriority(a)-seriesPriority(b) || a.localeCompare(b,'sv'));
+
+    let firstGroup = true;
+    for (const s of seriesKeys){
+      let list = bySeries[s].slice();
+      if (mode===MODE.SERIES_TIME){
+        list.sort((a,b)=> parseTime(a.time)-parseTime(b.time) || seriesPriority(a.series)-seriesPriority(b.series));
+      } else {
+        list.sort((a,b)=> seriesPriority(a.series)-seriesPriority(b.series) || parseTime(a.time)-parseTime(b.time));
+      }
+
+      // divider only in SERIES (time grey)
+      if (mode===MODE.SERIES && !firstGroup){
+        const d = document.createElement('div'); d.className='divider'; scroll.appendChild(d);
+      }
+      firstGroup = false;
+
+      for (const g of list) scroll.appendChild(gameCard(g, /*seriesMode=*/true));
+    }
   }
 }
 
-btnPlace.onclick = ()=>{
-  currentMode = MODE.PLACE;
-  btnPlace.classList.add("on");
-  btnSeries.classList.remove("on");
-  btnTime.classList.add("on");
-  render();
-};
+function gameCard(g, seriesMode){
+  const a = document.createElement('article'); a.className='game';
+  const top = document.createElement('div'); top.className='game-top';
+  const time = document.createElement('div'); time.className='game-time'; time.textContent=g.time;
+  const series = document.createElement('div'); series.className='game-series';
+  series.innerHTML = `<a href="#">${g.series}</a>`;
+  top.appendChild(time); top.appendChild(series);
 
-btnSeries.onclick = ()=>{
-  currentMode = MODE.SERIES;
-  btnPlace.classList.remove("on");
-  btnSeries.classList.add("on");
-  btnTime.classList.remove("on");
-  render();
-};
-
-btnTime.onclick = ()=>{
-  if(currentMode===MODE.PLACE) return;
-  if(currentMode===MODE.SERIES){
-    currentMode = MODE.SERIES_TIME;
-    btnTime.classList.add("on");
-  } else {
-    currentMode = MODE.SERIES;
-    btnTime.classList.remove("on");
+  if (seriesMode){
+    const mid = document.createElement('div'); mid.className='game-mid'; mid.textContent=g.arena;
+    const right = document.createElement('div'); right.className='game-right'; right.textContent=`Avst ${km(g.arena)} km`;
+    top.appendChild(mid); top.appendChild(right);
   }
-  render();
-};
 
+  const bottom = document.createElement('div'); bottom.className='game-bottom';
+  bottom.innerHTML = `
+    <div class="team"><img class="team-logo" src="${g.home.logo}" alt=""><span class="team-name">${g.home.name}</span></div>
+    <div class="result"><a href="#">${g.result}</a></div>
+    <div class="team right"><img class="team-logo" src="${g.away.logo}" alt=""><span class="team-name">${g.away.name}</span></div>
+  `;
+
+  a.appendChild(top); a.appendChild(bottom);
+  return a;
+}
+
+function updateSlot(){
+  // determine which arena is currently at/above top in scroll
+  const cards = Array.from(scroll.children);
+  // find first visible card and read its arena
+  const viewportTop = scroll.getBoundingClientRect().top;
+  let currentArena = null;
+  for (const node of cards){
+    const r = node.getBoundingClientRect();
+    if (r.top >= viewportTop - 1){
+      // node is a .game (we only append games in PLACE mode)
+      // find its arena from GAMES by matching time/series/home to avoid storing data on node
+      const time = node.querySelector('.game-time')?.textContent.trim();
+      const series = node.querySelector('.game-series')?.textContent.trim();
+      const found = GAMES.find(x=> x.time===time && x.series===series);
+      currentArena = found?.arena || null;
+      break;
+    }
+  }
+  if (!currentArena){
+    // fallback to nearest arena
+    const nearest = Object.keys(ARENAS).sort((a,b)=> km(a)-km(b))[0];
+    currentArena = nearest || '—';
+  }
+  document.querySelector('.group-title').textContent = currentArena;
+  document.querySelector('.group-sub').textContent   = `Avst ${km(currentArena)} km`;
+}
+
+/* =================== Interactions (pills) =================== */
+function applyMode(newMode){
+  mode = newMode;
+  applyPills();
+  render();
+}
+
+pillPlace.addEventListener('click', ()=> applyMode(MODE.PLACE));
+pillSeries.addEventListener('click', ()=>{
+  // switch to SERIES (time OFF)
+  if (mode===MODE.SERIES_TIME) applyMode(MODE.SERIES);
+  else if (mode!==MODE.SERIES) applyMode(MODE.SERIES);
+});
+pillTime.addEventListener('click', ()=>{
+  if (mode===MODE.PLACE) return; // locked ON in place (but we don't allow toggling)
+  applyMode(mode===MODE.SERIES ? MODE.SERIES_TIME : MODE.SERIES);
+});
+
+/* =================== Init =================== */
+applyPills();
 render();
 </script>
-
 </body>
 </html>
 
