@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport v14.5 – Exakt sticky-byteslogik</title>
+<title>LocalSport v14.6 – Stabil iPhone sticky + fade</title>
 <style>
 :root{
   --topbar-h:56px;
@@ -30,7 +30,7 @@ html,body{
 }
 .device{width:100%;height:100dvh;overflow:hidden;display:flex;flex-direction:column}
 
-/* LAGER 1: Topbar */
+/* ====== LAGER 1: Topbar ====== */
 .topbar{position:sticky;top:0;z-index:500;background:#fff;border-bottom:1px solid var(--hair)}
 .topbar-inner{
   display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
@@ -61,26 +61,29 @@ html,body{
 .pill.off{background:#f1f5f9;color:#94a3b8;border-color:#cbd5e1}
 .pill.lock{opacity:.6;cursor:not-allowed}
 
-/* LAGER 2: Hint */
+/* ====== LAGER 2: Hint ====== */
 .hint{
   position:sticky;top:var(--topbar-h);z-index:450;color:var(--muted);font-size:12px;text-align:center;
   line-height:var(--hint-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair)
 }
 
-/* LAGER 3: Sticky slot (endast i PLATS) */
+/* ====== LAGER 3: Sticky slot (Plats) ====== */
 .group-slot{
   position:sticky;top:calc(var(--topbar-h)+var(--hint-h));z-index:425;height:var(--slot-h);
   background:#fff;border-bottom:1px dashed var(--hair);
-  display:flex;align-items:center;justify-content:space-between;padding:10px 12px;font-weight:700
+  display:flex;align-items:center;justify-content:space-between;padding:10px 12px;font-weight:700;
+  will-change:opacity, transform;
+  transition:opacity .16s ease-in-out;
 }
+.group-slot.swap{ opacity:0.2; }  /* C: fade-only vid byte */
 
-/* LAGER 4: Scroll */
+/* ====== LAGER 4: Scroll ====== */
 .scroll{
   flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
   background:var(--bg);padding:0;margin:0;width:100%
 }
 
-/* Arena-header INNE i listan (PLATS-läge) */
+/* Arena-header inuti listan (Plats) */
 .arena-header{
   background:#fff;font-weight:700;padding:10px 12px;border-bottom:1px dashed var(--hair);
   display:flex;justify-content:space-between;
@@ -116,7 +119,7 @@ html,body{
 .game-top.dynamic-scale .game-series a,
 .game-top.dynamic-scale .game-mid{font-size:var(--dyn-font,14px)}
 
-/* Respons (maxbredd på breda skärmar) */
+/* Respons (maxbredd) */
 @media(min-width:768px){.device{max-width:720px;margin:auto}}
 @media(min-width:1024px){.device{max-width:840px}}
 </style>
@@ -124,7 +127,7 @@ html,body{
 <body>
 <div class="device">
 
-  <!-- LAGER 1 -->
+  <!-- ====== LAGER 1 ====== -->
   <header class="topbar">
     <div class="topbar-inner">
       <div class="cluster-left">
@@ -150,16 +153,16 @@ html,body{
     </div>
   </header>
 
-  <!-- LAGER 2 -->
+  <!-- ====== LAGER 2 ====== -->
   <div class="hint">Visar matcher nära: Kruniusvägen 1, Billdal (57.590214, 11.946082)</div>
 
-  <!-- LAGER 3 (endast i PLATS) -->
+  <!-- ====== LAGER 3 (Plats) ====== -->
   <div id="groupSlot" class="group-slot">
     <div class="group-title">Kungsbacka Ishall A</div>
     <div class="group-sub">Avst 8 km</div>
   </div>
 
-  <!-- LAGER 4 -->
+  <!-- ====== LAGER 4 ====== -->
   <main id="scrollArea" class="scroll"></main>
 
 </div>
@@ -257,7 +260,7 @@ pillTime.onclick   = ()=>{
 function gameCard(g, seriesMode){
   const a = document.createElement('article'); 
   a.className='game';
-  a.dataset.arena = g.arena; // <- för exakt sticky-beslut
+  a.dataset.arena = g.arena;
 
   const top = document.createElement('div'); 
   top.className = seriesMode ? 'game-top dynamic-scale' : 'game-top';
@@ -283,38 +286,51 @@ function gameCard(g, seriesMode){
   return a;
 }
 
-/* -------- NY: Exakt sticky-byteslogik (ingen hysteresis-offset) -------- */
+/* -------- Sticky: exakt växling + fade (C) -------- */
 let currentArena = null;
+let lastChangeTs = 0;
 
 function updateStickyArena(){
   const headers = Array.from(scroll.querySelectorAll('.arena-header'));
   if (!headers.length) return;
 
   const slotBottom = groupSlot.getBoundingClientRect().bottom;
-  let active = headers[0].dataset.arenaHeader;
+  const tolerance = 5; // px tolerans för iOS avrundning
 
-  // Gå igenom arenor i ordning — byt först när sista matchen i arenan passerat slotBottom
+  let next = headers[0].dataset.arenaHeader;
+
   for (const header of headers){
     const arenaName = header.dataset.arenaHeader;
     const games = scroll.querySelectorAll(`.game[data-arena="${arenaName}"]`);
     if (!games.length) continue;
 
-    const lastGame = games[games.length - 1];
-    const lastBottom = lastGame.getBoundingClientRect().bottom;
+    const last = games[games.length - 1];
+    const lastBottom = last.getBoundingClientRect().bottom;
 
-    // Byt arena först när sista spelet är HELT förbi slot-ytan
-    if (lastBottom < slotBottom){
-      active = arenaName;
+    // Byt först när sista spelet passerat sticky-ytan (med liten tolerans)
+    if (lastBottom < slotBottom + tolerance){
+      next = arenaName;
     } else {
-      break; // så fort vi hittar en arena vars sista match inte passerat helt, stanna
+      break;
     }
   }
 
-  if (active !== currentArena){
-    currentArena = active;
+  if (next !== currentArena){
+    // Liten debounce (för iPhone-bounce): 80ms mellan byten
+    const now = performance.now();
+    if (now - lastChangeTs < 80) return;
+    lastChangeTs = now;
+
+    // Fade (C): lägg på klass, byt text, ta bort klass
+    groupSlot.classList.add('swap');
+
+    currentArena = next;
     document.querySelector('.group-title').textContent = currentArena;
     document.querySelector('.group-sub').textContent   = `Avst ${km(currentArena)} km`;
+
     headers.forEach(h => h.classList.toggle('active-hidden', h.dataset.arenaHeader === currentArena));
+
+    setTimeout(()=> groupSlot.classList.remove('swap'), 160);
   }
 }
 
@@ -363,7 +379,7 @@ function render(){
       header.className = 'arena-header';
       header.dataset.arenaHeader = aName;
       header.innerHTML = `<div>${aName}</div><div>Avst ${km(aName)} km</div>`;
-      if (idx===0) header.classList.add('active-hidden'); // döljer direkt så ingen dubbel vid start
+      if (idx===0) header.classList.add('active-hidden');
       scroll.appendChild(header);
 
       const list = byArena[aName].slice().sort((x,y)=> parseTime(x.time)-parseTime(y.time));
