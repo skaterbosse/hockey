@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport v17.1 – Korrekt uppåt/nedåt växling</title>
+<title>LocalSport v17.2 – Korrekt uppåtväxling</title>
 <style>
 :root{
   --topbar-h:56px; --hint-h:26px; --slot-h:42px;
@@ -199,8 +199,9 @@ function sortGames(){
 
 /* ===== Sticky arena växling =====
    Nedåt: byt när sticky täcker >= 50% av NÄSTA arenas HEADER.
-   Uppåt: byt när FÖREGÅENDE arenas HEADER är 100% synlig i scroll-ytan
-          (dvs mellan sticky-bottom och scroll-container-bottom).
+   Uppåt: (1) lägg tillbaka AKTUELL arenas header så snart dess första match
+              når sticky-bottom,
+          (2) byt först när FÖREGÅENDE arenas header är 100% synlig i scroll-ytan.
 */
 let currentArena=null, lastChangeTs=0;
 let arenaOrder=[];
@@ -211,12 +212,29 @@ function updateStickyArena(force=false){
 
   const slotBottom = groupSlot.getBoundingClientRect().bottom;
   const scrollRect = scroll.getBoundingClientRect();
-  const viewTop = slotBottom;           // överkanten för synlig scroll-yta (under sticky)
-  const viewBottom = scrollRect.bottom; // nederkant för synlig scroll-yta
+  const viewTop = slotBottom;           // synlig scroll-yta: topp
+  const viewBottom = scrollRect.bottom; // synlig scroll-yta: botten
 
   const headers = arenaOrder.map(a => document.querySelector(`.arena-header[data-arena-header="${a}"]`)).filter(Boolean);
   let next = currentArena || arenaOrder[0];
   const idx = arenaOrder.indexOf(currentArena);
+
+  // --- UPPÅT steg (1): visa tillbaka aktuell arenas header vid listtopp ---
+  if(idx >= 0){
+    const curr = arenaOrder[idx];
+    const currHeader = document.querySelector(`.arena-header[data-arena-header="${curr}"]`);
+    const firstCard  = document.querySelector(`.game[data-arena="${curr}"]`);
+    if(currHeader && firstCard){
+      const fr = firstCard.getBoundingClientRect();
+      // När första matchens topp NÅR sticky-bottom -> visa headern igen
+      if(fr.top >= slotBottom){
+        currHeader.classList.remove('active-hidden');
+      } else {
+        // annars håll den dold (för att undvika dubblett när vi är mitt i listan)
+        currHeader.classList.add('active-hidden');
+      }
+    }
+  }
 
   // --- NEDÅT: kolla nästa header (50% täckning av sticky) ---
   if(idx >= 0 && idx < arenaOrder.length - 1){
@@ -229,7 +247,7 @@ function updateStickyArena(force=false){
     }
   }
 
-  // --- UPPÅT: kolla föregående header (100% synlig inom scroll-ytan) ---
+  // --- UPPÅT steg (2): byt först när föregående header är 100% synlig ---
   if(idx > 0){
     const ph = headers[idx-1];
     if(ph){
@@ -248,8 +266,10 @@ function updateStickyArena(force=false){
     document.querySelector('.group-title').textContent = currentArena;
     document.querySelector('.group-sub').textContent = `Avst ${km(currentArena)} km`;
 
-    // Dölj in-list-header för aktiv arena
-    headers.forEach(h=> h.classList.toggle('active-hidden', h.dataset.arenaHeader===currentArena));
+    // Dölj endast nu AKTIVA arenans header (för att undvika dubblett).
+    headers.forEach(h=>{
+      h.classList.toggle('active-hidden', h.dataset.arenaHeader===currentArena);
+    });
   }
 }
 
@@ -272,7 +292,7 @@ function render(){
       if(idx>0){ const d=document.createElement('div'); d.className='divider'; scroll.appendChild(d); }
       const header=document.createElement('div'); header.className='arena-header'; header.dataset.arenaHeader=aName;
       header.innerHTML=`<div>${aName}</div><div>Avst ${km(aName)} km</div>`;
-      if(idx===0) header.classList.add('active-hidden'); // undvik dubblett
+      if(idx===0) header.classList.add('active-hidden'); // undvik dubblett initialt
       scroll.appendChild(header);
 
       const games=byArena[aName].slice().sort((x,y)=> parseTime(x.time)-parseTime(y.time));
