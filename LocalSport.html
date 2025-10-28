@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport v17.4 – Korrekt uppåtväxling med scrollTop</title>
+<title>LocalSport v17.5 – Uppåt-växling m. riktning + 5+15 matcher</title>
 <style>
 :root{
   --topbar-h:56px; --hint-h:26px; --slot-h:42px;
@@ -122,7 +122,7 @@ const LOGOS = {
 };
 /* Avstånd (km) */
 const ARENAS = {"Kungsbacka Ishall A":8,"Åse & Viste Arena":104};
-/* Matcher 5 + 10 */
+/* Matcher 5 + 15 (Åse & Viste har 10 extra längre ner på dagen) */
 const GAMES = [
   // Kungsbacka (5)
   { arena:"Kungsbacka Ishall A", series:"HockeyTvåan Södra", time:"09:00", home:{name:"Hanhals IF",logo:LOGOS.hanhals}, away:{name:"Bäcken HC",logo:LOGOS.backen}, result:"–" },
@@ -130,7 +130,8 @@ const GAMES = [
   { arena:"Kungsbacka Ishall A", series:"J20 Region Syd",     time:"10:20", home:{name:"Bäcken HC U20",logo:LOGOS.backen}, away:{name:"IF Mölndal Hockey",logo:LOGOS.hanhals}, result:"–" },
   { arena:"Kungsbacka Ishall A", series:"Träningsmatch",      time:"11:00", home:{name:"Grästorps IK J18",logo:LOGOS.grastorp}, away:{name:"Kungälvs IK J18",logo:LOGOS.kungalv}, result:"2 - 4" },
   { arena:"Kungsbacka Ishall A", series:"HockeyTvåan Västra", time:"11:40", home:{name:"Hisingen Hockey",logo:LOGOS.hanhals}, away:{name:"Partille HK",logo:LOGOS.backen}, result:"–" },
-  // Åse & Viste (10)
+
+  // Åse & Viste (15) – original 10
   { arena:"Åse & Viste Arena",   series:"HockeyTvåan Södra", time:"09:20", home:{name:"Grästorps IK",logo:LOGOS.grastorp}, away:{name:"Kungälvs IK",logo:LOGOS.kungalv}, result:"–" },
   { arena:"Åse & Viste Arena",   series:"J20 Region Syd",     time:"10:00", home:{name:"Hanhals IF",logo:LOGOS.hanhals}, away:{name:"Bäcken HC",logo:LOGOS.backen}, result:"2 - 2" },
   { arena:"Åse & Viste Arena",   series:"J18 Region Södra",   time:"10:40", home:{name:"Kungälvs IK J18",logo:LOGOS.kungalv}, away:{name:"Grästorps IK J18",logo:LOGOS.grastorp}, result:"–" },
@@ -141,6 +142,18 @@ const GAMES = [
   { arena:"Åse & Viste Arena",   series:"J18 Region Södra",   time:"14:00", home:{name:"Bäcken HC J18",logo:LOGOS.backen}, away:{name:"Kalmar HC",logo:LOGOS.backen}, result:"3 - 0" },
   { arena:"Åse & Viste Arena",   series:"HockeyTvåan Västra", time:"14:40", home:{name:"Grästorps IK",logo:LOGOS.grastorp}, away:{name:"Partille HK",logo:LOGOS.backen}, result:"–" },
   { arena:"Åse & Viste Arena",   series:"Träningsmatch",      time:"15:20", home:{name:"IF Mölndal Hockey",logo:LOGOS.hanhals}, away:{name:"Kållereds SK",logo:LOGOS.hanhals}, result:"–" },
+
+  // Åse & Viste – 10 extra (senare tider)
+  { arena:"Åse & Viste Arena",   series:"J18 Region Södra",   time:"16:00", home:{name:"Grästorps IK J18",logo:LOGOS.grastorp}, away:{name:"Kungälvs IK J18",logo:LOGOS.kungalv}, result:"–" },
+  { arena:"Åse & Viste Arena",   series:"J20 Region Syd",     time:"16:40", home:{name:"Bäcken HC U20",logo:LOGOS.backen}, away:{name:"Hanhals IF U20",logo:LOGOS.hanhals}, result:"–" },
+  { arena:"Åse & Viste Arena",   series:"HockeyTvåan Södra",  time:"17:20", home:{name:"Kungälvs IK",logo:LOGOS.kungalv}, away:{name:"Grästorps IK",logo:LOGOS.grastorp}, result:"–" },
+  { arena:"Åse & Viste Arena",   series:"Träningsmatch",      time:"18:00", home:{name:"Bäcken HC",logo:LOGOS.backen}, away:{name:"Hisingen Hockey",logo:LOGOS.hanhals}, result:"–" },
+  { arena:"Åse & Viste Arena",   series:"HockeyTvåan Västra", time:"18:40", home:{name:"Grästorps IK",logo:LOGOS.grastorp}, away:{name:"Kungälvs IK",logo:LOGOS.kungalv}, result:"–" },
+  { arena:"Åse & Viste Arena",   series:"J18 Region Södra",   time:"19:20", home:{name:"Kalmar HC J18",logo:LOGOS.backen}, away:{name:"Bäcken HC J18",logo:LOGOS.backen}, result:"–" },
+  { arena:"Åse & Viste Arena",   series:"J20 Region Syd",     time:"20:00", home:{name:"IF Mölndal Hockey U20",logo:LOGOS.hanhals}, away:{name:"Hanhals IF U20",logo:LOGOS.hanhals}, result:"–" },
+  { arena:"Åse & Viste Arena",   series:"Träningsmatch",      time:"20:40", home:{name:"Kållereds SK",logo:LOGOS.hanhals}, away:{name:"Bäcken HC",logo:LOGOS.backen}, result:"–" },
+  { arena:"Åse & Viste Arena",   series:"HockeyTvåan Södra",  time:"21:20", home:{name:"Grästorps IK",logo:LOGOS.grastorp}, away:{name:"Troja-Ljungby",logo:LOGOS.hanhals}, result:"–" },
+  { arena:"Åse & Viste Arena",   series:"J18 Region Södra",   time:"22:00", home:{name:"Kungälvs IK J18",logo:LOGOS.kungalv}, away:{name:"IF Mölndal Hockey J18",logo:LOGOS.hanhals}, result:"–" },
 ];
 
 /* MODE & DOM */
@@ -197,34 +210,40 @@ function sortGames(){
   }
 }
 
-/* ===== Sticky arena växling =====
+/* ===== Sticky arena växling (med riktning) =====
    Nedåt: byt när sticky täcker >= 50% av NÄSTA arenas HEADER.
    Uppåt: (1) lägg tillbaka AKTUELL arenas header när dess första match når sticky-bottom,
-          (2) byt när FÖREGÅENDE arenas header är 100% synlig i scroll-ytan
-              – mätt med scrollTop/offsetTop i scroll-containern (robust i iOS).
+          (2) byt när FÖREGÅENDE arenas header är 100% synlig i scroll-ytan (scrollTop/offsetTop).
 */
 let currentArena=null, lastChangeTs=0;
 let arenaOrder=[];
+let lastScrollTop=0, scrollDirection='down';
 
-/* Hjälp: hitta index och element */
 function headerEl(name){return scroll.querySelector(`.arena-header[data-arena-header="${name}"]`);}
 function firstCardEl(name){return scroll.querySelector(`.game[data-arena="${name}"]`);}
+
+function updateScrollDirection(){
+  const st=scroll.scrollTop;
+  const dir = (st>lastScrollTop)?'down':(st<lastScrollTop)?'up':scrollDirection;
+  lastScrollTop=st;
+  return (scrollDirection=dir);
+}
 
 function updateStickyArena(force=false){
   if(mode!==MODE.PLACE || !arenaOrder.length) return;
 
   const now=performance.now();
-  const debounce=(now-lastChangeTs<20);
+  const dir=updateScrollDirection();
   const slotBottom = groupSlot.getBoundingClientRect().bottom;
 
-  // Scroll-området (synlig yta inom containern)
+  // Synlig scroll-ytas topp/botten i content-koordinater
   const viewTop    = scroll.scrollTop;
   const viewBottom = viewTop + scroll.clientHeight;
 
   let next = currentArena || arenaOrder[0];
   const idx = arenaOrder.indexOf(currentArena);
 
-  /* --- UPPÅT (1): lägg tillbaka aktuell arenas header när dess första match når sticky-bottom --- */
+  // UPPÅT (1): lägg tillbaka aktuell arenas header precis när dess första match når sticky-bottom
   if(idx>=0){
     const curr = arenaOrder[idx];
     const currHeader = headerEl(curr);
@@ -236,32 +255,32 @@ function updateStickyArena(force=false){
     }
   }
 
-  /* --- NEDÅT: 50% täckning av nästa header --- */
-  if(idx>=0 && idx<arenaOrder.length-1){
-    const nh = headerEl(arenaOrder[idx+1]);
-    if(nh){
-      const r = nh.getBoundingClientRect();
-      const overlap = Math.max(0, slotBottom - r.top);
-      if(overlap >= r.height*0.5){ next = arenaOrder[idx+1]; }
+  if(dir==='down'){
+    // NEDÅT: 50% täckning av nästa header
+    if(idx>=0 && idx<arenaOrder.length-1){
+      const nh = headerEl(arenaOrder[idx+1]);
+      if(nh){
+        const r = nh.getBoundingClientRect();
+        const overlap = Math.max(0, slotBottom - r.top);
+        if(overlap >= r.height*0.5){ next = arenaOrder[idx+1]; }
+      }
     }
-  }
-
-  /* --- UPPÅT (2): byt när föregående header är 100% synlig i scroll-ytan
-         Här använder vi offsetTop i scroll-containern (inte viewport).
-     --------------------------------------------------------------- */
-  if(idx>0){
-    const prev = arenaOrder[idx-1];
-    const ph = headerEl(prev);
-    if(ph){
-      const headerTop    = ph.offsetTop;                 // position i scroll-innehållet
-      const headerBottom = headerTop + ph.offsetHeight;  // slut i scroll-innehållet
-      const fullyVisible = (headerTop >= viewTop) && (headerBottom <= viewBottom);
-      if(fullyVisible){ next = prev; }
+  } else { // dir==='up'
+    // UPPÅT (2): byt när föregående header är 100% synlig i scroll-ytan (content-koordinater)
+    if(idx>0){
+      const prev = arenaOrder[idx-1];
+      const ph = headerEl(prev);
+      if(ph){
+        const headerTop    = ph.offsetTop;
+        const headerBottom = headerTop + ph.offsetHeight;
+        const fullyVisible = (headerTop >= viewTop) && (headerBottom <= viewBottom);
+        if(fullyVisible){ next = prev; }
+      }
     }
   }
 
   if(next!==currentArena || force){
-    if(!force && debounce) return;
+    if(!force && (now-lastChangeTs<18)) return; // mild debounce mot flipp
     lastChangeTs=now;
     currentArena=next;
 
@@ -269,7 +288,7 @@ function updateStickyArena(force=false){
     document.querySelector('.group-title').textContent=currentArena;
     document.querySelector('.group-sub').textContent=`Avst ${km(currentArena)} km`;
 
-    // Dölj endast aktiva arenans header, övriga synliga
+    // Dölj endast aktiva arenans header
     arenaOrder.forEach(name=>{
       const h=headerEl(name);
       if(!h) return;
@@ -298,15 +317,20 @@ function render(){
       if(idx>0){ const d=document.createElement('div'); d.className='divider'; scroll.appendChild(d); }
       const header=document.createElement('div'); header.className='arena-header'; header.dataset.arenaHeader=aName;
       header.innerHTML=`<div>${aName}</div><div>Avst ${km(aName)} km</div>`;
-      if(idx===0) header.classList.add('active-hidden');
+      if(idx===0) header.classList.add('active-hidden'); // undvik dubblett initialt
       scroll.appendChild(header);
 
       const games=byArena[aName].slice().sort((x,y)=> parseTime(x.time)-parseTime(y.time));
       games.forEach(g=> scroll.appendChild(gameCard(g,false)));
     });
 
+    // nollställ scroll state
+    lastScrollTop = scroll.scrollTop;
+    scrollDirection = 'down';
+
     updateStickyArena(true);
   } else {
+    // Serie-lägen: inga arena-headers alls
     arenaOrder=[];
     const seriesMode=true;
     if(mode===MODE.SERIES){
@@ -320,11 +344,26 @@ function render(){
         first=false;
         games.forEach(g=> scroll.appendChild(gameCard(g,seriesMode)));
       });
-    } else {
+    } else { // SERIES_TIME
       list.forEach(g=> scroll.appendChild(gameCard(g,seriesMode)));
     }
+    // nollställ scroll state
+    lastScrollTop = scroll.scrollTop;
+    scrollDirection = 'down';
     autoScaleTopRows();
   }
+}
+
+/* Auto-scale top row (Serie-vy) */
+function autoScaleTopRows(){
+  if(mode===MODE.PLACE) return;
+  const rows=scroll.querySelectorAll('.game-top.dynamic-scale');
+  rows.forEach(row=>{
+    let font=14; row.style.setProperty('--dyn-font', font+'px');
+    while(row.scrollWidth>row.clientWidth && font>11){
+      font-=1; row.style.setProperty('--dyn-font', font+'px');
+    }
+  });
 }
 
 /* Mode */
