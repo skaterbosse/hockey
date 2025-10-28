@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport v14.1 – Plats/Serie fixar</title>
+<title>LocalSport v14.2 – Stabil sticky & Serie+Tid</title>
 <style>
 :root{
   --topbar-h:56px;
@@ -57,9 +57,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
   background:#fff;font-weight:700;padding:10px 12px;border-bottom:1px dashed var(--hair);
   display:flex;justify-content:space-between;transition:height .15s ease, padding .15s ease, border .15s ease, margin .15s ease;
 }
-.arena-header.active-hidden{
-  height:0;padding:0;border:0;margin:0;overflow:hidden;
-}
+.arena-header.active-hidden{height:0;padding:0;border:0;margin:0;overflow:hidden}
 
 /* Game card */
 .game{padding:8px 12px;border-top:1px dashed #e5e7eb;display:grid;gap:6px;background:#fff;width:100%}
@@ -169,37 +167,57 @@ const GAMES = [
     home:{name:"IF Mölndal Hockey",logo:LOGOS.hanhals}, away:{name:"Kållereds SK",logo:LOGOS.hanhals}, result:"–" },
 ];
 
-/* -------- Hjälp & state -------- */
+/* -------- Mode & refs -------- */
 const MODE = { PLACE:'place', SERIES:'series', SERIES_TIME:'series_time' };
 let mode = MODE.PLACE;
-
 const slot = document.getElementById('groupSlot');
 const scroll = document.getElementById('scrollArea');
 const pillPlace  = document.getElementById('pillPlace');
 const pillSeries = document.getElementById('pillSeries');
 const pillTime   = document.getElementById('pillTime');
 
+/* -------- Helpers -------- */
 function parseTime(t){ const [H,M]=t.split(':').map(Number); return H*60+M; }
 function km(a){ return ARENAS[a] ?? 0; }
 function seriesPriority(name){
   const n = name.toLowerCase();
   if (n.includes("hockeytvåan")) return 10;
-  if (n.includes("j20") || n.includes("u20")) return 15;
-  if (n.includes("j18") || n.includes("u18")) return 16;
+  if (n.includes("ndhl")) return 11;
+  if (n.includes("hockeytrean")) return 12;
+  if (n.includes("damtvåan")) return 13;
+  if (n.includes("j20") || n.includes("u20")) return 14;
+  if (n.includes("j18") || n.includes("u18")) return 15;
+  if (n.includes("hockeyfyran")) return 16;
   if (n.includes("tränings")) return 99;
   return 50;
 }
 
-/* -------- Game card -------- */
+/* -------- UI: pills -------- */
+function applyPills(){
+  pillPlace.className  = (mode===MODE.PLACE)      ? "pill on"      : "pill off";
+  pillSeries.className = (mode!==MODE.PLACE && mode!==MODE.SERIES_TIME) ? "pill on" : (mode===MODE.PLACE ? "pill off" : "pill off");
+  // Visuellt: Tid ON i PLATS, annars ON i SERIES_TIME
+  if (mode===MODE.PLACE) pillTime.className = "pill on lock";
+  else pillTime.className = (mode===MODE.SERIES_TIME ? "pill on" : "pill off");
+}
+
+pillPlace.onclick  = ()=> setMode(MODE.PLACE);
+pillSeries.onclick = ()=> setMode(MODE.SERIES);
+pillTime.onclick   = ()=>{
+  if (mode===MODE.PLACE) return; // låst
+  setMode(mode===MODE.SERIES ? MODE.SERIES_TIME : MODE.SERIES);
+};
+
+/* -------- Build cards -------- */
 function gameCard(g, seriesMode){
   const a = document.createElement('article'); a.className='game';
   const top = document.createElement('div'); top.className = seriesMode ? 'game-top dynamic-scale' : 'game-top';
-  const t = document.createElement('div'); t.className='game-time'; t.textContent=g.time;
+  const t = document.createElement('div'); t.className='game-time'; t.textContent = g.time;
   const s = document.createElement('div'); s.className='game-series'; s.innerHTML = `<a href="#">${g.series}</a>`;
   top.appendChild(t); top.appendChild(s);
   if (seriesMode){
-    const mid = document.createElement('div'); mid.className='game-mid'; mid.textContent=g.arena;
-    const right = document.createElement('div'); right.className='game-right'; right.textContent=`Avst ${km(g.arena)} km`;
+    const mid = document.createElement('div'); mid.className='game-mid'; mid.textContent = g.arena;
+    const right = document.createElement('div'); right.className='game-right'; right.textContent = `Avst ${km(g.arena)} km`;
     top.appendChild(mid); top.appendChild(right);
   }
   const bottom = document.createElement('div'); bottom.className='game-bottom';
@@ -212,25 +230,34 @@ function gameCard(g, seriesMode){
   return a;
 }
 
-/* -------- Sticky: göm aktiv list-header -------- */
+/* -------- Sticky med hysteresis (stabil) -------- */
+let currentArena = null;
 function updateStickyFromHeaders(){
   const headers = Array.from(scroll.querySelectorAll('.arena-header'));
   if (!headers.length) return;
-  const viewportTop = scroll.getBoundingClientRect().top + 1;
-  let current = headers[0];
+
+  const threshold = scroll.getBoundingClientRect().top + 40; // hysteresis (px nedanför slot)
+  let newArena = currentArena ?? headers[0].dataset.arenaHeader;
+
   for (const h of headers){
-    const r = h.getBoundingClientRect();
-    if (r.top <= viewportTop) current = h; else break;
+    const topY = h.getBoundingClientRect().top;
+    // byt arena först när headern passerat tröskeln
+    if (topY <= threshold){
+      newArena = h.dataset.arenaHeader;
+    } else {
+      break;
+    }
   }
-  // uppdatera sticky text
-  const name = current.dataset.arenaHeader;
-  document.querySelector('.group-title').textContent = name;
-  document.querySelector('.group-sub').textContent   = `Avst ${km(name)} km`;
-  // göm aktiva headern, visa övriga
-  headers.forEach(h => h.classList.toggle('active-hidden', h === current));
+
+  if (newArena !== currentArena){
+    currentArena = newArena;
+    document.querySelector('.group-title').textContent = currentArena;
+    document.querySelector('.group-sub').textContent   = `Avst ${km(currentArena)} km`;
+    headers.forEach(h => h.classList.toggle('active-hidden', h.dataset.arenaHeader === currentArena));
+  }
 }
 
-/* -------- Autoscale (Serie-vy) -------- */
+/* -------- Autoscale top row (Serie-vy) -------- */
 function autoScaleTopRows(){
   if (mode===MODE.PLACE) return;
   const rows = scroll.querySelectorAll('.game-top.dynamic-scale');
@@ -251,18 +278,25 @@ function render(){
   scroll.innerHTML = "";
 
   if (mode===MODE.PLACE){
+    // Sticky slot synlig
     slot.style.display = "flex";
+
+    // Scroll listener (en gång)
     if (!scrollBound){ scroll.addEventListener('scroll', updateStickyFromHeaders, {passive:true}); scrollBound = true; }
 
+    // Grupp: Arena → sort by distance; inom arena sortera strikt på tid
     const byArena = {};
     for (const g of GAMES) (byArena[g.arena] ||= []).push(g);
     const arenas = Object.keys(byArena).sort((a,b)=> km(a)-km(b));
 
-    if (arenas.length){
-      document.querySelector('.group-title').textContent = arenas[0];
-      document.querySelector('.group-sub').textContent   = `Avst ${km(arenas[0])} km`;
+    // init sticky
+    currentArena = arenas[0] || null;
+    if (currentArena){
+      document.querySelector('.group-title').textContent = currentArena;
+      document.querySelector('.group-sub').textContent   = `Avst ${km(currentArena)} km`;
     }
 
+    // render: arena-header i listan + tidssorterade matcher
     for (const aName of arenas){
       const header = document.createElement('div');
       header.className = 'arena-header';
@@ -275,68 +309,62 @@ function render(){
     }
 
     updateStickyFromHeaders();
-  } else {
+  }
+  else if (mode===MODE.SERIES){
+    // DÖLJ sticky slot
     slot.style.display = "none";
     if (scrollBound){ scroll.removeEventListener('scroll', updateStickyFromHeaders); scrollBound = false; }
 
+    // Grupp: Serie → divider mellan serier (Tid grå)
     const bySeries = {};
     for (const g of GAMES) (bySeries[g.series] ||= []).push(g);
     const keys = Object.keys(bySeries).sort((a,b)=> seriesPriority(a)-seriesPriority(b) || a.localeCompare(b,'sv'));
 
     let first = true;
     for (const s of keys){
-      const list = bySeries[s].slice();
-
-      if (mode===MODE.SERIES_TIME){
-        // Tid först
-        list.sort((a,b)=> {
-          const t = parseTime(a.time) - parseTime(b.time);
-          if (t !== 0) return t;
-          return seriesPriority(a.series) - seriesPriority(b.series);
-        });
-      } else {
-        // Serie-prio först
-        list.sort((a,b)=> {
+      const list = bySeries[s].slice()
+        .sort((a,b)=> {
           const p = seriesPriority(a.series) - seriesPriority(b.series);
           if (p !== 0) return p;
           return parseTime(a.time) - parseTime(b.time);
         });
-      }
 
-      if (mode===MODE.SERIES && !first){
+      if (!first){
         const d = document.createElement('div'); d.className='divider'; scroll.appendChild(d);
       }
       first = false;
 
       for (const g of list) scroll.appendChild(gameCard(g, /*seriesMode=*/true));
     }
+
+    autoScaleTopRows();
   }
+  else if (mode===MODE.SERIES_TIME){
+    // DÖLJ sticky slot
+    slot.style.display = "none";
+    if (scrollBound){ scroll.removeEventListener('scroll', updateStickyFromHeaders); scrollBound = false; }
 
-  autoScaleTopRows();
+    // 🔑 GLOBAL lista sorterad primärt på TID (inte grupperad per serie)
+    const list = GAMES.slice().sort((a,b)=>{
+      const t = parseTime(a.time) - parseTime(b.time);
+      if (t !== 0) return t;
+      return seriesPriority(a.series) - seriesPriority(b.series);
+    });
+
+    for (const g of list) scroll.appendChild(gameCard(g, /*seriesMode=*/true));
+
+    autoScaleTopRows();
+  }
 }
 
-/* -------- UI (pills) -------- */
-function applyPills(){
-  pillPlace.className  = (mode===MODE.PLACE)      ? "pill on"      : "pill off";
-  pillSeries.className = (mode!==MODE.PLACE)      ? "pill on"      : "pill off";
-  pillTime.className   = (mode===MODE.PLACE)      ? "pill on lock" : (mode===MODE.SERIES_TIME ? "pill on" : "pill off");
-}
-
+/* -------- Mode switch -------- */
 function setMode(m){
   mode = m;
   applyPills();
   render();
 }
 
-/* FIX: Serie-knappen måste kunna byta från Plats → Serie */
-pillPlace.onclick  = ()=> setMode(MODE.PLACE);
-pillSeries.onclick = ()=> setMode(MODE.SERIES); // <-- alltid till Serie
-pillTime.onclick   = ()=>{
-  if (mode===MODE.PLACE) return; // låst
-  setMode(mode===MODE.SERIES ? MODE.SERIES_TIME : MODE.SERIES);
-};
-
-/* init */
+/* Init */
 applyPills();
 render();
 </script>
