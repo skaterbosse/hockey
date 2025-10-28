@@ -31,7 +31,7 @@ html,body{
 }
 .device{width:100%;height:100dvh;overflow:hidden;display:flex;flex-direction:column}
 
-/* ===== TOP BAR ===== */
+/* ───────── TOP BAR ───────── */
 .topbar{position:sticky;top:0;z-index:500;background:#fff;border-bottom:1px solid var(--hair)}
 .topbar-inner{
   display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
@@ -62,13 +62,13 @@ html,body{
 .pill.off{background:#f1f5f9;color:#94a3b8;border-color:#cbd5e1}
 .pill.lock{opacity:.6;cursor:not-allowed}
 
-/* ===== LAGER 2 / hint ===== */
+/* ───────── HINT FIXERAD ───────── */
 .hint{
   position:sticky;top:var(--topbar-h);z-index:450;color:var(--muted);font-size:12px;text-align:center;
   line-height:var(--hint-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair)
 }
 
-/* ===== LAGER 3 / sticky arena slot ===== */
+/* ───────── ARENA SLOT (STICKY) ───────── */
 .group-slot{
   position:sticky;top:calc(var(--topbar-h)+var(--hint-h));z-index:425;height:var(--slot-h);
   background:#fff;border-bottom:1px dashed var(--hair);
@@ -77,7 +77,7 @@ html,body{
 }
 .group-slot.swap{opacity:.3;}
 
-/* ===== LAGER 4 / scroll ===== */
+/* ───────── SCROLL ───────── */
 .scroll{
   flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
   background:var(--bg);padding:0;margin:0;width:100%
@@ -89,7 +89,7 @@ html,body{
 }
 .arena-header.active-hidden{height:0;padding:0;border:0;margin:0;overflow:hidden}
 
-/* ===== GAME CARD ===== */
+/* ───────── GAMES ───────── */
 .game{
   padding:8px 12px;border-top:1px dashed #e5e7eb;display:grid;gap:6px;background:#fff;width:100%
 }
@@ -112,11 +112,10 @@ html,body{
 }
 
 .divider{height:8px;background:var(--bg);border-top:1px dashed var(--hair)}
-
-@media(min-width:768px){.device{max-width:720px;margin:auto}}
-@media(min-width:1024px){.device{max-width:840px}}
 </style>
 </head>
+
+
 <body>
 <div class="device">
 
@@ -157,8 +156,10 @@ html,body{
 <main id="scrollArea" class="scroll"></main>
 
 </div>
+
+
 <script>
-/* --- LOGOS --- */
+/* ========= LOGOTYPER ========= */
 const LOGOS = {
   backen:"logos/Bäcken_HC__119055af-fc61-4108-82a8-a0cd0e883df0.png",
   grastorp:"logos/Grästorps_IK__c6811c5f-e2c9-43e2-a9c2-73ab53f63fd1.png",
@@ -166,76 +167,99 @@ const LOGOS = {
   kungalv:"logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png",
 };
 
-/* --- ARENA DISTANCES (for "Plats") --- */
-const ARENAS = {"Kungsbacka Ishall A":8,"Åse & Viste Arena":104};
+/* ========= DISTANS FRÅN ANVÄNDARE ========= */
+const ARENAS = {
+  "Kungsbacka Ishall A": 8,
+  "Åse & Viste Arena": 104
+};
 
-/* --- MATCHDATA (5 + 10 matcher) --- */
-const GAMES=[ ... (SAME AS LAST TIME — din matchlista här, 5 + 10) ... ];
-/*
-⚠️ Jag klipper här bara för att inte fylla 300 rader igen.
-Du sa "samma matcher" → använd exakt listan från v14.6.
-*/
+/* ========= MATCHLISTA (5 + 10 matcher) ========= */
+const GAMES = [
+  /* ******* KUNGSBACKA ISHALL A (5 matcher) ******* */
+  {arena:"Kungsbacka Ishall A",series:"HockeyTvåan Södra",time:"09:00",home:{name:"Hanhals IF",logo:LOGOS.hanhals},away:{name:"Bäcken HC",logo:LOGOS.backen},result:"–"},
+  {arena:"Kungsbacka Ishall A",series:"J18 Region Södra",time:"09:40",home:{name:"Kungälvs IK",logo:LOGOS.kungalv},away:{name:"Grästorps IK",logo:LOGOS.grastorp},result:"3 - 2"},
+  {arena:"Kungsbacka Ishall A",series:"J20 Region Syd",time:"10:20",home:{name:"Bäcken HC U20",logo:LOGOS.backen},away:{name:"IF Mölndal Hockey",logo:LOGOS.hanhals},result:"–"},
+  {arena:"Kungsbacka Ishall A",series:"Träningsmatch",time:"11:00",home:{name:"Grästorps IK J18",logo:LOGOS.grastorp},away:{name:"Kungälvs IK J18",logo:LOGOS.kungalv},result:"2 - 4"},
+  {arena:"Kungsbacka Ishall A",series:"HockeyTvåan Västra",time:"11:40",home:{name:"Hisingen Hockey",logo:LOGOS.hanhals},away:{name:"Partille HK",logo:LOGOS.backen},result:"–"},
 
-/* ===== SORTERING ===== */
+  /* ******* ÅSE & VISTE ARENA (10 matcher) ******* */
+  {arena:"Åse & Viste Arena",series:"HockeyTvåan Södra",time:"09:20",home:{name:"Grästorps IK",logo:LOGOS.grastorp},away:{name:"Kungälvs IK",logo:LOGOS.kungalv},result:"–"},
+  {arena:"Åse & Viste Arena",series:"J20 Region Syd",time:"10:00",home:{name:"Hanhals IF",logo:LOGOS.hanhals},away:{name:"Bäcken HC",logo:LOGOS.backen},result:"2 - 2"},
+  {arena:"Åse & Viste Arena",series:"J18 Region Södra",time:"10:40",home:{name:"Kungälvs IK J18",logo:LOGOS.kungalv},away:{name:"Grästorps IK J18",logo:LOGOS.grastorp},result:"–"},
+  {arena:"Åse & Viste Arena",series:"HockeyTvåan Västra",time:"11:20",home:{name:"Bäcken HC",logo:LOGOS.backen},away:{name:"Nybro Vikings IF",logo:LOGOS.backen},result:"–"},
+  {arena:"Åse & Viste Arena",series:"Träningsmatch",time:"12:00",home:{name:"Grästorps IK",logo:LOGOS.grastorp},away:{name:"Hisingen Hockey",logo:LOGOS.hanhals},result:"4 - 1"},
+  {arena:"Åse & Viste Arena",series:"J20 Region Syd",time:"12:40",home:{name:"Hanhals IF U20",logo:LOGOS.hanhals},away:{name:"IF Mölndal Hockey",logo:LOGOS.hanhals},result:"–"},
+  {arena:"Åse & Viste Arena",series:"HockeyTvåan Södra",time:"13:20",home:{name:"Kungälvs IK",logo:LOGOS.kungalv},away:{name:"Troja-Ljungby",logo:LOGOS.hanhals},result:"–"},
+  {arena:"Åse & Viste Arena",series:"J18 Region Södra",time:"14:00",home:{name:"Bäcken HC J18",logo:LOGOS.backen},away:{name:"Kalmar HC",logo:LOGOS.backen},result:"3 - 0"},
+  {arena:"Åse & Viste Arena",series:"HockeyTvåan Västra",time:"14:40",home:{name:"Grästorps IK",logo:LOGOS.grastorp},away:{name:"Partille HK",logo:LOGOS.backen},result:"–"},
+  {arena:"Åse & Viste Arena",series:"Träningsmatch",time:"15:20",home:{name:"IF Mölndal Hockey",logo:LOGOS.hanhals},away:{name:"Kållereds SK",logo:LOGOS.hanhals},result:"–"},
+];
+
+/* ========= SORTERING & PILL-LOGIK ========= */
 const MODE={PLACE:'place',SERIES:'series',SERIES_TIME:'series_time'};
 let mode=MODE.PLACE;
 
-/* ===== DOM ===== */
-const pillPlace=document.getElementById('pillPlace');
-const pillSeries=document.getElementById('pillSeries');
-const pillTime=document.getElementById('pillTime');
-const scroll=document.getElementById('scrollArea');
-const groupSlot=document.getElementById('groupSlot');
+const pillPlace=document.getElementById("pillPlace");
+const pillSeries=document.getElementById("pillSeries");
+const pillTime=document.getElementById("pillTime");
+const scroll=document.getElementById("scrollArea");
+const groupSlot=document.getElementById("groupSlot");
 
-/* ===== PILL BEHAVIOR ===== */
+function parseTime(t){const [H,M]=t.split(":").map(Number);return H*60+M;}
+function seriesPriority(n){
+  const s=n.toLowerCase();
+  if(s.includes("hockeytvåan"))return 10;
+  if(s.includes("j20")||s.includes("u20"))return 14;
+  if(s.includes("j18")||s.includes("u18"))return 15;
+  if(s.includes("tränings"))return 99;
+  return 50;
+}
+
 function applyPills(){
   pillPlace.className=(mode===MODE.PLACE)?"pill on":"pill off";
   pillSeries.className=(mode===MODE.SERIES||mode===MODE.SERIES_TIME)?"pill on":"pill off";
   pillTime.className=(mode===MODE.PLACE?"pill on lock": mode===MODE.SERIES_TIME?"pill on":"pill off");
 }
+
 pillPlace.onclick = ()=> setMode(MODE.PLACE);
 pillSeries.onclick= ()=> setMode(MODE.SERIES);
 pillTime.onclick  = ()=>{ if(mode!==MODE.PLACE) setMode(mode===MODE.SERIES?MODE.SERIES_TIME:MODE.SERIES); };
 
-/* ===== RENDER ===== */
-function render(){
-  scroll.innerHTML="";
-  const sorted = sortGames();
-  let currentArenaRendered=null;
-
-  for(const g of sorted){
-    if(mode===MODE.PLACE){
-      if(g.arena!==currentArenaRendered){
-        const ah=document.createElement('div');
-        ah.className="arena-header";
-        ah.dataset.arenaHeader=g.arena;
-        ah.innerHTML=`<span>${g.arena}</span><span>Avst ${ARENAS[g.arena]} km</span>`;
-        scroll.appendChild(ah);
-        currentArenaRendered=g.arena;
-      }
-    }
-    scroll.appendChild(gameCard(g));
+/* ========= RENDER ========= */
+function sortGames(){
+  if(mode===MODE.PLACE){
+    return [...GAMES].sort((a,b)=>
+      ARENAS[a.arena]-ARENAS[b.arena] || parseTime(a.time)-parseTime(b.time)
+    );
   }
-  updateStickyArena(true);
+  if(mode===MODE.SERIES){
+    return [...GAMES].sort((a,b)=>
+      seriesPriority(a.series)-seriesPriority(b.series) ||
+      parseTime(a.time)-parseTime(b.time)
+    );
+  }
+  return [...GAMES].sort((a,b)=>
+    parseTime(a.time)-parseTime(b.time) ||
+    seriesPriority(a.series)-seriesPriority(b.series)
+  );
 }
 
-/* ===== GAME CARD ===== */
 function gameCard(g){
-  const a=document.createElement('article');
-  a.className='game';
+  const a=document.createElement("article");
+  a.className="game";
   a.dataset.arena=g.arena;
 
-  const top=document.createElement('div');
+  const top=document.createElement("div");
   top.className=(mode!==MODE.PLACE?'game-top dynamic-scale':'game-top');
 
-  top.innerHTML=`
+  top.innerHTML = `
     <div class="game-time">${g.time}</div>
     <div class="game-series"><a href="#">${g.series}</a></div>
     ${mode!==MODE.PLACE ? `<div class="game-mid">${g.arena}</div><div class="game-right">Avst ${ARENAS[g.arena]} km</div>` : ""}
   `;
 
-  const bottom=document.createElement('div');
-  bottom.className='game-bottom';
+  const bottom=document.createElement("div");
+  bottom.className="game-bottom";
   bottom.innerHTML=`
     <div class="team"><img class="team-logo" src="${g.home.logo}"><span class="team-name">${g.home.name}</span></div>
     <div class="result"><a href="#">${g.result}</a></div>
@@ -247,27 +271,29 @@ function gameCard(g){
   return a;
 }
 
-/* ===== SORTING ===== */
-function parseTime(t){const [H,M]=t.split(':').map(Number);return H*60+M;}
-function seriesPriority(name){
-  const s=name.toLowerCase();
-  if(s.includes("hockeytvåan"))return 10;
-  if(s.includes("j20")||s.includes("u20"))return 14;
-  if(s.includes("j18")||s.includes("u18"))return 15;
-  if(s.includes("tränings"))return 99;
-  return 50;
-}
-function sortGames(){
-  if(mode===MODE.PLACE){
-    return [...GAMES].sort((a,b)=> ARENAS[a.arena]-ARENAS[b.arena] || parseTime(a.time)-parseTime(b.time));
+function render(){
+  scroll.innerHTML="";
+  const sorted=sortGames();
+  let currentArenaRendered=null;
+
+  for(const g of sorted){
+    if(mode===MODE.PLACE){
+      if(g.arena!==currentArenaRendered){
+        const ah=document.createElement("div");
+        ah.className="arena-header";
+        ah.dataset.arenaHeader=g.arena;
+        ah.innerHTML=`<span>${g.arena}</span><span>Avst ${ARENAS[g.arena]} km</span>`;
+        scroll.appendChild(ah);
+        currentArenaRendered=g.arena;
+      }
+    }
+    scroll.appendChild(gameCard(g));
   }
-  if(mode===MODE.SERIES){
-    return [...GAMES].sort((a,b)=> seriesPriority(a.series)-seriesPriority(b.series) || parseTime(a.time)-parseTime(b.time));
-  }
-  return [...GAMES].sort((a,b)=> parseTime(a.time)-parseTime(b.time) || seriesPriority(a.series)-seriesPriority(b.series));
+
+  updateStickyArena(true);
 }
 
-/* ===== STICKY ARENA — FIXERAD & FADE ===== */
+/* ========= STICKY ARENA (MED FADE) ========= */
 let currentArena=null;
 let lastScrollY=0;
 let lastChangeTs=0;
@@ -275,11 +301,12 @@ let lastChangeTs=0;
 function updateStickyArena(force=false){
   if(mode!==MODE.PLACE) return;
 
-  const headers=[...scroll.querySelectorAll('.arena-header')];
+  const headers=[...scroll.querySelectorAll(".arena-header")];
   if(!headers.length) return;
 
   const tolerance=7;
   const slotBottom=groupSlot.getBoundingClientRect().bottom;
+
   const scrollingDown=scroll.scrollTop>lastScrollY;
   lastScrollY=scroll.scrollTop;
 
@@ -308,17 +335,20 @@ function updateStickyArena(force=false){
     document.querySelector(".group-title").textContent=currentArena;
     document.querySelector(".group-sub").textContent=`Avst ${ARENAS[currentArena]} km`;
 
-    headers.forEach(h=>h.classList.toggle("active-hidden",h.dataset.arenaHeader===currentArena));
+    headers.forEach(h=>
+      h.classList.toggle("active-hidden",h.dataset.arenaHeader===currentArena)
+    );
+
     setTimeout(()=> groupSlot.classList.remove("swap"),140);
   }
 }
 
-/* ===== MODE ===== */
 function setMode(m){
   mode=m;
   applyPills();
   render();
 }
+
 scroll.addEventListener("scroll",()=> updateStickyArena(false));
 
 render();
