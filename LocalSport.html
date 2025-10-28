@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport v16 – Naturlig arenaväxling</title>
+<title>LocalSport v17 – Header 50% nedåt, touch uppåt</title>
 <style>
 :root{
   --topbar-h:56px; --hint-h:26px; --slot-h:42px;
@@ -44,7 +44,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
 .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:var(--bg);padding:0;margin:0;width:100%}
 
 /* Arena header (endast i Plats-läge) */
-.arena-header{background:#fff;font-weight:700;padding:10px 12px;border-bottom:1px dashed var(--hair);display:flex;justify-content:space-between;transition:height .15s ease,padding .15s ease,border .15s ease,margin .15s ease}
+.arena-header{background:#fff;font-weight:700;padding:10px 12px;border-bottom:1px dashed var(--hair);display:flex;justify-content:space-between}
 .arena-header.active-hidden{height:0;padding:0;border:0;margin:0;overflow:hidden}
 
 /* Game card */
@@ -120,7 +120,7 @@ const LOGOS = {
   hanhals:"logos/Hanhals_IF__b65395a8-4623-46e4-96ab-97ff2e0e7b72.png",
   kungalv:"logos/Kungälvs_IK__620a9df2-1b0b-4bc5-b9eb-7e88670f4c7b.png",
 };
-/* Avstånd */
+/* Avstånd (km) */
 const ARENAS = {"Kungsbacka Ishall A":8,"Åse & Viste Arena":104};
 /* Matcher 5 + 10 */
 const GAMES = [
@@ -197,9 +197,9 @@ function sortGames(){
   }
 }
 
-/* ===== Naturlig arenaväxling =====
-   - NER: byt när sticky header täcker ≥ 50% av nästa arenas första spelkort
-   - UPP: byt när föregående arenas header når precis under sticky-ytan (top >= slotBottom)
+/* ===== Sticky arena växling =====
+   Nedåt: byt när sticky överlappar >= 50% av NÄSTA arenas HEADER.
+   Uppåt: byt när FÖREGÅENDE arenas HEADER botten når sticky-bottom (dvs blir synlig precis under).
 */
 let currentArena=null, lastChangeTs=0;
 let arenaOrder=[];
@@ -208,43 +208,39 @@ function updateStickyArena(force=false){
   if(mode!==MODE.PLACE) return;
   if(!arenaOrder.length) return;
 
-  const slotRect = groupSlot.getBoundingClientRect();
-  const slotBottom = slotRect.bottom;
+  const slotBottom = groupSlot.getBoundingClientRect().bottom;
+  const headers = arenaOrder.map(a => document.querySelector(`.arena-header[data-arena-header="${a}"]`)).filter(Boolean);
 
   let next = currentArena || arenaOrder[0];
 
-  // Index för current
+  // hitta index för current
   const idx = arenaOrder.indexOf(currentArena);
-  const hasCurrent = idx >= 0;
 
-  // --- Scroll NEDÅT: kolla NÄSTA arena ---
-  if(hasCurrent && idx < arenaOrder.length - 1){
-    const nextArena = arenaOrder[idx + 1];
-    const firstCard = document.querySelector(`.game[data-arena="${nextArena}"]`);
-    if(firstCard){
-      const r = firstCard.getBoundingClientRect();
-      const overlap = Math.max(0, slotBottom - r.top); // hur mycket sticky överlappar kortet
-      if(overlap >= 0.5 * r.height){ // 50% täckning
-        next = nextArena;
-      }
+  // --- NEDÅT: kolla nästa header (50% täckning) ---
+  if(idx >= 0 && idx < arenaOrder.length - 1){
+    const nh = headers[idx+1];
+    if(nh){
+      const r = nh.getBoundingClientRect();
+      const overlap = Math.max(0, slotBottom - r.top);           // hur mycket sticky överlappar headern
+      const halfH   = r.height * 0.5;
+      if(overlap >= halfH){ next = arenaOrder[idx+1]; }
     }
   }
 
-  // --- Scroll UPPÅT: kolla FÖREGÅENDE arena ---
-  if(hasCurrent && idx > 0){
-    const prevArena = arenaOrder[idx - 1];
-    const prevHeader = document.querySelector(`.arena-header[data-arena-header="${prevArena}"]`);
-    if(prevHeader){
-      const hr = prevHeader.getBoundingClientRect();
-      if(hr.top >= slotBottom){ // tidigare header ligger överst (precis under sticky)
-        next = prevArena;
+  // --- UPPÅT: kolla föregående header (blir synlig precis under sticky) ---
+  if(idx > 0){
+    const ph = headers[idx-1];
+    if(ph){
+      const pr = ph.getBoundingClientRect();
+      if(pr.bottom >= slotBottom){ // så snart den “touchar” sticky-bottom
+        next = arenaOrder[idx-1];
       }
     }
   }
 
   if(next !== currentArena || force){
     const now = performance.now();
-    if(now - lastChangeTs < 30 && !force) return; // liten debounce
+    if(now - lastChangeTs < 25 && !force) return; // kort debounce
     lastChangeTs = now;
 
     currentArena = next;
@@ -252,7 +248,6 @@ function updateStickyArena(force=false){
     document.querySelector('.group-sub').textContent = `Avst ${km(currentArena)} km`;
 
     // Dölj in-list-header för aktiv arena
-    const headers=[...scroll.querySelectorAll('.arena-header')];
     headers.forEach(h=> h.classList.toggle('active-hidden', h.dataset.arenaHeader===currentArena));
   }
 }
