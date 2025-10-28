@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#ffffff" />
-<title>LocalSport v17 – Header 50% nedåt, touch uppåt</title>
+<title>LocalSport v17.1 – Korrekt uppåt/nedåt växling</title>
 <style>
 :root{
   --topbar-h:56px; --hint-h:26px; --slot-h:42px;
@@ -43,7 +43,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
 /* Scroll area */
 .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:var(--bg);padding:0;margin:0;width:100%}
 
-/* Arena header (endast i Plats-läge) */
+/* Arena header (bara i Plats) */
 .arena-header{background:#fff;font-weight:700;padding:10px 12px;border-bottom:1px dashed var(--hair);display:flex;justify-content:space-between}
 .arena-header.active-hidden{height:0;padding:0;border:0;margin:0;overflow:hidden}
 
@@ -198,8 +198,9 @@ function sortGames(){
 }
 
 /* ===== Sticky arena växling =====
-   Nedåt: byt när sticky överlappar >= 50% av NÄSTA arenas HEADER.
-   Uppåt: byt när FÖREGÅENDE arenas HEADER botten når sticky-bottom (dvs blir synlig precis under).
+   Nedåt: byt när sticky täcker >= 50% av NÄSTA arenas HEADER.
+   Uppåt: byt när FÖREGÅENDE arenas HEADER är 100% synlig i scroll-ytan
+          (dvs mellan sticky-bottom och scroll-container-bottom).
 */
 let currentArena=null, lastChangeTs=0;
 let arenaOrder=[];
@@ -209,32 +210,32 @@ function updateStickyArena(force=false){
   if(!arenaOrder.length) return;
 
   const slotBottom = groupSlot.getBoundingClientRect().bottom;
+  const scrollRect = scroll.getBoundingClientRect();
+  const viewTop = slotBottom;           // överkanten för synlig scroll-yta (under sticky)
+  const viewBottom = scrollRect.bottom; // nederkant för synlig scroll-yta
+
   const headers = arenaOrder.map(a => document.querySelector(`.arena-header[data-arena-header="${a}"]`)).filter(Boolean);
-
   let next = currentArena || arenaOrder[0];
-
-  // hitta index för current
   const idx = arenaOrder.indexOf(currentArena);
 
-  // --- NEDÅT: kolla nästa header (50% täckning) ---
+  // --- NEDÅT: kolla nästa header (50% täckning av sticky) ---
   if(idx >= 0 && idx < arenaOrder.length - 1){
     const nh = headers[idx+1];
     if(nh){
       const r = nh.getBoundingClientRect();
-      const overlap = Math.max(0, slotBottom - r.top);           // hur mycket sticky överlappar headern
+      const overlap = Math.max(0, slotBottom - r.top); // hur mycket sticky överlappar headern
       const halfH   = r.height * 0.5;
       if(overlap >= halfH){ next = arenaOrder[idx+1]; }
     }
   }
 
-  // --- UPPÅT: kolla föregående header (blir synlig precis under sticky) ---
+  // --- UPPÅT: kolla föregående header (100% synlig inom scroll-ytan) ---
   if(idx > 0){
     const ph = headers[idx-1];
     if(ph){
-      const pr = ph.getBoundingClientRect();
-      if(pr.bottom >= slotBottom){ // så snart den “touchar” sticky-bottom
-        next = arenaOrder[idx-1];
-      }
+      const r = ph.getBoundingClientRect();
+      const fullyVisible = (r.top >= viewTop) && (r.bottom <= viewBottom);
+      if(fullyVisible){ next = arenaOrder[idx-1]; }
     }
   }
 
