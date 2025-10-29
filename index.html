@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>LocalSport</title>
+
+<style>
+/* ----------- THEME VARIABLES ------------------------------------------------ */
+:root {
+  --topbar-h: 56px;
+  --hint-h: 26px;
+  --slot-h: 42px;
+  --bg:#f0f3f8;
+  --hair:#e2e8f0;
+  --text:#0f172a;
+  --muted:#64748b;
+  --accent:#16a34a;
+  --link:#2563eb;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; font-family:-apple-system, BlinkMacSystemFont, Roboto, Arial; background: var(--bg); color: var(--text); }
+
+/* ----------- LAYOUT --------------------------------------------------------- */
+.device { display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
+
+/* ----------- TOP BAR -------------------------------------------------------- */
+.topbar {
+  height:var(--topbar-h);
+  background:#fff;
+  border-bottom:1px solid var(--hair);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:6px 10px;
+  position:sticky;
+  top:0;
+  z-index:500;
+}
+.icon-btn {
+  width:32px;height:32px;display:grid;place-items:center;
+  border:1px solid var(--hair);border-radius:8px;background:#f1f5f9;cursor:pointer;
+}
+.cluster { display:flex; align-items:center; gap:10px; }
+.date-block { text-align:center; font-size:13px; font-weight:600; line-height:1.1; }
+
+/* ----------- SORT PILLS ----------------------------------------------------- */
+.sort-stack { border:1px solid var(--hair); border-radius:10px; background:#fff;
+  padding:4px 6px; display:flex; flex-direction:column; align-items:center; }
+.pill { padding:4px 8px; border-radius:99px; border:1px solid var(--hair);
+  font-size:11px; font-weight:600; cursor:pointer; }
+.pill.on { background:#dcfce7; border-color:#86efac; color:var(--accent); }
+.pill.off { background:#f1f5f9; border-color:#cbd5e1; color:#94a3b8; }
+
+/* ----------- LOCATION BAR --------------------------------------------------- */
+.hint { height:var(--hint-h); background:#fff; border-bottom:1px solid var(--hair);
+  font-size:12px; text-align:center; line-height:var(--hint-h); position:sticky;
+  top:var(--topbar-h); z-index:300; }
+
+/* ----------- ARENA SLOT (Sticky header) ------------------------------------ */
+.group-slot {
+  height:var(--slot-h);
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 12px; background:#fff; border-bottom:1px dashed var(--hair);
+  font-size:14px; font-weight:700;
+  position:sticky; top:calc(var(--topbar-h) + var(--hint-h)); z-index:250;
+}
+
+/* ----------- SCROLL AREA ---------------------------------------------------- */
+.scroll { flex:1; overflow-y:auto; }
+
+/* ----------- ARENA HEADER --------------------------------------------------- */
+.arena-header {
+  padding:10px 12px; background:#fff; border-bottom:1px dashed var(--hair);
+  font-weight:700; display:flex; justify-content:space-between;
+}
+.arena-header.active-hidden { visibility:hidden;height:0;padding:0;margin:0;border:none; }
+
+/* ----------- GAME CARD ------------------------------------------------------ */
+.game { background:#fff; border-top:1px dashed var(--hair); padding:8px 12px; display:grid; gap:6px; }
+.game-top { display:flex; gap:6px; align-items:center; }
+.game-time { font-weight:700; white-space:nowrap; }
+.game-series a { color:var(--link); font-weight:700; text-decoration:none; }
+
+.game-bottom { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:4px; }
+.team { display:flex; align-items:center; gap:6px; }
+.team-name { font-size:13px; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.team-logo { width:26px;height:26px;border-radius:50%;border:1px solid var(--hair);object-fit:cover;background:#eee; }
+
+/* result style */
+.result span { font-weight:700; }
+.result a { padding:2px 10px; border-radius:8px; border:1px solid var(--hair); text-decoration:none; font-weight:700; }
+
+/* DIVIDER */
+.divider { height:7px; background:var(--bg); border-top:1px dashed var(--hair); }
+</style>
+</head>
+
+<body>
+<div class="device">
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="cluster">
+    <button class="icon-btn">🏠</button>
+    <button class="icon-btn">🗺️</button>
+  </div>
+
+  <div class="cluster">
+    <button class="icon-btn" id="prevDate">◀</button>
+    <div class="date-block" id="dateText">26 okt 2025</div>
+    <button class="icon-btn" id="nextDate">▶</button>
+  </div>
+
+  <div class="cluster">
+    <div class="sort-stack">
+      <div style="font-size:12px;font-weight:600;">Sortering</div>
+      <div class="cluster">
+        <span id="pillPlace" class="pill on">Plats</span>
+        <span id="pillSeries" class="pill on">Serie</span>
+        <span id="pillTime" class="pill off">Tid</span>
+      </div>
+    </div>
+    <button class="icon-btn">⚙️</button>
+  </div>
+</header>
+
+<div class="hint" id="locationHint">Visar matcher nära...</div>
+<div id="groupSlot" class="group-slot"><span></span><span></span></div>
+
+<main id="scrollArea" class="scroll"></main>
+
+</div>
+
+<script>
+// ============================================================================
+// SETTINGS
+// ============================================================================
+const TODAY = "2025-10-26";
+const USER_POS = { lat:57.590214281624824, long:11.94608216084837 }; // Billdal
+
+const scrollArea = document.getElementById("scrollArea");
+const slot = document.getElementById("groupSlot");
+const pillPlace = document.getElementById("pillPlace");
+const pillSeries = document.getElementById("pillSeries");
+const pillTime = document.getElementById("pillTime");
+
+let mode = "PLACE"; // PLACE | SERIES | TIME
+let currentArena = null;
+let games = [];
+
+// ============================================================================
+// LOAD JSON
+// ============================================================================
+async function loadGames() {
+  const url = `/data/games_${TODAY}.json`;
+  const response = await fetch(url);
+  games = await response.json();
+  render();
+}
+loadGames();
+
+// ============================================================================
+// DISTANCE CALCULATION
+// ============================================================================
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a =
+    Math.sin(dLat/2)**2 +
+    Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+// ============================================================================
+// RENDER
+// ============================================================================
+function render() {
+  scrollArea.innerHTML = "";
+
+  if(mode === "PLACE") renderByPlace();
+  if(mode === "SERIES" || mode === "TIME") renderBySeries();
+
+  scrollArea.scrollTop = 0;
+}
+
+// ---- PLACE (arena grouping) -------------------------------------------------
+function renderByPlace() {
+  const grouped = {};
+
+  games.forEach(g => {
+    const key = g.arena;
+    if(!grouped[key]) grouped[key] = [];
+    grouped[key].push(g);
+  });
+
+  const sortedArenas = Object.keys(grouped).sort((a,b) => {
+    const [ga, gb] = [grouped[a][0], grouped[b][0]];
+    const da = haversine(USER_POS.lat, USER_POS.long, ga.lat, ga.long);
+    const db = haversine(USER_POS.lat, USER_POS.long, gb.lat, gb.long);
+    return da-db;
+  });
+
+  sortedArenas.forEach(arena => {
+    const g0 = grouped[arena][0];
+    const dist = haversine(USER_POS.lat, USER_POS.long, g0.lat, g0.long);
+
+    scrollArea.insertAdjacentHTML("beforeend", `
+      <div class="arena-header" data-arena="${arena}">
+        <div>${arena}</div>
+        <div>Avst ${dist} km</div>
+      </div>
+    `);
+
+    grouped[arena].forEach(g => addGameCard(g));
+    scrollArea.insertAdjacentHTML("beforeend", `<div class="divider"></div>`);
+  });
+}
+
+// ---- SERIES (series grouping, ordered by time if pillTime active) ---------
+function renderBySeries() {
+  const sorted = [...games].sort((a,b) =>
+    (mode==="TIME")
+      ? a.time.localeCompare(b.time)
+      : a.series_name.localeCompare(b.series_name)
+  );
+
+  let lastSeries = "";
+
+  sorted.forEach(g => {
+    if(g.series_name !== lastSeries) {
+      scrollArea.insertAdjacentHTML("beforeend", `
+        <div class="arena-header">
+          <div>${g.series_name}</div>
+        </div>
+      `);
+      lastSeries = g.series_name;
+    }
+    addGameCard(g);
+  });
+}
+
+// ============================================================================
+// GAME CARD HTML
+// ============================================================================
+function addGameCard(g) {
+  const resultIsLink = g.result !== "-" && g.result_link !== "";
+  let resultMarkup = resultIsLink
+    ? `<a href="${g.result_link}" style="color:var(--link)">${g.result}</a>`
+    : `<span style="color:black">${g.result}</span>`;
+
+  scrollArea.insertAdjacentHTML("beforeend", `
+    <article class="game">
+      <div class="game-top">
+        <div class="game-time">${g.time}</div>
+        <div class="game-series"><a href="${g.series_link}">${g.series_name}</a></div>
+      </div>
+      <div class="game-bottom">
+        <div class="team">
+          <span class="team-name">${g.home_team}</span>
+          <img class="team-logo" src="/logos/${g.home_logo}">
+        </div>
+        <div class="result">${resultMarkup}</div>
+        <div class="team">
+          <img class="team-logo" src="/logos/${g.away_logo}">
+          <span class="team-name">${g.away_team}</span>
+        </div>
+      </div>
+    </article>
+  `);
+}
+
+// ============================================================================
+// SORTING BEHAVIOR
+// ============================================================================
+pillPlace.onclick = () => (mode="PLACE", applyPills(), render());
+pillSeries.onclick = () => (mode="SERIES", applyPills(), render());
+pillTime.onclick   = () => (mode="TIME", applyPills(), render());
+
+function applyPills() {
+  pillPlace.className = "pill " + (mode==="PLACE"  ? "on" : "off");
+  pillSeries.className = "pill " + (mode==="SERIES" ? "on" : "off");
+  pillTime.className = "pill " + (mode==="TIME"    ? "on" : "off");
+}
+</script>
+
+</body>
+</html>
+
