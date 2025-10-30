@@ -19,19 +19,27 @@
   --muted:#64748b;
   --accent:#16a34a;
   --link:#2563eb;
-  --danger:#ef4444;
 }
 
+/* Base */
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--text);overscroll-behavior:none;}
 .device{width:100%;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
 
-/* Topbar */
+/* Top bar */
 .topbar{position:sticky;top:0;z-index:500;background:#fff;border-bottom:1px solid var(--hair);}
-.topbar-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:var(--topbar-h);padding:6px;}
+.topbar-inner{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  height:var(--topbar-h);
+  padding:6px;
+}
 .cluster-left,.cluster-right{display:flex;gap:8px;align-items:center;}
-.cluster-center{display:flex;align-items:center;justify-content:center;gap:8px;}
-
+.cluster-center{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transform:translateX(-8px); /* flytta lite vänster så paketet centreras visuellt mellan kartikon och sortering */
+}
 .icon-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;display:grid;place-items:center;cursor:pointer;}
 .icon-img{width:18px;height:18px;object-fit:contain;}
 
@@ -40,7 +48,6 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 .nav-btn.inactive{color:#94a3b8;opacity:.7;cursor:not-allowed;}
 
 .date-block{display:flex;flex-direction:column;align-items:center;font-weight:700;font-size:13.5px;line-height:1.1;}
-/* we’ll render 3 rader: Idag / veckodag / datum med JS */
 
 /* Sortering */
 .sort-stack{border:1px solid var(--hair);border-radius:10px;background:#fff;padding:4px 6px;display:flex;flex-direction:column;align-items:center;}
@@ -54,54 +61,58 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 /* Hint */
 .hint{position:sticky;top:var(--topbar-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair);text-align:center;font-size:12px;line-height:var(--hint-h);color:var(--muted);z-index:450;}
 
-/* Sticky arena slot – identical to arena headers in list */
-.group-slot{position:sticky;top:calc(var(--topbar-h) + var(--hint-h));height:var(--slot-h);display:flex;justify-content:space-between;align-items:center;padding:10px 12px;font-size:14px;font-weight:700;background:#fff;z-index:425;}
+/* Sticky arena slot — exakt samma stil som arena-header i listan */
+.group-slot{
+  position:sticky;top:calc(var(--topbar-h) + var(--hint-h));
+  height:var(--slot-h);
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 12px;font-size:14px;font-weight:700;background:#fff;z-index:425;
+}
 
-/* Scroll area */
+/* Scroll */
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);}
 
-/* Arena header in scroll */
-.arena-header{padding:10px 12px;background:#fff;font-weight:700;display:flex;justify-content:space-between;}
+/* Arena header (i scroll-listan) */
+.arena-header{padding:10px 12px;background:#fff;font-weight:700;display:flex;justify-content:space-between;border-top:1px solid var(--hair);}
+.arena-header:first-child{border-top:none;}
 .arena-header.active-hidden{visibility:hidden;height:0;padding:0;margin:0;border:none;}
 
-/* Game cards (shared) */
+/* Game card */
 .game{background:#fff;border-top:1px solid var(--hair);padding:6px 10px;display:grid;gap:4px;}
-/* top row differs per view but keep common flex */
 .game-top{display:flex;align-items:center;gap:8px;justify-content:space-between;}
-/* bottom row grid: [time] [homeName] [homeLogo] [result] [awayLogo] [awayName] */
-.game-bottom{display:grid;grid-template-columns:auto 1fr auto auto auto 1fr;align-items:center;column-gap:6px;}
+.game-bottom{display:grid;grid-template-columns:60px 1fr auto auto auto 1fr;align-items:center;column-gap:6px;} /* fast tid 60px */
 
 /* text atoms */
-.time{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;}
-.series{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+.time{font-size:12px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;}
+.series{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:clip;}
 .series a{text-decoration:none;color:var(--link);}
-
-/* in series view top row: left=series, mid=arena (constrained), right=distance placeholder */
+.series.nolink{color:#0f172a;}
 .top-left{min-width:0;flex:1;}
 .top-mid{min-width:0;text-align:center;flex:1;}
 .top-right{white-space:nowrap;color:var(--muted);font-size:12px;}
 
-/* team line */
-.team-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:600;}
+/* Teams */
+.team-name{white-space:nowrap;overflow:hidden;text-overflow:clip;font-size:13px;font-weight:600;}
 .team-name.home{text-align:right;padding-right:4px;}
 .team-name.away{text-align:left;padding-left:4px;}
 
-/* logos */
+/* Logos */
 .team-logo{width:28px;height:28px;object-fit:contain;display:block;background:none;}
 .logo-fallback{width:28px;height:28px;display:grid;place-items:center;font-size:11px;font-weight:700;color:#475569;background:#e2e8f0;border-radius:4px;}
 
-/* result box: fixed width + autoshrink font */
-.result-box{width:64px;min-width:64px;max-width:64px;padding:2px 6px;border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;text-align:center;font-weight:700;white-space:nowrap;}
-.result-box .link{color:var(--link);text-decoration:none;}
-.result-box .nolink{color:#0f172a;}
+/* Result box – smal fast bredd, jämn paddning */
+.result-box{width:52px;min-width:52px;max-width:52px;padding:1px 4px;border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;text-align:center;font-weight:700;white-space:nowrap;}
+.result-box .link{color:var(--link);text-decoration:none;display:inline-block;max-width:100%;overflow:hidden;}
+.result-box .nolink{color:#0f172a;display:inline-block;max-width:100%;overflow:hidden;}
 
-/* truncation + debug shrink */
-.trunc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.debug-shrunk{color:var(--danger)!important;}
+/* helpers: truncation with single '.' */
+.trunc-one{white-space:nowrap;overflow:hidden;}
+.debug-shrunk{ /* off by default; kept if you ever want to wire up debug=1 */ }
 
-/* responsive helpers (for larger screens we allow more room before trunc) */
-@media (min-width: 768px){
-  .result-box{width:72px;min-width:72px;max-width:72px;}
+/* larger screens – lite större box/logga */
+@media (min-width:768px){
+  .game-bottom{grid-template-columns:64px 1fr auto auto auto 1fr;}
+  .result-box{width:56px;min-width:56px;max-width:56px;}
   .team-logo{width:30px;height:30px;}
 }
 </style>
@@ -138,508 +149,412 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 
 <div class="hint" id="hintField">Visar matcher nära: Kruniusvägen 1, Billdal</div>
 
+<!-- sticky, identisk med lista -->
 <div id="groupSlot" class="group-slot"><div class="group-title">—</div><div class="group-sub">—</div></div>
 
 <main id="scrollArea" class="scroll"></main>
 
 <script>
-/* ==========================================================
-   CONFIG & STATE
-========================================================== */
-const DEBUG = new URLSearchParams(location.search).get("debug")==="1";
+/* ================== STATE & CONFIG ================== */
+const MODE={PLACE:"place",SERIES:"series",SERIES_TIME:"series_time"};
+let mode=MODE.PLACE;
+let ALL_GAMES=[], LOGO_MAP={};
+let currentDate=new Date().toISOString().slice(0,10);
 
-const MODE = { PLACE:"place", SERIES:"series", SERIES_TIME:"series_time" };
-let mode = MODE.PLACE;
+// user fixed position (Billdal)
+const USER_POS={lat:57.590214281624824, lon:11.94608216084837};
 
-const dateLabel = document.getElementById("dateLabel");
-const prevBtn = document.getElementById("prevDate");
-const nextBtn = document.getElementById("nextDate");
-const goHome = document.getElementById("goHome");
-const openMap = document.getElementById("openMap");
-const pillPlace = document.getElementById("pillPlace");
-const pillSeries = document.getElementById("pillSeries");
-const pillTime = document.getElementById("pillTime");
+// elements
+const dateLabel=document.getElementById("dateLabel");
+const prevBtn=document.getElementById("prevDate");
+const nextBtn=document.getElementById("nextDate");
+const pillPlace=document.getElementById("pillPlace");
+const pillSeries=document.getElementById("pillSeries");
+const pillTime=document.getElementById("pillTime");
+const goHome=document.getElementById("goHome");
+const openMap=document.getElementById("openMap");
+const scrollArea=document.getElementById("scrollArea");
+const groupSlot=document.getElementById("groupSlot");
 
-const scrollArea = document.getElementById("scrollArea");
-const groupSlot = document.getElementById("groupSlot");
-
-let ALL_GAMES = [];
-let LOGO_MAP = {};
-let currentDate = new Date().toISOString().slice(0,10);
-
-/* ==========================================================
-   UTIL: dates & labels
-========================================================== */
+/* ================== HELPERS ================== */
 function fmtDateParts(iso){
-  const d = new Date(iso+"T00:00:00");
-  const todayIso = new Date().toISOString().slice(0,10);
-  const isToday = (iso===todayIso);
-  const w = d.toLocaleDateString("sv-SE",{weekday:"short"});
-  const day = d.toLocaleDateString("sv-SE",{day:"numeric"});
-  const mon = d.toLocaleDateString("sv-SE",{month:"short"});
-  return {
-    line1: isToday ? "Idag" : "",
-    line2: w.charAt(0).toUpperCase()+w.slice(1), // ex: Tors
-    line3: `${day} ${mon}`
-  };
+  const d=new Date(iso+"T00:00:00");
+  const today=new Date().toISOString().slice(0,10);
+  const isToday=(iso===today);
+  const w=d.toLocaleDateString("sv-SE",{weekday:"short"});
+  const day=d.toLocaleDateString("sv-SE",{day:"numeric"});
+  const mon=d.toLocaleDateString("sv-SE",{month:"short"});
+  return { line1:isToday?"Idag":"", line2:w.charAt(0).toUpperCase()+w.slice(1), line3:`${day} ${mon}` };
 }
-
 function updateDateLabel(){
-  const p = fmtDateParts(currentDate);
-  dateLabel.innerHTML = `${p.line1?`<span>${p.line1}</span>`:""}<span>${p.line2}</span><span>${p.line3}</span>`;
+  const p=fmtDateParts(currentDate);
+  dateLabel.innerHTML=`${p.line1?`<span>${p.line1}</span>`:""}<span>${p.line2}</span><span>${p.line3}</span>`;
 }
-
-/* ==========================================================
-   NAV BUTTON STATE (green/gray depending on available days)
-========================================================== */
-function hasGamesOn(iso){
-  return ALL_GAMES.some(g=>g.date===iso);
-}
-function datePlus(iso,delta){
-  const d=new Date(iso); d.setDate(d.getDate()+delta); return d.toISOString().slice(0,10);
-}
+function datePlus(iso,delta){const d=new Date(iso); d.setDate(d.getDate()+delta); return d.toISOString().slice(0,10);}
+function hasGamesOn(iso){return ALL_GAMES.some(g=>g.date===iso);}
 function updateNavButtons(){
-  const prev = datePlus(currentDate,-1);
-  const next = datePlus(currentDate, 1);
-  if(hasGamesOn(prev)){ prevBtn.classList.add("active"); prevBtn.classList.remove("inactive"); } else { prevBtn.classList.remove("active"); prevBtn.classList.add("inactive"); }
-  if(hasGamesOn(next)){ nextBtn.classList.add("active"); nextBtn.classList.remove("inactive"); } else { nextBtn.classList.remove("active"); nextBtn.classList.add("inactive"); }
+  const prev=datePlus(currentDate,-1), next=datePlus(currentDate,1);
+  if(hasGamesOn(prev)){prevBtn.classList.add("active");prevBtn.classList.remove("inactive");} else {prevBtn.classList.remove("active");prevBtn.classList.add("inactive");}
+  if(hasGamesOn(next)){nextBtn.classList.add("active");nextBtn.classList.remove("inactive");} else {nextBtn.classList.remove("active");nextBtn.classList.add("inactive");}
 }
 
-/* ==========================================================
-   SORT PILLS
-========================================================== */
-function applyPills(){
-  pillPlace.className = (mode===MODE.PLACE) ? "pill on":"pill off";
-  pillSeries.className = (mode===MODE.SERIES||mode===MODE.SERIES_TIME) ? "pill on":"pill off";
-  pillTime.className = (mode===MODE.PLACE) ? "pill on lock" : ((mode===MODE.SERIES_TIME)?"pill on":"pill off");
+function km2(a,b){
+  const R=6371;
+  const dLat=(b.lat-a.lat)*Math.PI/180;
+  const dLon=(b.lon-a.lon)*Math.PI/180;
+  const la=a.lat*Math.PI/180, lb=b.lat*Math.PI/180;
+  const x=Math.sin(dLat/2)**2 + Math.sin(dLon/2)**2*Math.cos(la)*Math.cos(lb);
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
-pillPlace.onclick = ()=>{ mode=MODE.PLACE; applyPills(); render(); };
-pillSeries.onclick= ()=>{ mode=MODE.SERIES; applyPills(); render(); };
-pillTime.onclick  = ()=>{ if(mode!==MODE.PLACE){ mode=(mode===MODE.SERIES)?MODE.SERIES_TIME:MODE.SERIES; applyPills(); render(); } };
+function distKm(lat,long){
+  if(!lat||!long) return null;
+  const d=km2(USER_POS,{lat:parseFloat(lat),lon:parseFloat(long)});
+  return Math.round(d);
+}
+function applyTruncate(text,max){
+  if(!text) return "";
+  if(text.length<=max) return text;
+  return text.slice(0,max)+".";
+}
+function shrinkToFit(el,minPx=10,step=0.5){
+  el.style.fontSize="";
+  let size=parseFloat(getComputedStyle(el).fontSize);
+  for(let i=0;i<40;i++){
+    if(el.scrollWidth<=el.clientWidth) break;
+    size-=step; if(size<minPx){size=minPx;break;}
+    el.style.fontSize=size+"px";
+  }
+}
+function shrinkTextToWidth(el, targetPx){
+  el.style.display="inline-block";
+  el.style.maxWidth=targetPx+"px";
+  shrinkToFit(el,9,0.5);
+}
 
-/* ==========================================================
-   HOME / MAP
-========================================================== */
-goHome.onclick = ()=>{
-  currentDate = new Date().toISOString().slice(0,10);
-  mode = MODE.PLACE;
-  applyPills();
-  render();
-};
-openMap.onclick = ()=>{}; // no-op for now
-
-prevBtn.onclick = ()=>{ const d = datePlus(currentDate,-1); currentDate = d; render(); };
-nextBtn.onclick = ()=>{ const d = datePlus(currentDate, 1); currentDate = d; render(); };
-
-/* ==========================================================
-   LOAD DATA
-========================================================== */
+/* ================== DATA LOAD ================== */
 Promise.all([
   fetch("data/Clubs_Organisatons_logos__ClubOrgName_LogoFileName.txt").then(r=>r.text()),
-  fetch("data/games.csv").then(r=>r.text()),
+  fetch("data/games.csv").then(r=>r.text())
 ]).then(([logosTxt,gamesCsv])=>{
-  // logos map
   logosTxt.split("\n").forEach(line=>{
     if(!line.trim()) return;
-    const [club, file] = line.split(";");
-    if(club && file) LOGO_MAP[club.trim()] = "logos/" + file.trim();
+    const [club,file]=line.split(";");
+    if(club&&file) LOGO_MAP[club.trim()]="logos/"+file.trim();
   });
 
-  // games
   gamesCsv.split("\n").forEach(row=>{
     if(!row.trim()) return;
-    const cols = row.split(";");
-    if(cols.length < 19) return;
+    const c=row.split(";");
+    if(c.length<19) return;
     ALL_GAMES.push({
-      date:cols[0],
-      time:cols[1],
-      series_name:cols[2],
-      link_to_series:cols[3],
-      admin_host:cols[4],
-      home_team:cols[5],
-      away_team:cols[6],
-      result:cols[7],
-      result_link:cols[8],
-      arena:cols[9],
-      status:cols[10],
-      iteration_fetched:cols[11],
-      iterations_total:cols[12],
-      home_club_list:cols[13],
-      away_club_list:cols[14],
-      arena_nbr:cols[15],
-      preferedName:cols[16],
-      lat:cols[17],
-      long:cols[18]
+      date:c[0], time:c[1], series_name:c[2], link_to_series:c[3], admin_host:c[4],
+      home_team:c[5], away_team:c[6], result:c[7], result_link:c[8],
+      arena:c[9], status:c[10], iteration_fetched:c[11], iterations_total:c[12],
+      home_club_list:c[13], away_club_list:c[14], arena_nbr:c[15],
+      preferedName:c[16], lat:c[17], long:c[18]
     });
   });
-
   render();
 });
 
-/* ==========================================================
-   LOGO HELPERS: mapping + smart trim (white+transparent)
-========================================================== */
-function firstClubName(list){ if(!list) return null; return list.split(",")[0]?.trim() || null; }
-function logoForClubList(list){
-  const club = firstClubName(list);
-  if(!club) return null;
-  return LOGO_MAP[club] || null;
+/* ================== SORT PILLS & NAV ================== */
+function applyPills(){
+  pillPlace.className=(mode===MODE.PLACE)?"pill on":"pill off";
+  pillSeries.className=(mode===MODE.SERIES||mode===MODE.SERIES_TIME)?"pill on":"pill off";
+  pillTime.className=(mode===MODE.PLACE)?"pill on lock":(mode===MODE.SERIES_TIME?"pill on":"pill off");
 }
+pillPlace.onclick=()=>{mode=MODE.PLACE;applyPills();render();};
+pillSeries.onclick=()=>{mode=MODE.SERIES;applyPills();render();};
+pillTime.onclick=()=>{if(mode!==MODE.PLACE){mode=(mode===MODE.SERIES)?MODE.SERIES_TIME:MODE.SERIES;applyPills();render();}};
+goHome.onclick=()=>{currentDate=new Date().toISOString().slice(0,10);mode=MODE.PLACE;applyPills();render();};
+openMap.onclick=()=>{};
+prevBtn.onclick=()=>{currentDate=datePlus(currentDate,-1);render();};
+nextBtn.onclick=()=>{currentDate=datePlus(currentDate, 1);render();};
 
-const LOGO_CACHE = {};
-async function loadAndTrimLogo(url){
-  if(!url) return null;
-  if(LOGO_CACHE[url]) return LOGO_CACHE[url];
-  return new Promise(resolve=>{
-    const img = new Image();
-    img.crossOrigin="anonymous";
-    img.onload = ()=>{
-      const w = img.width, h = img.height;
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      canvas.width = w; canvas.height = h;
-      ctx.drawImage(img,0,0);
-      const data = ctx.getImageData(0,0,w,h).data;
-
-      let minX=w, minY=h, maxX=0, maxY=0;
-      const isBg = (r,g,b,a)=>(a===0) || (r>245 && g>245 && b>245 && a>240);
-
-      for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-          const i=(y*w+x)*4;
-          const r=data[i], g=data[i+1], b=data[i+2], a=data[i+3];
-          if(!isBg(r,g,b,a)){ minX=Math.min(minX,x); minY=Math.min(minY,y); maxX=Math.max(maxX,x); maxY=Math.max(maxY,y); }
-        }
-      }
-      if(minX>maxX || minY>maxY){ LOGO_CACHE[url]=url; return resolve(url); }
-      const trimW=maxX-minX+1, trimH=maxY-minY+1;
-      const out=document.createElement("canvas");
-      out.width=trimW; out.height=trimH;
-      out.getContext("2d").drawImage(canvas,minX,minY,trimW,trimH,0,0,trimW,trimH);
-      const dataUrl = out.toDataURL("image/png");
-      LOGO_CACHE[url]=dataUrl;
-      resolve(dataUrl);
-    };
-    img.onerror = ()=>resolve(null);
-    img.src = url;
-  });
-}
-
-/* ==========================================================
-   TEXT: trunc + fit (shrink) helpers
-========================================================== */
-function applyTruncate(text, maxChars){
-  if(text.length<=maxChars) return text;
-  return text.slice(0, maxChars) + ".";
-}
-
-/* shrink-to-fit: reduce font-size until it fits on one line */
-function shrinkToFit(el, minPx=10){
-  // reset inline font-size first
-  el.style.fontSize = "";
-  const computed = parseFloat(getComputedStyle(el).fontSize);
-  let size = computed;
-  let shrunk = false;
-
-  // safety loop
-  for(let i=0;i<20;i++){
-    if(el.scrollWidth<=el.clientWidth) break;
-    size -= 0.5;
-    if(size<minPx){ size=minPx; break; }
-    el.style.fontSize = size+"px";
-    shrunk = true;
-  }
-
-  if(DEBUG && shrunk){
-    el.classList.add("debug-shrunk");
-  }else{
-    el.classList.remove("debug-shrunk");
-  }
-}
-
-/* shrink specific for result text inside fixed box */
-function shrinkResultText(el, minPx=10){
-  el.style.fontSize = "";
-  const computed = parseFloat(getComputedStyle(el).fontSize);
-  let size = computed;
-  let shrunk = false;
-  for(let i=0;i<20;i++){
-    if(el.scrollWidth<=el.clientWidth) break;
-    size -= 0.8;
-    if(size<minPx){ size=minPx; break; }
-    el.style.fontSize = size+"px";
-    shrunk = true;
-  }
-  if(DEBUG && shrunk){
-    el.classList.add("debug-shrunk");
-  }else{
-    el.classList.remove("debug-shrunk");
-  }
-}
-
-/* ==========================================================
-   RENDER
-========================================================== */
+/* ================== RENDER ROOT ================== */
 function render(){
   updateDateLabel();
-  updateNavButtons();
   applyPills();
+  updateNavButtons();
 
-  const gamesForDay = ALL_GAMES.filter(g=>g.date===currentDate);
-  scrollArea.innerHTML = "";
+  const games=ALL_GAMES.filter(g=>g.date===currentDate);
+  scrollArea.innerHTML="";
 
-  if(!gamesForDay.length){
-    scrollArea.innerHTML = `<div style="padding:16px;background:#fff;border-top:1px solid var(--hair);">Inga matcher denna dag.</div>`;
-    groupSlot.querySelector(".group-title").textContent = "—";
-    groupSlot.querySelector(".group-sub").textContent = "—";
+  if(!games.length){
+    groupSlot.querySelector(".group-title").textContent="—";
+    groupSlot.querySelector(".group-sub").textContent="—";
+    scrollArea.innerHTML=`<div style="padding:16px;background:#fff;border-top:1px solid var(--hair);">Inga matcher denna dag.</div>`;
     return;
   }
 
-  if(mode===MODE.PLACE){
-    renderPlaceView(gamesForDay);
-  }else{
-    renderSeriesView(gamesForDay);
-  }
+  if(mode===MODE.PLACE) renderPlaceView(games);
+  else renderSeriesView(games);
 }
 
-/* ---------------- PLACE VIEW ---------------- */
+/* ================== PLACE VIEW ================== */
 function renderPlaceView(games){
-  // group by arena (PreferedName fallback arena)
-  const byArena = {};
+  const byArena={};
   games.forEach(g=>{
-    const a = g.preferedName?.trim() || g.arena?.trim() || "Okänd arena";
+    const a=(g.preferedName||g.arena||"Okänd arena").trim();
     (byArena[a] ||= []).push(g);
   });
 
-  const arenas = Object.keys(byArena).sort((a,b)=> a.localeCompare(b));
+  // sort arenas by distance (closest first). Take lat/long from first game in the group
+  const arenas=Object.keys(byArena).map(name=>{
+    const any=byArena[name][0];
+    const d=distKm(any.lat, any.long);
+    return {name,d,lat:any.lat,long:any.long};
+  }).sort((a,b)=> (a.d??1e9)-(b.d??1e9));
 
-  // initial active arena in sticky slot
+  // sticky slot initial (only arenas with games)
   if(arenas.length){
-    groupSlot.querySelector(".group-title").textContent = arenas[0];
-    groupSlot.querySelector(".group-sub").textContent = ""; // distance placeholder
+    const a=arenas[0];
+    groupSlot.querySelector(".group-title").textContent=a.name;
+    groupSlot.querySelector(".group-sub").textContent = (a.d!=null)?`Avst ${a.d} km`:"Avst —";
   }
 
-  // build list
-  arenas.forEach(ar=>{
-    // arena header in list
-    const hdr = document.createElement("div");
+  // build list: header + games (time order)
+  arenas.forEach(a=>{
+    const hdr=document.createElement("div");
     hdr.className="arena-header";
-    hdr.dataset.arenaHeader = ar;
-    hdr.innerHTML = `<div>${ar}</div><div class="top-right">Avst —</div>`;
+    hdr.dataset.arenaHeader=a.name;
+    hdr.innerHTML=`<div>${a.name}</div><div class="top-right">${a.d!=null ? `Avst ${a.d} km` : 'Avst —'}</div>`;
     scrollArea.appendChild(hdr);
 
-    // games sorted by time
-    byArena[ar].sort((a,b)=> a.time.localeCompare(b.time))
-               .forEach(g=> scrollArea.appendChild(buildGameCard(g,false)));
+    byArena[a.name].sort((x,y)=>x.time.localeCompare(y.time)).forEach(g=>{
+      scrollArea.appendChild(buildGameCard(g,false, a.d));
+    });
   });
 
-  applyPlaceSticky(arenas);
+  // sticky behavior: switch when active arena has no games >=25% visible
+  applyPlaceSticky(arenas.map(a=>a.name));
 }
 
-/* sticky logic (proven stable pattern from earlier good version) */
-function applyPlaceSticky(arenas){
-  let currentArena = arenas[0];
-  const stickyBottom = ()=> groupSlot.getBoundingClientRect().bottom;
+function applyPlaceSticky(arenaNames){
+  let current=arenaNames[0]||null;
+  const VIEW_TOP = ()=> groupSlot.getBoundingClientRect().bottom;
+  const VIEW_BOTTOM = ()=> window.innerHeight;
 
-  const onScroll = ()=>{
-    const sb = stickyBottom();
-    for(let i=0;i<arenas.length-1;i++){
-      const next = arenas[i+1];
-      const hdr = scrollArea.querySelector(`.arena-header[data-arena-header="${next}"]`);
-      const r = hdr.getBoundingClientRect();
-      // switch when next header is >= 50% covered
-      if(r.top < sb && (sb - r.top) >= r.height*0.5){
-        currentArena = next;
+  function arenaGamesVisibleRatio(name){
+    const games=[...scrollArea.querySelectorAll(`article.game[data-arena="${CSS.escape(name)}"]`)];
+    let maxRatio=0;
+    const top=VIEW_TOP(), bottom=VIEW_BOTTOM();
+    games.forEach(el=>{
+      const r=el.getBoundingClientRect();
+      const vis=Math.max(0, Math.min(bottom,r.bottom) - Math.max(top,r.top));
+      const ratio=vis/Math.max(1,(r.height));
+      if(ratio>maxRatio) maxRatio=ratio;
+    });
+    return maxRatio; // 0..1
+  }
+
+  function onScroll(){
+    // hide only active header
+    arenaNames.forEach(n=>{
+      const hdr=scrollArea.querySelector(`.arena-header[data-arena-header="${CSS.escape(n)}"]`);
+      if(hdr) hdr.classList.toggle("active-hidden", n===current);
+    });
+
+    const idx=arenaNames.indexOf(current);
+    if(idx<0) return;
+
+    // if current has no sufficiently visible games → advance to next if any (down) or prev (up)
+    const currRatio=arenaGamesVisibleRatio(current);
+
+    // decide direction by looking at next header position vs sticky bottom
+    const sb=VIEW_TOP();
+    let dir="down";
+    if(idx>0){
+      const prevHdr=scrollArea.querySelector(`.arena-header[data-arena-header="${CSS.escape(arenaNames[idx-1])}"]`);
+      if(prevHdr && prevHdr.getBoundingClientRect().top>=sb) dir="up";
+    }
+
+    if(currRatio < 0.25){ // less than 25% visible → switch
+      if(dir==="down" && idx<arenaNames.length-1) current=arenaNames[idx+1];
+      else if(dir==="up" && idx>0) current=arenaNames[idx-1];
+    }else{
+      // also allow forward switch when next header is ≥50% covered
+      if(idx<arenaNames.length-1){
+        const nextHdr=scrollArea.querySelector(`.arena-header[data-arena-header="${CSS.escape(arenaNames[idx+1])}"]`);
+        const r=nextHdr.getBoundingClientRect();
+        if(r.top<sb && (sb-r.top)>=r.height*0.5) current=arenaNames[idx+1];
       }
     }
-    // update slot
-    groupSlot.querySelector(".group-title").textContent = currentArena;
-    groupSlot.querySelector(".group-sub").textContent = "";
-    // hide active header only
-    arenas.forEach(a=>{
-      const hdr = scrollArea.querySelector(`.arena-header[data-arena-header="${a}"]`);
-      hdr.classList.toggle("active-hidden", a===currentArena);
-    });
-  };
 
-  scrollArea.removeEventListener("scroll", onScroll); // ensure not doubled
+    // update sticky label
+    const activeHdr=scrollArea.querySelector(`.arena-header[data-arena-header="${CSS.escape(current)}"]`);
+    const right=activeHdr?.querySelector(".top-right")?.textContent || "Avst —";
+    groupSlot.querySelector(".group-title").textContent=current||"—";
+    groupSlot.querySelector(".group-sub").textContent=right;
+  }
+
+  scrollArea.removeEventListener("scroll", onScroll);
   scrollArea.addEventListener("scroll", onScroll, {passive:true});
-  onScroll(); // initial
+  onScroll();
 }
 
-/* ---------------- SERIES VIEW ---------------- */
+/* ================== SERIES VIEW ================== */
 function renderSeriesView(games){
-  // sort by series, then time if SERIES_TIME
-  const sortBy = (a,b)=>{
-    if(mode===MODE.SERIES_TIME){
-      return a.time.localeCompare(b.time) || a.series_name.localeCompare(b.series_name);
-    }else{
-      return a.series_name.localeCompare(b.series_name) || a.time.localeCompare(b.time);
-    }
-  };
-  games.sort(sortBy);
-  // no arena headers in series view
-  groupSlot.querySelector(".group-title").textContent = "—";
-  groupSlot.querySelector(".group-sub").textContent = "—";
+  // sort: series then time (or time then series)
+  const sorted=[...games].sort((a,b)=>{
+    if(mode===MODE.SERIES_TIME) return a.time.localeCompare(b.time) || a.series_name.localeCompare(b.series_name);
+    return a.series_name.localeCompare(b.series_name) || a.time.localeCompare(b.time);
+  });
 
-  games.forEach(g=> scrollArea.appendChild(buildGameCard(g,true)));
+  // sticky slot not used
+  groupSlot.querySelector(".group-title").textContent="—";
+  groupSlot.querySelector(".group-sub").textContent="—";
+
+  sorted.forEach(g=>{
+    const d = distKm(g.lat,g.long);
+    scrollArea.appendChild(buildGameCard(g,true,d));
+  });
 }
 
-/* ---------------- GAME CARD BUILDER ---------------- */
-function buildGameCard(g, seriesMode){
-  const card = document.createElement("article");
-  card.className = "game";
+/* ================== CARD BUILDER ================== */
+function firstClubName(list){ if(!list) return null; return list.split(",")[0]?.trim()||null; }
+function mapLogo(list){ const c=firstClubName(list); return c? LOGO_MAP[c]||null : null; }
 
-  // top row
-  const top = document.createElement("div");
-  top.className = "game-top";
+const LOGO_CACHE={};
+function loadAndTrimLogo(url){
+  if(!url) return Promise.resolve(null);
+  if(LOGO_CACHE[url]) return Promise.resolve(LOGO_CACHE[url]);
+  return new Promise(res=>{
+    const img=new Image(); img.crossOrigin="anonymous";
+    img.onload=()=>{
+      const w=img.width,h=img.height;
+      const cv=document.createElement("canvas"), cx=cv.getContext("2d");
+      cv.width=w; cv.height=h; cx.drawImage(img,0,0);
+      const id=cx.getImageData(0,0,w,h); const d=id.data;
+      let minX=w,minY=h,maxX=0,maxY=0,found=false;
+      const isBg=(r,g,b,a)=> (a===0) || (r>245&&g>245&&b>245&&a>240);
+      for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+          const i=(y*w+x)*4, r=d[i],g=d[i+1],b=d[i+2],a=d[i+3];
+          if(!isBg(r,g,b,a)){found=true; if(x<minX)minX=x; if(y<minY)minY=y; if(x>maxX)maxX=x; if(y>maxY)maxY=y;}
+        }
+      }
+      if(!found){ LOGO_CACHE[url]=url; return res(url); }
+      const tw=maxX-minX+1, th=maxY-minY+1;
+      const out=document.createElement("canvas"); out.width=tw; out.height=th;
+      out.getContext("2d").drawImage(cv,minX,minY,tw,th,0,0,tw,th);
+      const dataUrl=out.toDataURL("image/png");
+      LOGO_CACHE[url]=dataUrl; res(dataUrl);
+    };
+    img.onerror=()=>res(null);
+    img.src=url;
+  });
+}
 
-  if(seriesMode){
-    // left: series (max 30)
-    const left = document.createElement("div");
-    left.className = "top-left series trunc";
-    left.dataset.fulltext = g.series_name || "";
-    left.textContent = applyTruncate(left.dataset.fulltext, 30);
+function buildGameCard(g, isSeries, distOverrideKm){
+  const card=document.createElement("article"); card.className="game";
+
+  /* --------- TOP ROW --------- */
+  const top=document.createElement("div"); top.className="game-top";
+  if(isSeries){
+    const left=document.createElement("div");
+    left.className="top-left series trunc-one";
+    const serText=applyTruncate(g.series_name||"",30);
+    if(g.link_to_series){ left.innerHTML=`<a href="${g.link_to_series}" target="_blank" rel="noopener">${serText}</a>`; }
+    else { left.classList.add("nolink"); left.textContent=serText; }
     top.appendChild(left);
 
-    // mid: arena (max 25) – centered area
-    const mid = document.createElement("div");
-    mid.className = "top-mid trunc";
-    const arenaName = (g.preferedName?.trim() || g.arena?.trim() || "Okänd arena");
-    mid.dataset.fulltext = arenaName;
-    mid.textContent = applyTruncate(arenaName, 25);
+    const mid=document.createElement("div");
+    mid.className="top-mid trunc-one";
+    const arenaName=applyTruncate((g.preferedName||g.arena||"Okänd arena").trim(),25);
+    mid.textContent=arenaName;
     top.appendChild(mid);
 
-    // right: distance placeholder
-    const right = document.createElement("div");
-    right.className = "top-right";
-    right.textContent = "Avst —";
+    const right=document.createElement("div"); right.className="top-right";
+    const d = (distOverrideKm!=null?distOverrideKm:distKm(g.lat,g.long));
+    right.textContent = (d!=null)?`Avst ${d} km`:"Avst —";
     top.appendChild(right);
   }else{
-    // place view top row: time + series (max 50)
-    const leftWrap = document.createElement("div");
+    const leftWrap=document.createElement("div");
     leftWrap.style.display="flex"; leftWrap.style.gap="8px"; leftWrap.style.alignItems="center"; leftWrap.style.minWidth="0";
-    const time = document.createElement("div");
-    time.className="time";
-    time.textContent = g.time || "";
-    leftWrap.appendChild(time);
 
-    const ser = document.createElement("div");
-    ser.className="series trunc";
-    ser.dataset.fulltext = g.series_name || "";
-    ser.innerHTML = g.link_to_series ? `<a href="${g.link_to_series}" target="_blank" rel="noopener">${applyTruncate(ser.dataset.fulltext, 50)}</a>` : applyTruncate(ser.dataset.fulltext, 50);
+    const ser=document.createElement("div"); ser.className="series trunc-one";
+    const serText=applyTruncate(g.series_name||"",50);
+    if(g.link_to_series){ ser.innerHTML=`<a href="${g.link_to_series}" target="_blank" rel="noopener">${serText}</a>`; }
+    else { ser.classList.add("nolink"); ser.textContent=serText; }
     leftWrap.appendChild(ser);
 
-    // spacer to push to left; we don't need right side cell in place-mode
-    top.appendChild(leftWrap);
-    const spacer = document.createElement("div"); spacer.style.flex="1";
-    top.appendChild(spacer);
+    const spacer=document.createElement("div"); spacer.style.flex="1";
+    top.appendChild(leftWrap); top.appendChild(spacer);
   }
   card.appendChild(top);
 
-  // bottom row: [time] [homeName] [homeLogo] [result] [awayLogo] [awayName]
-  const bot = document.createElement("div");
-  bot.className = "game-bottom";
+  /* --------- BOTTOM ROW --------- */
+  const bot=document.createElement("div"); bot.className="game-bottom";
 
-  // time (always on bottom row in series view; also in place view for alignment)
-  const t = document.createElement("div");
-  t.className="time";
-  t.textContent = g.time || "";
+  // TIME (fixed width, shrink including "Postponed")
+  const t=document.createElement("div"); t.className="time";
+  t.textContent = (g.status && g.status.toLowerCase().includes("postponed")) ? "Postponed" : (g.time||"");
   bot.appendChild(t);
 
-  // home name (right-aligned to its logo)
-  const homeName = document.createElement("div");
-  homeName.className="team-name home trunc";
-  homeName.dataset.fulltext = g.home_team || "";
-  homeName.textContent = applyTruncate(homeName.dataset.fulltext, 30);
+  // HOME NAME
+  const homeName=document.createElement("div"); homeName.className="team-name home trunc-one";
+  homeName.textContent=applyTruncate(g.home_team||"",30);
   bot.appendChild(homeName);
 
-  // home logo
-  const homeLogoUrl = logoForClubList(g.home_club_list);
-  const homeLogoEl = document.createElement("img");
-  homeLogoEl.className="team-logo home-logo";
-  if(homeLogoUrl){
-    loadAndTrimLogo(homeLogoUrl).then(u=>{ if(u) homeLogoEl.src=u; else homeLogoEl.replaceWith(makeLogoFallback(g.home_team)); });
-  }else{
-    homeLogoEl.replaceWith(makeLogoFallback(g.home_team));
-  }
-  bot.appendChild(homeLogoEl);
+  // HOME LOGO
+  const hLogoUrl=mapLogo(g.home_club_list);
+  const hImg=document.createElement("img"); hImg.className="team-logo";
+  if(hLogoUrl){ loadAndTrimLogo(hLogoUrl).then(u=>{ if(u) hImg.src=u; else hImg.replaceWith(makeLogoFallback(g.home_team)); }); }
+  else { hImg.replaceWith(makeLogoFallback(g.home_team)); }
+  bot.appendChild(hImg);
 
-  // result box (fixed width)
-  const res = document.createElement("div");
-  res.className="result-box";
-  const resVal = (g.result && g.result.trim()) ? g.result.trim() : "–";
-  if(g.result_link && g.result_link.trim() && resVal!=="–"){
-    res.innerHTML = `<a class="link" href="${g.result_link}" target="_blank" rel="noopener">${resVal}</a>`;
-  }else{
-    res.innerHTML = `<span class="nolink">${resVal}</span>`;
-  }
+  // RESULT BOX
+  const res=document.createElement("div"); res.className="result-box";
+  const val=(g.result && g.result.trim())?g.result.trim():"–";
+  if(g.result_link && g.result_link.trim() && val!=="–"){ res.innerHTML=`<a class="link">${val}</a>`; res.querySelector("a").href=g.result_link; res.querySelector("a").target="_blank"; res.querySelector("a").rel="noopener"; }
+  else { res.innerHTML=`<span class="nolink">${val}</span>`; }
   bot.appendChild(res);
 
-  // away logo
-  const awayLogoUrl = logoForClubList(g.away_club_list);
-  const awayLogoEl = document.createElement("img");
-  awayLogoEl.className="team-logo away-logo";
-  if(awayLogoUrl){
-    loadAndTrimLogo(awayLogoUrl).then(u=>{ if(u) awayLogoEl.src=u; else awayLogoEl.replaceWith(makeLogoFallback(g.away_team)); });
-  }else{
-    awayLogoEl.replaceWith(makeLogoFallback(g.away_team));
-  }
-  bot.appendChild(awayLogoEl);
+  // AWAY LOGO
+  const aLogoUrl=mapLogo(g.away_club_list);
+  const aImg=document.createElement("img"); aImg.className="team-logo";
+  if(aLogoUrl){ loadAndTrimLogo(aLogoUrl).then(u=>{ if(u) aImg.src=u; else aImg.replaceWith(makeLogoFallback(g.away_team)); }); }
+  else { aImg.replaceWith(makeLogoFallback(g.away_team)); }
+  bot.appendChild(aImg);
 
-  // away name (left-aligned from its logo)
-  const awayName = document.createElement("div");
-  awayName.className="team-name away trunc";
-  awayName.dataset.fulltext = g.away_team || "";
-  awayName.textContent = applyTruncate(awayName.dataset.fulltext, 30);
+  // AWAY NAME
+  const awayName=document.createElement("div"); awayName.className="team-name away trunc-one";
+  awayName.textContent=applyTruncate(g.away_team||"",30);
   bot.appendChild(awayName);
 
   card.appendChild(bot);
 
-  // FIT PHASE (after in DOM)
+  // fit phase after DOM
   requestAnimationFrame(()=>{
-    if(seriesMode){
-      // top-left (series 30), top-mid (arena 25)
-      const left = top.querySelector(".top-left");
-      const mid = top.querySelector(".top-mid");
-      shrinkToFit(left);
-      shrinkToFit(mid);
+    if(isSeries){
+      shrinkToFit(top.querySelector(".top-left"));
+      shrinkToFit(top.querySelector(".top-mid"));
     }else{
-      // place mode: series 50
-      const ser = top.querySelector(".series");
-      if(ser){ shrinkToFit(ser); }
+      shrinkToFit(top.querySelector(".series"));
     }
+    shrinkToFit(homeName); shrinkToFit(awayName);
+    // shrink time width to fixed 60px area (or 64px on md)
+    const timeCell=t;
+    const timeWidth=parseFloat(getComputedStyle(bot).gridTemplateColumns.split(" ")[0]); // "60px"
+    shrinkTextToWidth(timeCell, timeWidth-6);
 
-    // names
-    shrinkToFit(homeName);
-    shrinkToFit(awayName);
-
-    // result shrink
-    const resText = res.querySelector(".link") || res.querySelector(".nolink");
-    if(resText){ shrinkResultText(resText); }
+    // result text shrink inside fixed box
+    const resText=res.querySelector("a")||res.querySelector(".nolink");
+    shrinkToFit(resText,9,0.8);
   });
+
+  // annotate arena for sticky calculation
+  card.dataset.arena = (g.preferedName||g.arena||"Okänd arena").trim();
 
   return card;
 }
 
-/* initials fallback logo */
 function makeLogoFallback(name){
-  const el = document.createElement("div");
-  el.className = "logo-fallback";
-  const initials = makeInitials(name||"—");
-  el.textContent = initials;
-  return el;
+  const el=document.createElement("div"); el.className="logo-fallback";
+  const initials=(name||"").split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0].toUpperCase()).join("")||"—";
+  el.textContent=initials; return el;
 }
-function makeInitials(name){
-  // Example: "Frölunda Hockey Club" -> "FHC"
-  const parts = (name||"").split(/\s+/).filter(Boolean);
-  if(!parts.length) return "—";
-  return parts.slice(0,3).map(w=>w[0].toUpperCase()).join("");
-}
-
-/* ==========================================================
-   END
-========================================================== */
 </script>
 </div>
 </body>
