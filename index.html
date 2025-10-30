@@ -1,15 +1,14 @@
 <!doctype html>
 <html lang="sv">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<title>LocalSport v18.4</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="mobile-web-app-capable" content="yes" />
+<title>LocalSport</title>
 
 <style>
-/* ---------------- ROOT THEME ---------------- */
 :root{
   --topbar-h:56px;
   --hint-h:26px;
@@ -20,823 +19,629 @@
   --muted:#64748b;
   --accent:#16a34a;
   --link:#2563eb;
-  --pill-off:#f1f5f9;
-  --pill-on:#dcfce7;
-  --card:#ffffff;
-  --result-w:86px; /* fast resultatbox-bredd */
+  --danger:#ef4444;
 }
 
-/* ---------------- RESET / BASE ---------------- */
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--text);overscroll-behavior:none}
-.device{width:100%;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--text);overscroll-behavior:none;}
+.device{width:100%;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
 
-/* ---------------- TOP BAR ---------------- */
-.topbar{position:sticky;top:0;z-index:500;background:#fff;border-bottom:1px solid var(--hair)}
-.topbar-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:var(--topbar-h);padding:6px}
-.cluster-left,.cluster-right{display:flex;gap:8px;align-items:center}
-.icon-btn{
-  width:36px;height:36px;border-radius:10px;border:1px solid var(--hair);
-  background:#f8fafc;display:grid;place-items:center;cursor:pointer;
-}
-.icon-img{width:20px;height:20px;object-fit:contain}
-.cluster-center{display:flex;align-items:center;justify-content:center;gap:8px}
-.date-block{display:flex;flex-direction:column;align-items:center;font-weight:700;font-size:13.5px;line-height:1.1;min-width:90px}
-.arrow{
-  width:32px;height:32px;border-radius:10px;border:1px solid var(--hair);
-  background:#fff;display:grid;place-items:center;cursor:pointer;font-weight:800;
-}
-.arrow.green{color:#16a34a;border-color:#86efac;background:#f0fdf4}
-.arrow.gray{color:#94a3b8;background:#f8fafc;border-color:#e2e8f0}
-.arrow span{display:block;transform:translateY(-0.5px)} /* optisk centrering */
+/* Topbar */
+.topbar{position:sticky;top:0;z-index:500;background:#fff;border-bottom:1px solid var(--hair);}
+.topbar-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:var(--topbar-h);padding:6px;}
+.cluster-left,.cluster-right{display:flex;gap:8px;align-items:center;}
+.cluster-center{display:flex;align-items:center;justify-content:center;gap:8px;}
 
-/* ---------------- SORTERING ---------------- */
-.sort-stack{border:1px solid var(--hair);border-radius:10px;background:#fff;padding:4px 6px;display:flex;flex-direction:column;align-items:center}
-.sort-top{font-size:12px;font-weight:600;margin-bottom:2px}
-.sort-bottom{display:flex;gap:4px}
-.pill{padding:4px 8px;font-size:11px;border-radius:999px;font-weight:600;border:1px solid var(--hair);user-select:none;cursor:pointer}
-.pill.on{background:var(--pill-on);border-color:#86efac;color:var(--accent)}
-.pill.off{background:var(--pill-off);border-color:#cbd5e1;color:#94a3b8}
-.pill.lock{opacity:.65;cursor:not-allowed}
+.icon-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;display:grid;place-items:center;cursor:pointer;}
+.icon-img{width:18px;height:18px;object-fit:contain;}
 
-/* ---------------- HINT ---------------- */
-.hint{
-  position:sticky;top:var(--topbar-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair);
-  text-align:center;font-size:12px;line-height:var(--hint-h);color:var(--muted);z-index:450
-}
+.nav-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;display:grid;place-items:center;cursor:pointer;font-size:16px;font-weight:700;line-height:1;}
+.nav-btn.active{color:var(--accent);}
+.nav-btn.inactive{color:#94a3b8;opacity:.7;cursor:not-allowed;}
 
-/* ---------------- STICKY ARENA SLOT ---------------- */
-.group-slot{
-  position:sticky;top:calc(var(--topbar-h) + var(--hint-h));height:var(--slot-h);
-  display:flex;justify-content:space-between;align-items:center;padding:10px 12px;font-size:14px;font-weight:700;
-  background:#fff;border-bottom:1px dashed var(--hair);z-index:425
-}
+.date-block{display:flex;flex-direction:column;align-items:center;font-weight:700;font-size:13.5px;line-height:1.1;}
+/* we’ll render 3 rader: Idag / veckodag / datum med JS */
 
-/* ---------------- SCROLL AREA ---------------- */
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg)}
+/* Sortering */
+.sort-stack{border:1px solid var(--hair);border-radius:10px;background:#fff;padding:4px 6px;display:flex;flex-direction:column;align-items:center;}
+.sort-top{font-size:12px;font-weight:600;margin-bottom:2px;}
+.sort-bottom{display:flex;gap:4px;}
+.pill{padding:4px 8px;font-size:11px;border-radius:999px;font-weight:600;border:1px solid var(--hair);cursor:pointer;user-select:none;}
+.pill.on{background:#dcfce7;border-color:#86efac;color:var(--accent);}
+.pill.off{background:#f1f5f9;border-color:#cbd5e1;color:#94a3b8;}
+.pill.lock{opacity:.6;cursor:not-allowed;}
 
-/* ---------------- ARENA HEADER (i listan) ---------------- */
-.arena-header{
-  padding:10px 12px;background:#fff;border-bottom:1px dashed var(--hair);font-weight:700;display:flex;justify-content:space-between
-}
-.arena-header.active-hidden{visibility:hidden;height:0;padding:0;margin:0;border:none}
+/* Hint */
+.hint{position:sticky;top:var(--topbar-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair);text-align:center;font-size:12px;line-height:var(--hint-h);color:var(--muted);z-index:450;}
 
-/* ---------------- GAME CARD ---------------- */
-.game{background:var(--card);border-top:1px dashed #e5e7eb;padding:8px 12px;display:grid;gap:6px}
+/* Sticky arena slot – identical to arena headers in list */
+.group-slot{position:sticky;top:calc(var(--topbar-h) + var(--hint-h));height:var(--slot-h);display:flex;justify-content:space-between;align-items:center;padding:10px 12px;font-size:14px;font-weight:700;background:#fff;z-index:425;}
 
-/* Top-rad (Plats-vy) */
-.game-top{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
-.game-time{font-weight:700;white-space:nowrap}
-.game-series{min-width:0}
-.game-series a{
-  text-decoration:none;font-weight:600;color:var(--link);
-  display:inline-block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  max-width:100%;
-}
+/* Scroll area */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);}
 
-/* Top-rad (Serie-vy) layout: vänster = serie, höger = arena + avstånd */
-.ser-top{display:flex;align-items:center;gap:8px}
-.ser-left{flex:1 1 50%;min-width:0}
-.ser-right{flex:1 1 50%;min-width:0;display:flex;justify-content:flex-end;gap:10px;align-items:center}
-.ser-arena{
-  max-width:calc(50vw - 70px); /* “mitthälften”, kommer justeras JS vid olika viewport */
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;text-align:right
-}
-.ser-dist{white-space:nowrap;font-size:12px;color:var(--muted)}
+/* Arena header in scroll */
+.arena-header{padding:10px 12px;background:#fff;font-weight:700;display:flex;justify-content:space-between;}
+.arena-header.active-hidden{visibility:hidden;height:0;padding:0;margin:0;border:none;}
 
-/* Bottom-rad (båda vyer) */
-.game-bottom{
-  display:grid;grid-template-columns:1fr var(--result-w) 1fr;align-items:center;column-gap:8px
-}
+/* Game cards (shared) */
+.game{background:#fff;border-top:1px solid var(--hair);padding:6px 10px;display:grid;gap:4px;}
+/* top row differs per view but keep common flex */
+.game-top{display:flex;align-items:center;gap:8px;justify-content:space-between;}
+/* bottom row grid: [time] [homeName] [homeLogo] [result] [awayLogo] [awayName] */
+.game-bottom{display:grid;grid-template-columns:auto 1fr auto auto auto 1fr;align-items:center;column-gap:6px;}
 
-/* Hemmalag och Bortalag – tajtare mot resultatboxen och anpassningsbar text */
-.team{
-  display:inline-flex;align-items:center;gap:6px;font-weight:600;min-width:0;white-space:nowrap
-}
-.team.home{justify-content:flex-end}   /* hemmalag höger-centrerat mot sin logo */
-.team.away{justify-content:flex-start} /* bortalag vänster-centrerat från sin logo */
+/* text atoms */
+.time{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;}
+.series{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+.series a{text-decoration:none;color:var(--link);}
 
-.team-logo{
-  width:28px;height:28px;border-radius:50%;border:1px solid var(--hair);object-fit:cover;background:#eee;flex:0 0 auto
-}
-/* Notera: vi kommer senare ev. byta till “non-white fit” – ej i denna version */
+/* in series view top row: left=series, mid=arena (constrained), right=distance placeholder */
+.top-left{min-width:0;flex:1;}
+.top-mid{min-width:0;text-align:center;flex:1;}
+.top-right{white-space:nowrap;color:var(--muted);font-size:12px;}
 
-.team-name{
-  display:inline-block;max-width: min(40vw,220px);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px
-}
+/* team line */
+.team-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:600;}
+.team-name.home{text-align:right;padding-right:4px;}
+.team-name.away{text-align:left;padding-left:4px;}
 
-/* Resultatbox: fast bredd, auto-shrink text */
-.result{
-  display:flex;align-items:center;justify-content:center;
-  width:var(--result-w);height:28px;border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;
-  font-weight:700;overflow:hidden
-}
-.result a{color:var(--link);text-decoration:none;display:inline-block}
-.result .plain{color:#111} /* “–” utan länk */
+/* logos */
+.team-logo{width:28px;height:28px;object-fit:contain;display:block;background:none;}
+.logo-fallback{width:28px;height:28px;display:grid;place-items:center;font-size:11px;font-weight:700;color:#475569;background:#e2e8f0;border-radius:4px;}
 
-/* Divider mellan arenor i plats-vy */
-.divider{height:7px;background:var(--bg);border-top:1px dashed var(--hair)}
+/* result box: fixed width + autoshrink font */
+.result-box{width:64px;min-width:64px;max-width:64px;padding:2px 6px;border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;text-align:center;font-weight:700;white-space:nowrap;}
+.result-box .link{color:var(--link);text-decoration:none;}
+.result-box .nolink{color:#0f172a;}
 
-/* ---------------- RESPONSIVE TWEAKS ---------------- */
-@media (min-width:768px){
-  :root{ --result-w:96px }
-  .team-logo{ width:30px; height:30px }
-  .team-name{ max-width: min(36vw,280px) }
-  .ser-arena{ max-width: calc(50vw - 100px) }
-}
-@media (min-width:1200px){
-  :root{ --result-w:108px }
-  .team-logo{ width:32px; height:32px }
-  .team-name{ max-width: min(32vw,360px) }
-  .ser-arena{ max-width: calc(50vw - 140px) }
+/* truncation + debug shrink */
+.trunc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.debug-shrunk{color:var(--danger)!important;}
+
+/* responsive helpers (for larger screens we allow more room before trunc) */
+@media (min-width: 768px){
+  .result-box{width:72px;min-width:72px;max-width:72px;}
+  .team-logo{width:30px;height:30px;}
 }
 </style>
 </head>
 <body>
 <div class="device">
 
-  <!-- TOP BAR -->
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="cluster-left">
-        <button id="btnHome" class="icon-btn" title="Hem">
-          <img class="icon-img" src="icons/home.png" alt="Hem"/>
-        </button>
-        <button id="btnMap" class="icon-btn" title="Karta">
-          <img class="icon-img" src="icons/map.png" alt="Karta"/>
-        </button>
-      </div>
-
-      <div class="cluster-center">
-        <button id="btnPrev" class="arrow gray" title="Föregående dag"><span>◀</span></button>
-        <div class="date-block" id="dateBlock">
-          <span>Idag</span><span>Tors</span><span>30 okt</span>
-        </div>
-        <button id="btnNext" class="arrow gray" title="Nästa dag"><span>▶</span></button>
-      </div>
-
-      <div class="cluster-right">
-        <div class="sort-stack">
-          <div class="sort-top">Sortering</div>
-          <div class="sort-bottom">
-            <span id="pillPlace" class="pill on">Plats</span>
-            <span id="pillSeries" class="pill off">Serie</span>
-            <span id="pillTime" class="pill on lock">Tid</span>
-          </div>
-        </div>
-        <button id="btnSettings" class="icon-btn" title="Inställningar">⚙️</button>
-      </div>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="cluster-left">
+      <button class="icon-btn" id="goHome" title="Start"><img class="icon-img" src="icons/home.jpeg" alt="Home"></button>
+      <button class="icon-btn" id="openMap" title="Karta"><img class="icon-img" src="icons/map.jpeg" alt="Map"></button>
     </div>
-  </header>
 
-  <!-- HINT -->
-  <div class="hint" id="hintText">Visar matcher nära: Kruniusvägen 1, Billdal</div>
+    <div class="cluster-center">
+      <button class="nav-btn inactive" id="prevDate" title="Föregående">◀</button>
+      <div class="date-block" id="dateLabel"></div>
+      <button class="nav-btn inactive" id="nextDate" title="Nästa">▶</button>
+    </div>
 
-  <!-- ARENA SLOT (endast i Plats-vy) -->
-  <div id="groupSlot" class="group-slot" style="display:flex;">
-    <div class="group-title">Kungsbacka Ishall A</div>
-    <div class="group-sub">Avst 8 km</div>
+    <div class="cluster-right">
+      <div class="sort-stack">
+        <div class="sort-top">Sortering</div>
+        <div class="sort-bottom">
+          <span id="pillPlace" class="pill on">Plats</span>
+          <span id="pillSeries" class="pill off">Serie</span>
+          <span id="pillTime" class="pill on lock">Tid</span>
+        </div>
+      </div>
+      <button class="icon-btn" title="Inställningar">⚙️</button>
+    </div>
   </div>
+</header>
 
-  <!-- SCROLL AREA -->
-  <main id="scrollArea" class="scroll"></main>
-</div>
+<div class="hint" id="hintField">Visar matcher nära: Kruniusvägen 1, Billdal</div>
+
+<div id="groupSlot" class="group-slot"><div class="group-title">—</div><div class="group-sub">—</div></div>
+
+<main id="scrollArea" class="scroll"></main>
 
 <script>
-/* =========================================================
-   Hjälpfunktioner: datum, strängar, trunc + autoshrink
-========================================================= */
-const svDays = ["Sön","Mån","Tis","Ons","Tors","Fre","Lör"];
-const svMonths = ["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
-function pad2(n){return (n<10?'0':'')+n;}
-function fmtDateHuman(d, baseToday){
-  // Idag/Imorgon/Igår + veckodag + datum
-  const dow = svDays[d.getDay()];
-  const textDate = `${d.getDate()} ${svMonths[d.getMonth()]}`;
-  let rel = '';
-  const today = new Date(baseToday.getFullYear(), baseToday.getMonth(), baseToday.getDate());
-  const cmp  = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const diff = Math.round((cmp - today)/86400000);
-  if(diff===0) rel='Idag';
-  else if(diff===1) rel='Imorgon';
-  else if(diff===-1) rel='Igår';
-  return {rel, dow, textDate};
-}
-function parseCSV(text){
-  const rows = text.trim().split(/\r?\n/);
-  return rows.map(r=>{
-    // split on semicolon; do not attempt to handle quoted fields (source is simple)
-    return r.split(';').map(s=>s.trim());
-  });
-}
-function kmDist(lat1,lon1,lat2,lon2){
-  const toRad=(x)=>x*Math.PI/180;
-  const R=6371;
-  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
-  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
-}
-function ellipsis(str, max){
-  if(!str) return '';
-  if(str.length<=max) return str;
-  return str.slice(0, Math.max(0,max-1)) + '…';
-}
+/* ==========================================================
+   CONFIG & STATE
+========================================================== */
+const DEBUG = new URLSearchParams(location.search).get("debug")==="1";
 
-/* Fit-helpers: minska font-size tills det får plats (en rad), annars ellipsis */
-function fitsOneLine(el){
-  return el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight;
-}
-function autoFitOneLine(el, minPx=10, step=0.5){
-  // krymper font-size i små steg tills det får plats (eller når minPx)
-  const orig = parseFloat(getComputedStyle(el).fontSize);
-  let size = orig;
-  while(!fitsOneLine(el) && size>minPx){
-    size -= step;
-    el.style.fontSize = size + 'px';
-  }
-  return size;
-}
-
-/* Responsiva maxlängder beroende på viewport */
-function getMaxLens(){
-  const w = window.innerWidth;
-  if(w<768)   return { serie:50, arena:25, team:30 };
-  if(w<1200)  return { serie:70, arena:35, team:40 };
-  return { serie:120, arena:80, team:80 }; // desktop: tillåter mkt innan trunc; fortfarande 1 rad
-}
-
-/* =========================================================
-   Data & state
-========================================================= */
-const USER_LOC = {lat:57.590214281624824, lon:11.94608216084837};
 const MODE = { PLACE:"place", SERIES:"series", SERIES_TIME:"series_time" };
 let mode = MODE.PLACE;
 
-const els = {
-  scroll: document.getElementById('scrollArea'),
-  slot: document.getElementById('groupSlot'),
-  hint: document.getElementById('hintText'),
-  pillPlace: document.getElementById('pillPlace'),
-  pillSeries: document.getElementById('pillSeries'),
-  pillTime: document.getElementById('pillTime'),
-  btnPrev: document.getElementById('btnPrev'),
-  btnNext: document.getElementById('btnNext'),
-  dateBlock: document.getElementById('dateBlock')
-};
+const dateLabel = document.getElementById("dateLabel");
+const prevBtn = document.getElementById("prevDate");
+const nextBtn = document.getElementById("nextDate");
+const goHome = document.getElementById("goHome");
+const openMap = document.getElementById("openMap");
+const pillPlace = document.getElementById("pillPlace");
+const pillSeries = document.getElementById("pillSeries");
+const pillTime = document.getElementById("pillTime");
 
-let games = [];  // alla matcher från CSV
-let clubsMap = new Map(); // namn -> logofil
-let dayIndex = 0; // 0 = “idag”
-let uniqueDays = []; // sorterade datumsträngar YYYY-MM-DD som finns i CSV
-let currentDateStr = ''; // aktuell dag (YYYY-MM-DD)
-let currentArena = null;
-let arenaOrder = [];
-let lastScrollTop = 0;
+const scrollArea = document.getElementById("scrollArea");
+const groupSlot = document.getElementById("groupSlot");
 
-/* =========================================================
-   Ladda data (CSV & logo-map)
-========================================================= */
-async function loadData(){
-  const [csv, mapTxt] = await Promise.all([
-    fetch('data/games.csv').then(r=>r.text()),
-    fetch('data/Clubs_Organisatons_logos__ClubOrgName_LogoFileName.txt').then(r=>r.text())
-  ]);
+let ALL_GAMES = [];
+let LOGO_MAP = {};
+let currentDate = new Date().toISOString().slice(0,10);
 
-  // parse map
-  mapTxt.trim().split(/\r?\n/).forEach(line=>{
-    const idx = line.indexOf(';');
-    if(idx>0){
-      const name = line.slice(0,idx).trim();
-      const file = line.slice(idx+1).trim();
-      if(name && file) clubsMap.set(name, file);
-    }
-  });
-
-  // parse games
-  // format:
-  // date; time; series_name; link_to_series; admin_host; home_team; away_team; result; result_link; arena;status;iteration_fetched;iterations_total;home_club_list;away_club_list;arena_nbr;PreferedName;Lat;Long
-  games = parseCSV(csv).map(cols=>{
-    const [
-      date,time,series,series_link,admin_host,home_team,away_team,result,result_link,arena,status,iteration_fetched,iterations_total,
-      home_list,away_list,arena_nbr,PreferedName,Lat,Long
-    ] = cols;
-
-    // club lists
-    const homeClubs = (home_list||'').split(',').map(s=>s.trim()).filter(Boolean);
-    const awayClubs = (away_list||'').split(',').map(s=>s.trim()).filter(Boolean);
-
-    return {
-      date, time, series, series_link, admin_host, home_team, away_team, result,
-      result_link, arena, status, iteration_fetched, iterations_total, homeClubs, awayClubs,
-      arena_nbr, PreferedName, lat: +Lat || null, lon: +Long || null
-    };
-  });
-
-  // unika datum som finns
-  uniqueDays = [...new Set(games.map(g=>g.date))].sort();
+/* ==========================================================
+   UTIL: dates & labels
+========================================================== */
+function fmtDateParts(iso){
+  const d = new Date(iso+"T00:00:00");
+  const todayIso = new Date().toISOString().slice(0,10);
+  const isToday = (iso===todayIso);
+  const w = d.toLocaleDateString("sv-SE",{weekday:"short"});
+  const day = d.toLocaleDateString("sv-SE",{day:"numeric"});
+  const mon = d.toLocaleDateString("sv-SE",{month:"short"});
+  return {
+    line1: isToday ? "Idag" : "",
+    line2: w.charAt(0).toUpperCase()+w.slice(1), // ex: Tors
+    line3: `${day} ${mon}`
+  };
 }
 
-/* =========================================================
-   Datumkontroller + byten
-========================================================= */
-function setDateToIndex(idx){
-  if(uniqueDays.length===0){
-    const d = new Date(); currentDateStr = d.toISOString().slice(0,10);
-    updateDateBlock(new Date());
-    els.btnPrev.className = 'arrow gray';
-    els.btnNext.className = 'arrow gray';
-    return;
-  }
-  dayIndex = Math.max(0, Math.min(uniqueDays.length-1, idx));
-  currentDateStr = uniqueDays[dayIndex];
-  const [y,m,da] = currentDateStr.split('-').map(Number);
-  const dObj = new Date(y, m-1, da);
+function updateDateLabel(){
+  const p = fmtDateParts(currentDate);
+  dateLabel.innerHTML = `${p.line1?`<span>${p.line1}</span>`:""}<span>${p.line2}</span><span>${p.line3}</span>`;
+}
 
-  updateDateBlock(dObj);
+/* ==========================================================
+   NAV BUTTON STATE (green/gray depending on available days)
+========================================================== */
+function hasGamesOn(iso){
+  return ALL_GAMES.some(g=>g.date===iso);
+}
+function datePlus(iso,delta){
+  const d=new Date(iso); d.setDate(d.getDate()+delta); return d.toISOString().slice(0,10);
+}
+function updateNavButtons(){
+  const prev = datePlus(currentDate,-1);
+  const next = datePlus(currentDate, 1);
+  if(hasGamesOn(prev)){ prevBtn.classList.add("active"); prevBtn.classList.remove("inactive"); } else { prevBtn.classList.remove("active"); prevBtn.classList.add("inactive"); }
+  if(hasGamesOn(next)){ nextBtn.classList.add("active"); nextBtn.classList.remove("inactive"); } else { nextBtn.classList.remove("active"); nextBtn.classList.add("inactive"); }
+}
 
-  // pilar grön/grå utifrån om det finns datum före/efter
-  els.btnPrev.className = 'arrow ' + (dayIndex>0 ? 'green':'gray');
-  els.btnNext.className = 'arrow ' + (dayIndex<uniqueDays.length-1 ? 'green':'gray');
+/* ==========================================================
+   SORT PILLS
+========================================================== */
+function applyPills(){
+  pillPlace.className = (mode===MODE.PLACE) ? "pill on":"pill off";
+  pillSeries.className = (mode===MODE.SERIES||mode===MODE.SERIES_TIME) ? "pill on":"pill off";
+  pillTime.className = (mode===MODE.PLACE) ? "pill on lock" : ((mode===MODE.SERIES_TIME)?"pill on":"pill off");
+}
+pillPlace.onclick = ()=>{ mode=MODE.PLACE; applyPills(); render(); };
+pillSeries.onclick= ()=>{ mode=MODE.SERIES; applyPills(); render(); };
+pillTime.onclick  = ()=>{ if(mode!==MODE.PLACE){ mode=(mode===MODE.SERIES)?MODE.SERIES_TIME:MODE.SERIES; applyPills(); render(); } };
+
+/* ==========================================================
+   HOME / MAP
+========================================================== */
+goHome.onclick = ()=>{
+  currentDate = new Date().toISOString().slice(0,10);
+  mode = MODE.PLACE;
+  applyPills();
+  render();
+};
+openMap.onclick = ()=>{}; // no-op for now
+
+prevBtn.onclick = ()=>{ const d = datePlus(currentDate,-1); currentDate = d; render(); };
+nextBtn.onclick = ()=>{ const d = datePlus(currentDate, 1); currentDate = d; render(); };
+
+/* ==========================================================
+   LOAD DATA
+========================================================== */
+Promise.all([
+  fetch("data/Clubs_Organisatons_logos__ClubOrgName_LogoFileName.txt").then(r=>r.text()),
+  fetch("data/games.csv").then(r=>r.text()),
+]).then(([logosTxt,gamesCsv])=>{
+  // logos map
+  logosTxt.split("\n").forEach(line=>{
+    if(!line.trim()) return;
+    const [club, file] = line.split(";");
+    if(club && file) LOGO_MAP[club.trim()] = "logos/" + file.trim();
+  });
+
+  // games
+  gamesCsv.split("\n").forEach(row=>{
+    if(!row.trim()) return;
+    const cols = row.split(";");
+    if(cols.length < 19) return;
+    ALL_GAMES.push({
+      date:cols[0],
+      time:cols[1],
+      series_name:cols[2],
+      link_to_series:cols[3],
+      admin_host:cols[4],
+      home_team:cols[5],
+      away_team:cols[6],
+      result:cols[7],
+      result_link:cols[8],
+      arena:cols[9],
+      status:cols[10],
+      iteration_fetched:cols[11],
+      iterations_total:cols[12],
+      home_club_list:cols[13],
+      away_club_list:cols[14],
+      arena_nbr:cols[15],
+      preferedName:cols[16],
+      lat:cols[17],
+      long:cols[18]
+    });
+  });
 
   render();
-}
-function updateDateBlock(dObj){
-  const now = new Date();
-  const {rel,dow,textDate} = fmtDateHuman(dObj, now);
-  els.dateBlock.innerHTML = `<span>${rel||''}</span><span>${dow}</span><span>${textDate}</span>`;
-}
+});
 
-/* =========================================================
-   Logo-hämtning (första klubbnamn, exakt match + trim)
-========================================================= */
-function logoForClubList(clubs){
-  if(!clubs || clubs.length===0) return null;
-  const first = clubs[0].trim();
-  const file = clubsMap.get(first);
-  return file ? ('logos/'+file) : null;
+/* ==========================================================
+   LOGO HELPERS: mapping + smart trim (white+transparent)
+========================================================== */
+function firstClubName(list){ if(!list) return null; return list.split(",")[0]?.trim() || null; }
+function logoForClubList(list){
+  const club = firstClubName(list);
+  if(!club) return null;
+  return LOGO_MAP[club] || null;
 }
 
-/* =========================================================
-   Rendering helpers (resultat, textfit, trunc)
-========================================================= */
-function buildResultEl(result, link){
-  const box = document.createElement('div');
-  box.className = 'result';
+const LOGO_CACHE = {};
+async function loadAndTrimLogo(url){
+  if(!url) return null;
+  if(LOGO_CACHE[url]) return LOGO_CACHE[url];
+  return new Promise(resolve=>{
+    const img = new Image();
+    img.crossOrigin="anonymous";
+    img.onload = ()=>{
+      const w = img.width, h = img.height;
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = w; canvas.height = h;
+      ctx.drawImage(img,0,0);
+      const data = ctx.getImageData(0,0,w,h).data;
 
-  // Länk finns?
-  if(link && link !== ''){
-    const a = document.createElement('a');
-    a.href = link;
-    a.textContent = (result && result.trim()) ? result.trim() : '–';
-    a.target = '_blank';
-    a.rel = 'noopener';
-    box.appendChild(a);
-  }else{
-    const span = document.createElement('span');
-    span.className = 'plain';
-    span.textContent = (result && result.trim()) ? result.trim() : '–';
-    box.appendChild(span);
-  }
+      let minX=w, minY=h, maxX=0, maxY=0;
+      const isBg = (r,g,b,a)=>(a===0) || (r>245 && g>245 && b>245 && a>240);
 
-  // Autoshrink text om stor (ex 10–11)
-  requestAnimationFrame(()=>{
-    const child = box.firstElementChild;
-    // minska font-size tills en rad i boxen
-    autoFitOneLine(child, 10, 0.5);
-  });
-
-  return box;
-}
-function makeTeamEl(side, name, clubs, wantLogo=true){
-  const wr = document.createElement('div');
-  wr.className = 'team '+side;
-
-  // namn
-  const nm = document.createElement('span');
-  nm.className = 'team-name';
-  nm.textContent = name || '';
-
-  // logo
-  let img = null;
-  if(wantLogo){
-    const logoSrc = logoForClubList(clubs);
-    img = document.createElement('img');
-    img.className = 'team-logo';
-    if(logoSrc){ img.src = logoSrc; img.alt = name || 'logo'; }
-    else{
-      // fallback – grå cirkel med initialer
-      img.style.background = '#e5e7eb';
-      img.style.display = 'inline-grid';
-      img.style.placeItems = 'center';
-      img.style.color = '#334155';
-      img.style.fontSize = '11px';
-      img.style.fontWeight = '700';
-      img.style.border = '1px solid #cbd5e1';
-      img.alt = 'logo';
-      // rendera som <div>-liknande: vi kan lägga en transparent data-uri för att få <img> att visa text via title
-      img.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
-      img.title = abbrev(name);
-      const overlay = document.createElement('span');
-      overlay.textContent = abbrev(name);
-      overlay.style.position = 'absolute';
-      // (förenklad: vi låter title räcka här – bild överlagring i <img> är krånglig utan wrapper)
-    }
-  }
-
-  // placera nära resultat-box
-  // home: [name][logo]  (högerjusterad mot resultat)
-  // away: [logo][name]
-  const maxLens = getMaxLens();
-  const maxTeam = maxLens.team;
-
-  if(side==='home'){
-    // text nära resultat (höger mot logo)
-    nm.style.textAlign = 'right';
-    nm.textContent = ellipsis(name||'', maxTeam);
-    wr.appendChild(nm);
-    if(img) wr.appendChild(img);
-  }else{
-    // logo nära resultat
-    if(img) wr.appendChild(img);
-    nm.textContent = ellipsis(name||'', maxTeam);
-    wr.appendChild(nm);
-  }
-
-  // autoshrink name till en rad
-  requestAnimationFrame(()=>{
-    autoFitOneLine(nm, 10, 0.5);
-  });
-
-  return wr;
-}
-function abbrev(name){
-  if(!name) return '?';
-  // FHC-stil: ta initialer i versaler
-  return name.split(/[\s\-\/]+/).filter(Boolean).map(w=>w[0]).slice(0,3).join('').toUpperCase();
-}
-
-/* Serie-namn fit + trunc (Plats-vy & Serie-vy vänster) */
-function renderSeriesName(parent, series, link){
-  const a = document.createElement('a');
-  a.href = link || '#';
-  a.textContent = series || '';
-  parent.appendChild(a);
-
-  const max = getMaxLens().serie;
-  a.textContent = ellipsis(a.textContent, max);
-  requestAnimationFrame(()=>autoFitOneLine(a, 10, 0.5));
-}
-
-/* Arena-namn fit + trunc (Serie-vy höger) */
-function renderArenaRight(parent, arenaName){
-  const arena = document.createElement('div');
-  arena.className = 'ser-arena';
-  arena.textContent = ellipsis(arenaName||'', getMaxLens().arena);
-  parent.appendChild(arena);
-  requestAnimationFrame(()=>autoFitOneLine(arena, 10, 0.5));
-  return arena;
-}
-
-/* =========================================================
-   Sortering
-========================================================= */
-function parseMinutes(t){ const [H,M]=t.split(':'); return (+H)*60 + (+M); }
-
-function sortPlaceThenSeries(glist){
-  // grupperas per arena (närmast först), inom arena sortera på serie + tid (enkel logik)
-  const byArena = new Map();
-  glist.forEach(g=>{
-    const key = g.PreferedName || g.arena || 'Okänd arena';
-    if(!byArena.has(key)) byArena.set(key, []);
-    byArena.get(key).push(g);
-  });
-  const arr = [...byArena.entries()].map(([k, arr])=>{
-    const dist = (glist.find(x=>(x.PreferedName||x.arena)===k) && glist.find(x=>(x.PreferedName||x.arena)===k).__dist) || 9999;
-    return {arena:k, dist, items:arr};
-  });
-  arr.sort((a,b)=>a.dist - b.dist);
-
-  arr.forEach(A=>{
-    // inom arena: serie (alfa) + tid
-    A.items.sort((x,y)=>{
-      if(x.series===y.series){
-        return parseMinutes(x.time) - parseMinutes(y.time);
+      for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+          const i=(y*w+x)*4;
+          const r=data[i], g=data[i+1], b=data[i+2], a=data[i+3];
+          if(!isBg(r,g,b,a)){ minX=Math.min(minX,x); minY=Math.min(minY,y); maxX=Math.max(maxX,x); maxY=Math.max(maxY,y); }
+        }
       }
-      return x.series.localeCompare(y.series);
-    });
+      if(minX>maxX || minY>maxY){ LOGO_CACHE[url]=url; return resolve(url); }
+      const trimW=maxX-minX+1, trimH=maxY-minY+1;
+      const out=document.createElement("canvas");
+      out.width=trimW; out.height=trimH;
+      out.getContext("2d").drawImage(canvas,minX,minY,trimW,trimH,0,0,trimW,trimH);
+      const dataUrl = out.toDataURL("image/png");
+      LOGO_CACHE[url]=dataUrl;
+      resolve(dataUrl);
+    };
+    img.onerror = ()=>resolve(null);
+    img.src = url;
   });
-
-  return arr;
-}
-function sortSeriesThenTime(glist){
-  // först series namn-prio (enkel: alfa), därefter tid
-  // grupper: per series
-  const bySer = new Map();
-  glist.forEach(g=>{
-    const key = g.series || 'Okänd serie';
-    if(!bySer.has(key)) bySer.set(key, []);
-    bySer.get(key).push(g);
-  });
-  const arr = [...bySer.entries()].map(([serie, items])=>({serie, items}));
-  arr.sort((a,b)=>a.serie.localeCompare(b.serie));
-  arr.forEach(S=>{
-    S.items.sort((x,y)=>parseMinutes(x.time) - parseMinutes(y.time));
-  });
-  return arr;
-}
-function sortTimeThenSeries(glist){
-  // tid först, brytband med serie
-  const copy = glist.slice().sort((x,y)=>{
-    const d = parseMinutes(x.time)-parseMinutes(y.time);
-    if(d!==0) return d;
-    return (x.series||'').localeCompare(y.series||'');
-  });
-  // grupperas efter serie för presentation
-  const bySer = new Map();
-  copy.forEach(g=>{
-    const key = g.series || 'Okänd serie';
-    if(!bySer.has(key)) bySer.set(key, []);
-    bySer.get(key).push(g);
-  });
-  const arr = [...bySer.entries()].map(([serie, items])=>({serie, items}));
-  return arr;
 }
 
-/* =========================================================
-   Render views
-========================================================= */
-function applyPills(){
-  els.pillPlace.className = (mode===MODE.PLACE) ? 'pill on' : 'pill off';
-  els.pillSeries.className = (mode===MODE.SERIES||mode===MODE.SERIES_TIME) ? 'pill on' : 'pill off';
-  els.pillTime.className = (mode===MODE.PLACE) ? 'pill on lock' : (mode===MODE.SERIES_TIME ? 'pill on' : 'pill off');
-
-  // visa/dölj sticky slot
-  els.slot.style.display = (mode===MODE.PLACE) ? 'flex' : 'none';
+/* ==========================================================
+   TEXT: trunc + fit (shrink) helpers
+========================================================== */
+function applyTruncate(text, maxChars){
+  if(text.length<=maxChars) return text;
+  return text.slice(0, maxChars) + ".";
 }
 
+/* shrink-to-fit: reduce font-size until it fits on one line */
+function shrinkToFit(el, minPx=10){
+  // reset inline font-size first
+  el.style.fontSize = "";
+  const computed = parseFloat(getComputedStyle(el).fontSize);
+  let size = computed;
+  let shrunk = false;
+
+  // safety loop
+  for(let i=0;i<20;i++){
+    if(el.scrollWidth<=el.clientWidth) break;
+    size -= 0.5;
+    if(size<minPx){ size=minPx; break; }
+    el.style.fontSize = size+"px";
+    shrunk = true;
+  }
+
+  if(DEBUG && shrunk){
+    el.classList.add("debug-shrunk");
+  }else{
+    el.classList.remove("debug-shrunk");
+  }
+}
+
+/* shrink specific for result text inside fixed box */
+function shrinkResultText(el, minPx=10){
+  el.style.fontSize = "";
+  const computed = parseFloat(getComputedStyle(el).fontSize);
+  let size = computed;
+  let shrunk = false;
+  for(let i=0;i<20;i++){
+    if(el.scrollWidth<=el.clientWidth) break;
+    size -= 0.8;
+    if(size<minPx){ size=minPx; break; }
+    el.style.fontSize = size+"px";
+    shrunk = true;
+  }
+  if(DEBUG && shrunk){
+    el.classList.add("debug-shrunk");
+  }else{
+    el.classList.remove("debug-shrunk");
+  }
+}
+
+/* ==========================================================
+   RENDER
+========================================================== */
 function render(){
+  updateDateLabel();
+  updateNavButtons();
   applyPills();
-  const dayGames = games.filter(g=>g.date===currentDateStr);
 
-  // för pilar: finns matcher före/efter
-  els.btnPrev.className = 'arrow ' + (dayIndex>0 ? 'green':'gray');
-  els.btnNext.className = 'arrow ' + (dayIndex<uniqueDays.length-1 ? 'green':'gray');
+  const gamesForDay = ALL_GAMES.filter(g=>g.date===currentDate);
+  scrollArea.innerHTML = "";
 
-  // rensa scroll
-  els.scroll.innerHTML = '';
+  if(!gamesForDay.length){
+    scrollArea.innerHTML = `<div style="padding:16px;background:#fff;border-top:1px solid var(--hair);">Inga matcher denna dag.</div>`;
+    groupSlot.querySelector(".group-title").textContent = "—";
+    groupSlot.querySelector(".group-sub").textContent = "—";
+    return;
+  }
 
   if(mode===MODE.PLACE){
-    renderPlace(dayGames);
+    renderPlaceView(gamesForDay);
   }else{
-    renderSeries(dayGames);
+    renderSeriesView(gamesForDay);
   }
 }
 
-/* ------- PLATS-VY ------- */
-function renderPlace(dayGames){
-  // beräkna avstånd
-  dayGames.forEach(g=>{
-    if(g.lat!=null && g.lon!=null){
-      g.__dist = kmDist(USER_LOC.lat, USER_LOC.lon, g.lat, g.lon);
-    }else g.__dist = 9999;
+/* ---------------- PLACE VIEW ---------------- */
+function renderPlaceView(games){
+  // group by arena (PreferedName fallback arena)
+  const byArena = {};
+  games.forEach(g=>{
+    const a = g.preferedName?.trim() || g.arena?.trim() || "Okänd arena";
+    (byArena[a] ||= []).push(g);
   });
 
-  const groups = sortPlaceThenSeries(dayGames);
+  const arenas = Object.keys(byArena).sort((a,b)=> a.localeCompare(b));
 
-  arenaOrder = groups.map(g=>g.arena);
-  currentArena = arenaOrder[0] || null;
-  if(currentArena){
-    document.querySelector('.group-title').textContent = currentArena;
-    const d = groups.find(x=>x.arena===currentArena)?.dist ?? '';
-    document.querySelector('.group-sub').textContent = (d!=='' ? `Avst ${d} km` : '');
+  // initial active arena in sticky slot
+  if(arenas.length){
+    groupSlot.querySelector(".group-title").textContent = arenas[0];
+    groupSlot.querySelector(".group-sub").textContent = ""; // distance placeholder
   }
 
-  groups.forEach((A, gi)=>{
-    // header i listan
-    const hdr = document.createElement('div');
-    hdr.className = 'arena-header';
-    hdr.dataset.arenaHeader = A.arena;
-    hdr.innerHTML = `<div>${A.arena}</div><div>${(A.dist!==9999)?`Avst ${A.dist} km`:''}</div>`;
-    els.scroll.appendChild(hdr);
+  // build list
+  arenas.forEach(ar=>{
+    // arena header in list
+    const hdr = document.createElement("div");
+    hdr.className="arena-header";
+    hdr.dataset.arenaHeader = ar;
+    hdr.innerHTML = `<div>${ar}</div><div class="top-right">Avst —</div>`;
+    scrollArea.appendChild(hdr);
 
-    A.items.forEach(g=>{
-      const card = document.createElement('article');
-      card.className = 'game';
-      card.dataset.arena = A.arena;
-
-      // top: time + series (fit + trunc 50/70/desktop)
-      const top = document.createElement('div');
-      top.className = 'game-top';
-      const tm = document.createElement('div');
-      tm.className = 'game-time';
-      tm.textContent = g.time || '';
-      top.appendChild(tm);
-      const ser = document.createElement('div');
-      ser.className = 'game-series';
-      renderSeriesName(ser, g.series, g.series_link);
-      top.appendChild(ser);
-      card.appendChild(top);
-
-      // bottom: home  | result | away
-      const bottom = document.createElement('div');
-      bottom.className = 'game-bottom';
-
-      const home = makeTeamEl('home', g.home_team, g.homeClubs, true);
-      const res  = buildResultEl(g.result, g.result_link);
-      const away = makeTeamEl('away', g.away_team, g.awayClubs, true);
-
-      bottom.appendChild(home);
-      bottom.appendChild(res);
-      bottom.appendChild(away);
-      card.appendChild(bottom);
-
-      els.scroll.appendChild(card);
-    });
-
-    if(gi !== groups.length-1){
-      const div = document.createElement('div'); div.className='divider';
-      els.scroll.appendChild(div);
-    }
+    // games sorted by time
+    byArena[ar].sort((a,b)=> a.time.localeCompare(b.time))
+               .forEach(g=> scrollArea.appendChild(buildGameCard(g,false)));
   });
 
-  // Sticky logik för arena-slot
-  setupStickyHandlers();
+  applyPlaceSticky(arenas);
 }
 
-/* ------- SERIE-VY ------- */
-function renderSeries(dayGames){
-  // stabil viewport – ingen arenaheader i listan
-  const list = (mode===MODE.SERIES_TIME) ? sortTimeThenSeries(dayGames) : sortSeriesThenTime(dayGames);
+/* sticky logic (proven stable pattern from earlier good version) */
+function applyPlaceSticky(arenas){
+  let currentArena = arenas[0];
+  const stickyBottom = ()=> groupSlot.getBoundingClientRect().bottom;
 
-  list.forEach((S, si)=>{
-    // gruppseparator (grå remsa)
-    const divTop = document.createElement('div');
-    divTop.className = 'divider';
-    if(si===0) divTop.style.marginTop = '0px';
-    els.scroll.appendChild(divTop);
-
-    // (ingen “serie-header-rad” – enligt dina riktlinjer)
-    S.items.forEach(g=>{
-      const card = document.createElement('article');
-      card.className = 'game';
-
-      // top: vänster (tid+serie), höger (arena+distans)
-      const top = document.createElement('div');
-      top.className = 'ser-top';
-
-      const left = document.createElement('div');
-      left.className = 'ser-left';
-      const tm = document.createElement('span');
-      tm.className = 'game-time';
-      tm.textContent = g.time+' ';
-      left.appendChild(tm);
-      const ser = document.createElement('span');
-      ser.className = 'game-series';
-      const serA = document.createElement('a');
-      serA.href = g.series_link || '#';
-      serA.textContent = g.series || '';
-      ser.appendChild(serA);
-      left.appendChild(ser);
-      top.appendChild(left);
-
-      const right = document.createElement('div');
-      right.className = 'ser-right';
-      // distans (om känt)
-      let dist = '';
-      if(g.lat!=null && g.lon!=null){
-        dist = `${kmDist(USER_LOC.lat, USER_LOC.lon, g.lat, g.lon)} km`;
+  const onScroll = ()=>{
+    const sb = stickyBottom();
+    for(let i=0;i<arenas.length-1;i++){
+      const next = arenas[i+1];
+      const hdr = scrollArea.querySelector(`.arena-header[data-arena-header="${next}"]`);
+      const r = hdr.getBoundingClientRect();
+      // switch when next header is >= 50% covered
+      if(r.top < sb && (sb - r.top) >= r.height*0.5){
+        currentArena = next;
       }
-      const arenaEl = renderArenaRight(right, g.PreferedName || g.arena || '');
-      const distEl = document.createElement('div');
-      distEl.className = 'ser-dist';
-      distEl.textContent = dist ? `Avst ${dist}` : '';
-      right.appendChild(distEl);
-      top.appendChild(right);
-      card.appendChild(top);
-
-      // bottom: hemmalag | resultat | bortalag (samma “nära resultat”-gap)
-      const bottom = document.createElement('div');
-      bottom.className = 'game-bottom';
-      const home = makeTeamEl('home', g.home_team, g.homeClubs, true);
-      const res  = buildResultEl(g.result, g.result_link);
-      const away = makeTeamEl('away', g.away_team, g.awayClubs, true);
-      bottom.appendChild(home);
-      bottom.appendChild(res);
-      bottom.appendChild(away);
-      card.appendChild(bottom);
-
-      els.scroll.appendChild(card);
-
-      // Anpassa vänster/höger i top så allt hålls inom halvorna
-      requestAnimationFrame(()=>{
-        // serie (vänster) – trunc & fit
-        const maxL = getMaxLens().serie;
-        serA.textContent = ellipsis(serA.textContent, maxL);
-        autoFitOneLine(serA, 10, 0.5);
-
-        // arena (höger) – får ej passera mitten, trunc redan i renderArenaRight
-        autoFitOneLine(arenaEl, 10, 0.5);
-      });
+    }
+    // update slot
+    groupSlot.querySelector(".group-title").textContent = currentArena;
+    groupSlot.querySelector(".group-sub").textContent = "";
+    // hide active header only
+    arenas.forEach(a=>{
+      const hdr = scrollArea.querySelector(`.arena-header[data-arena-header="${a}"]`);
+      hdr.classList.toggle("active-hidden", a===currentArena);
     });
-  });
+  };
 
-  // Serie-vy: ingen sticky arena-slot
-  els.slot.style.display = 'none';
+  scrollArea.removeEventListener("scroll", onScroll); // ensure not doubled
+  scrollArea.addEventListener("scroll", onScroll, {passive:true});
+  onScroll(); // initial
 }
 
-/* =========================================================
-   Sticky i Plats-vy (stabil övergång upp/ner)
-========================================================= */
-function setupStickyHandlers(){
-  lastScrollTop = 0;
-  const slot = els.slot;
-  const stickyBottom = ()=>slot.getBoundingClientRect().bottom;
-
-  function updateSticky(){
-    if(mode!==MODE.PLACE) return;
-    const st = els.scroll.scrollTop;
-    const dir = (st>lastScrollTop)?'down':'up';
-    lastScrollTop = st;
-
-    const idx = arenaOrder.indexOf(currentArena);
-    if(idx<0) return;
-
-    // DOWN: byt när nästa header är 50% täckt av slot
-    if(dir==='down' && idx < arenaOrder.length-1){
-      const nextArena = arenaOrder[idx+1];
-      const hdr = els.scroll.querySelector(`.arena-header[data-arena-header="${nextArena}"]`);
-      if(hdr){
-        const r = hdr.getBoundingClientRect();
-        const sb = stickyBottom();
-        if(r.top < sb && (sb - r.top) >= (r.height * 0.5)){
-          currentArena = nextArena;
-          document.querySelector('.group-title').textContent = nextArena;
-          const distTxt = hdr.lastElementChild?.textContent || '';
-          document.querySelector('.group-sub').textContent = distTxt;
-        }
-      }
+/* ---------------- SERIES VIEW ---------------- */
+function renderSeriesView(games){
+  // sort by series, then time if SERIES_TIME
+  const sortBy = (a,b)=>{
+    if(mode===MODE.SERIES_TIME){
+      return a.time.localeCompare(b.time) || a.series_name.localeCompare(b.series_name);
+    }else{
+      return a.series_name.localeCompare(b.series_name) || a.time.localeCompare(b.time);
     }
+  };
+  games.sort(sortBy);
+  // no arena headers in series view
+  groupSlot.querySelector(".group-title").textContent = "—";
+  groupSlot.querySelector(".group-sub").textContent = "—";
 
-    // UP: byt först när nuvarande header är HELT synlig i skroll-fönstret + lite buffert (iOS)
-    if(dir==='up' && idx > 0){
-      const currArena = arenaOrder[idx];
-      const prevArena = arenaOrder[idx-1];
-      const currHdr = els.scroll.querySelector(`.arena-header[data-arena-header="${currArena}"]`);
-      if(currHdr){
-        const r = currHdr.getBoundingClientRect();
-        const sb = stickyBottom();
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        const extra = isIOS ? 26 : 0;
+  games.forEach(g=> scrollArea.appendChild(buildGameCard(g,true)));
+}
 
-        if(r.top >= sb + extra){
-          currentArena = prevArena;
-          document.querySelector('.group-title').textContent = prevArena;
-          const prevHdr = els.scroll.querySelector(`.arena-header[data-arena-header="${prevArena}"]`);
-          const distTxt = prevHdr?.lastElementChild?.textContent || '';
-          document.querySelector('.group-sub').textContent = distTxt;
-        }
-      }
-    }
+/* ---------------- GAME CARD BUILDER ---------------- */
+function buildGameCard(g, seriesMode){
+  const card = document.createElement("article");
+  card.className = "game";
 
-    // dölj enbart aktiva headern i listan
-    arenaOrder.forEach(a=>{
-      const hdr = els.scroll.querySelector(`.arena-header[data-arena-header="${a}"]`);
-      if(hdr) hdr.classList.toggle('active-hidden', a===currentArena);
-    });
+  // top row
+  const top = document.createElement("div");
+  top.className = "game-top";
+
+  if(seriesMode){
+    // left: series (max 30)
+    const left = document.createElement("div");
+    left.className = "top-left series trunc";
+    left.dataset.fulltext = g.series_name || "";
+    left.textContent = applyTruncate(left.dataset.fulltext, 30);
+    top.appendChild(left);
+
+    // mid: arena (max 25) – centered area
+    const mid = document.createElement("div");
+    mid.className = "top-mid trunc";
+    const arenaName = (g.preferedName?.trim() || g.arena?.trim() || "Okänd arena");
+    mid.dataset.fulltext = arenaName;
+    mid.textContent = applyTruncate(arenaName, 25);
+    top.appendChild(mid);
+
+    // right: distance placeholder
+    const right = document.createElement("div");
+    right.className = "top-right";
+    right.textContent = "Avst —";
+    top.appendChild(right);
+  }else{
+    // place view top row: time + series (max 50)
+    const leftWrap = document.createElement("div");
+    leftWrap.style.display="flex"; leftWrap.style.gap="8px"; leftWrap.style.alignItems="center"; leftWrap.style.minWidth="0";
+    const time = document.createElement("div");
+    time.className="time";
+    time.textContent = g.time || "";
+    leftWrap.appendChild(time);
+
+    const ser = document.createElement("div");
+    ser.className="series trunc";
+    ser.dataset.fulltext = g.series_name || "";
+    ser.innerHTML = g.link_to_series ? `<a href="${g.link_to_series}" target="_blank" rel="noopener">${applyTruncate(ser.dataset.fulltext, 50)}</a>` : applyTruncate(ser.dataset.fulltext, 50);
+    leftWrap.appendChild(ser);
+
+    // spacer to push to left; we don't need right side cell in place-mode
+    top.appendChild(leftWrap);
+    const spacer = document.createElement("div"); spacer.style.flex="1";
+    top.appendChild(spacer);
   }
+  card.appendChild(top);
 
-  els.scroll.removeEventListener('scroll', updateSticky);
-  els.scroll.addEventListener('scroll', updateSticky);
-  // init
-  requestAnimationFrame(updateSticky);
+  // bottom row: [time] [homeName] [homeLogo] [result] [awayLogo] [awayName]
+  const bot = document.createElement("div");
+  bot.className = "game-bottom";
+
+  // time (always on bottom row in series view; also in place view for alignment)
+  const t = document.createElement("div");
+  t.className="time";
+  t.textContent = g.time || "";
+  bot.appendChild(t);
+
+  // home name (right-aligned to its logo)
+  const homeName = document.createElement("div");
+  homeName.className="team-name home trunc";
+  homeName.dataset.fulltext = g.home_team || "";
+  homeName.textContent = applyTruncate(homeName.dataset.fulltext, 30);
+  bot.appendChild(homeName);
+
+  // home logo
+  const homeLogoUrl = logoForClubList(g.home_club_list);
+  const homeLogoEl = document.createElement("img");
+  homeLogoEl.className="team-logo home-logo";
+  if(homeLogoUrl){
+    loadAndTrimLogo(homeLogoUrl).then(u=>{ if(u) homeLogoEl.src=u; else homeLogoEl.replaceWith(makeLogoFallback(g.home_team)); });
+  }else{
+    homeLogoEl.replaceWith(makeLogoFallback(g.home_team));
+  }
+  bot.appendChild(homeLogoEl);
+
+  // result box (fixed width)
+  const res = document.createElement("div");
+  res.className="result-box";
+  const resVal = (g.result && g.result.trim()) ? g.result.trim() : "–";
+  if(g.result_link && g.result_link.trim() && resVal!=="–"){
+    res.innerHTML = `<a class="link" href="${g.result_link}" target="_blank" rel="noopener">${resVal}</a>`;
+  }else{
+    res.innerHTML = `<span class="nolink">${resVal}</span>`;
+  }
+  bot.appendChild(res);
+
+  // away logo
+  const awayLogoUrl = logoForClubList(g.away_club_list);
+  const awayLogoEl = document.createElement("img");
+  awayLogoEl.className="team-logo away-logo";
+  if(awayLogoUrl){
+    loadAndTrimLogo(awayLogoUrl).then(u=>{ if(u) awayLogoEl.src=u; else awayLogoEl.replaceWith(makeLogoFallback(g.away_team)); });
+  }else{
+    awayLogoEl.replaceWith(makeLogoFallback(g.away_team));
+  }
+  bot.appendChild(awayLogoEl);
+
+  // away name (left-aligned from its logo)
+  const awayName = document.createElement("div");
+  awayName.className="team-name away trunc";
+  awayName.dataset.fulltext = g.away_team || "";
+  awayName.textContent = applyTruncate(awayName.dataset.fulltext, 30);
+  bot.appendChild(awayName);
+
+  card.appendChild(bot);
+
+  // FIT PHASE (after in DOM)
+  requestAnimationFrame(()=>{
+    if(seriesMode){
+      // top-left (series 30), top-mid (arena 25)
+      const left = top.querySelector(".top-left");
+      const mid = top.querySelector(".top-mid");
+      shrinkToFit(left);
+      shrinkToFit(mid);
+    }else{
+      // place mode: series 50
+      const ser = top.querySelector(".series");
+      if(ser){ shrinkToFit(ser); }
+    }
+
+    // names
+    shrinkToFit(homeName);
+    shrinkToFit(awayName);
+
+    // result shrink
+    const resText = res.querySelector(".link") || res.querySelector(".nolink");
+    if(resText){ shrinkResultText(resText); }
+  });
+
+  return card;
 }
 
-/* =========================================================
-   UI handlers: knappar, pills
-========================================================= */
-els.pillPlace.onclick = ()=>{ mode = MODE.PLACE; applyPills(); render(); };
-els.pillSeries.onclick= ()=>{ mode = MODE.SERIES; applyPills(); render(); };
-els.pillTime.onclick  = ()=>{
-  if(mode===MODE.PLACE) return; // låst i plats-vy
-  mode = (mode===MODE.SERIES) ? MODE.SERIES_TIME : MODE.SERIES;
-  applyPills(); render();
-};
-els.btnPrev.onclick = ()=>{ if(dayIndex>0){ setDateToIndex(dayIndex-1);} };
-els.btnNext.onclick = ()=>{ if(dayIndex<uniqueDays.length-1){ setDateToIndex(dayIndex+1);} };
+/* initials fallback logo */
+function makeLogoFallback(name){
+  const el = document.createElement("div");
+  el.className = "logo-fallback";
+  const initials = makeInitials(name||"—");
+  el.textContent = initials;
+  return el;
+}
+function makeInitials(name){
+  // Example: "Frölunda Hockey Club" -> "FHC"
+  const parts = (name||"").split(/\s+/).filter(Boolean);
+  if(!parts.length) return "—";
+  return parts.slice(0,3).map(w=>w[0].toUpperCase()).join("");
+}
 
-/* =========================================================
-   Init
-========================================================= */
-(async function init(){
-  await loadData();
-
-  // sätt dag: om dagens datum finns – välj den, annars första
-  const todayStr = (new Date()).toISOString().slice(0,10);
-  const idx = uniqueDays.indexOf(todayStr);
-  setDateToIndex(idx>=0 ? idx : 0);
-})();
+/* ==========================================================
+   END
+========================================================== */
 </script>
+</div>
 </body>
 </html>
 
