@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
-<title>LocalSport v18.2 • Index (CSV)</title>
+<title>LocalSport v18.3 • Index (CSV)</title>
 
 <style>
 :root {
@@ -48,7 +48,9 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 .group-slot{position:sticky;top:calc(var(--topbar-h) + var(--hint-h));height:var(--slot-h);display:flex;justify-content:space-between;align-items:center;padding:10px 12px;font-size:14px;font-weight:700;background:#fff;border-bottom:1px dashed var(--hair);z-index:425;}
 
 /* Scroll */
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);touch-action:pan-y;}
+/* Prevent horizontal “floaty” feel on iPhone */
+.scroll, body { overscroll-behavior-y: contain; }
 
 /* Headers in scroll */
 .arena-header{padding:10px 12px;background:#fff;border-bottom:1px dashed var(--hair);font-weight:700;display:flex;justify-content:space-between;}
@@ -63,6 +65,8 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 .game-right{white-space:nowrap;font-size:12px;color:var(--muted);}
 
 .game-bottom{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:24px;}
+.game-bottom .result{justify-self:center;} /* always perfectly centered */
+
 .team{display:inline-flex;align-items:center;font-weight:600;}
 .team.home{justify-content:flex-end;text-align:right;}
 .team.home .team-name{order:1;margin-right:6px;max-width:min(38vw,165px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;}
@@ -91,13 +95,13 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
   <header class="topbar">
     <div class="topbar-inner">
       <div class="cluster-left">
-        <button class="icon-btn" title="Hem">🏠</button>
+        <button id="btnHome" class="icon-btn" title="Hem">🏠</button>
         <button class="icon-btn" title="Karta">🗺️</button>
       </div>
 
       <div class="cluster-center">
         <button class="icon-btn" id="btnPrev" title="Föregående dag">◀</button>
-        <div class="date-block"><span>Idag</span><span>Tors</span><span>23 okt</span></div>
+        <div class="date-block"><span id="lblToday"></span><span id="lblWeekday"></span><span id="lblDate"></span></div>
         <button class="icon-btn" id="btnNext" title="Nästa dag">▶</button>
       </div>
 
@@ -141,16 +145,44 @@ const pillSeries=document.getElementById('pillSeries');
 const pillTime=document.getElementById('pillTime');
 const scroll=document.getElementById('scrollArea');
 const slot=document.getElementById('groupSlot');
+const lblToday=document.getElementById('lblToday');
+const lblWeekday=document.getElementById('lblWeekday');
+const lblDate=document.getElementById('lblDate');
+const btnPrev=document.getElementById('btnPrev');
+const btnNext=document.getElementById('btnNext');
+const btnHome=document.getElementById('btnHome');
 
 /* ================== STATE ================== */
 let mode = MODE.PLACE;
-let games = [];
+let gamesAll = [];              // alla matcher (alla datum)
+let games = [];                 // filtrerat på currentDate
 let logoMap = {};               // { 'Frölunda HC': '/logos/FHC.png', ... }
 let currentArena = null;
 let arenaOrder = [];
 let lastScrollTop = 0;
 
+const svWeek = ['Sön','Mån','Tis','Ons','Tors','Fre','Lör'];
+const svMonth = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
+
+let today = new Date();               // browserns lokala datum
+let currentDate = new Date(today);    // start = idag
+
 /* ================== HELPERS ================== */
+function pad(n){ return n<10 ? '0'+n : ''+n; }
+function dateToYYYYMMDD(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function humanDate(d){
+  const wd = svWeek[d.getDay()];
+  const mon = svMonth[d.getMonth()];
+  return { wd, mon, day: d.getDate() };
+}
+function updateDateHeader(){
+  const { wd, mon, day } = humanDate(currentDate);
+  const isToday = dateToYYYYMMDD(currentDate) === dateToYYYYMMDD(today);
+  lblToday.textContent = isToday ? 'Idag' : '';
+  lblWeekday.textContent = wd;
+  lblDate.textContent = `${day} ${mon}`;
+}
+
 function kmRound(v){ return Math.round(v); }
 function toRad(d){ return d*Math.PI/180; }
 function haversine(lat1,lon1,lat2,lon2){
@@ -210,7 +242,7 @@ function parseGamesCSV(text){
   const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l && !l.startsWith('#'));
   const out = [];
   for(const line of lines){
-    // OBS: semikolon-separerat
+    // semikolon-separerat
     const cols = line.split(';');
     if(cols.length < 19) continue;
     const obj = {
@@ -221,7 +253,7 @@ function parseGamesCSV(text){
       admin_host: cols[4],
       home_team: cols[5],
       away_team: cols[6],
-      result: cols[7] || '–',
+      result: (cols[7]||'–').trim() || '–',
       result_link: cols[8],
       arena_raw: cols[9],
       status: cols[10],
@@ -359,6 +391,12 @@ function gameCard(g, seriesMode=false){
   return art;
 }
 
+/* ================== DATABEHANDLING ================== */
+function filterGamesForCurrentDate(){
+  const sel = dateToYYYYMMDD(currentDate);
+  games = gamesAll.filter(g => (g.date || '').trim() === sel);
+}
+
 /* ================== RENDER MODES ================== */
 function renderPlace(){
   scroll.innerHTML='';
@@ -386,6 +424,9 @@ function renderPlace(){
     const d = byArena.get(currentArena)[0]?.distance_km ?? Infinity;
     slot.querySelector('.group-title').textContent = currentArena;
     slot.querySelector('.group-sub').textContent = `Avst ${kmRound(d)} km`;
+  }else{
+    slot.querySelector('.group-title').textContent = 'Inga arenor';
+    slot.querySelector('.group-sub').textContent = '—';
   }
 
   arenas.forEach((name, idx)=>{
@@ -480,10 +521,10 @@ function updateStickyArena(force=false){
   }
 
   if(force || currentArena){
-    slot.querySelector('.group-title').textContent = currentArena;
+    slot.querySelector('.group-title').textContent = currentArena || '—';
     const firstGame = games.find(g=>g.arena===currentArena);
-    const d = firstGame? kmRound(firstGame.distance_km) : '–';
-    slot.querySelector('.group-sub').textContent = `Avst ${d} km`;
+    const d = firstGame? kmRound(firstGame.distance_km) : '—';
+    slot.querySelector('.group-sub').textContent = currentArena ? `Avst ${d} km` : '—';
     arenaOrder.forEach(name=>{
       const h=document.querySelector(`.arena-header[data-arena-header="${name}"]`);
       if(h) h.classList.toggle('active-hidden', name===currentArena);
@@ -502,25 +543,39 @@ pillTime.onclick  = ()=>{
 };
 scroll.addEventListener('scroll', ()=> updateStickyArena(false));
 
+btnPrev.onclick = ()=>{ currentDate.setDate(currentDate.getDate()-1); onDateChanged(); };
+btnNext.onclick = ()=>{ currentDate.setDate(currentDate.getDate()+1); onDateChanged(); };
+btnHome.onclick = ()=>{ currentDate = new Date(today); mode=MODE.PLACE; applyPills(); onDateChanged(); };
+
+/* ================== DATE & RENDER PIPELINE ================== */
+function onDateChanged(){
+  updateDateHeader();
+  filterGamesForCurrentDate();
+  if(mode===MODE.PLACE) renderPlace();
+  else renderSeries(mode===MODE.SERIES_TIME);
+}
+
 /* ================== INIT ================== */
 (async function init(){
+  updateDateHeader();
   applyPills();
   try{
     // Logos
-    const mapText = await fetch('./data/Clubs_Organisatons_logos__ClubOrgName_LogoFileName.txt', {cache:'no-store'}).then(r=>r.text());
+    const mapText = await fetch(DATA_PATH.logosMap, {cache:'no-store'}).then(r=>r.text());
     logoMap = parseLogosMap(mapText);
   }catch(e){
     console.warn('Kunde inte läsa logos-map:', e);
     logoMap = {};
   }
   try{
-    // Games
-    const csvText = await fetch('./data/games.csv', {cache:'no-store'}).then(r=>r.text());
-    games = parseGamesCSV(csvText);
+    // Games (alla datum)
+    const csvText = await fetch(DATA_PATH.games, {cache:'no-store'}).then(r=>r.text());
+    gamesAll = parseGamesCSV(csvText);
   }catch(e){
     console.error('Kunde inte läsa games.csv:', e);
-    games = [];
+    gamesAll = [];
   }
+  filterGamesForCurrentDate();
   renderPlace();
 })();
 </script>
