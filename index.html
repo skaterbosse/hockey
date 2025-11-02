@@ -6,185 +6,222 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
-<title>LocalSport – Plats & Serie</title>
+<title>LocalSport – v18.2 + patch</title>
+
 <style>
-/* ========================= ROOT THEME ========================= */
+/* =================== THEME =================== */
 :root{
   --topbar-h:56px;
   --hint-h:26px;
   --slot-h:42px;
   --bg:#f0f3f8;
-  --paper:#fff;
   --hair:#e2e8f0;
   --text:#0f172a;
   --muted:#64748b;
-  --accent:#16a34a;           /* green ON */
-  --accent-weak:#86efac;      /* green border */
+  --accent:#16a34a;
+  --accent-weak:#86efac;
   --link:#2563eb;
-  --danger:#ef4444;
-  --pill-off-bg:#f1f5f9;
-  --pill-off-border:#cbd5e1;
-  --pill-off-text:#94a3b8;
-  --arrow-on:#22c55e;         /* brighter green arrow */
-  --arrow-off:#94a3b8;        /* grey arrow */
+  --danger:#dc2626;
 }
 
-/* ========================= RESET / BASE ========================= */
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;overscroll-behavior:none;}
+html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--text);overscroll-behavior:none}
 .device{width:100%;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 
-/* ========================= TOPBAR ========================= */
-.topbar{position:sticky;top:0;z-index:600;background:var(--paper);border-bottom:1px solid var(--hair)}
+/* =================== TOP BAR =================== */
+.topbar{position:sticky;top:0;z-index:500;background:#fff;border-bottom:1px solid var(--hair)}
 .topbar-inner{
-  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:var(--topbar-h);padding:6px 8px;gap:6px;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  height:var(--topbar-h);
+  padding:6px 8px;
+  gap:8px;
 }
-
-/* left/right clusters */
-.cluster-left,.cluster-right{display:flex;align-items:center;gap:8px}
-.icon-btn{width:32px;height:32px;border-radius:10px;border:1px solid var(--hair);background:#f8fafc;display:grid;place-items:center;cursor:pointer}
+.cluster-left,.cluster-right{display:flex;gap:8px;align-items:center}
+.icon-btn{
+  width:32px;height:32px;border-radius:10px;border:1px solid var(--hair);
+  background:#f1f5f9;display:grid;place-items:center;cursor:pointer;overflow:hidden
+}
 .icon-btn img{width:18px;height:18px;display:block}
 
-/* center: date control (place it centered between left map and right sort) */
 .cluster-center{
-  display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;
+  display:flex;align-items:center;justify-content:center;gap:8px;min-width:0
 }
-.date-block{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;font-weight:700;font-size:13.5px;white-space:nowrap;}
+.date-block{display:flex;flex-direction:column;align-items:center;font-weight:700;font-size:13.5px;line-height:1.1;min-width:0}
+.date-block span{white-space:nowrap}
 
-/* date arrows: svg colored by data-state */
+/* date arrows – green/gray according to availability */
 .date-arrow{
-  width:32px;height:32px;border-radius:10px;border:1px solid var(--hair);background:#f8fafc;display:grid;place-items:center;cursor:pointer;flex:0 0 auto;
+  width:32px;height:32px;border-radius:10px;border:1px solid var(--hair);
+  display:grid;place-items:center;font-weight:900;user-select:none
 }
-.date-arrow svg{width:16px;height:16px}
-.date-arrow[data-enabled="true"] svg{color:var(--arrow-on)}
-.date-arrow[data-enabled="false"] svg{color:var(--arrow-off)}
+.date-arrow.enabled{color:#15a34a;background:#dcfce7;border-color:#bbf7d0;cursor:pointer}
+.date-arrow.disabled{color:#94a3b8;background:#f1f5f9;border-color:#cbd5e1;cursor:not-allowed}
 
-/* ========================= SORTERING BOX ========================= */
+/* =================== SORTERING =================== */
 .sort-stack{
-  border:1px solid var(--hair);border-radius:10px;background:var(--paper);
-  padding:4px 6px;display:flex;flex-direction:column;align-items:center;min-width:150px;
+  border:1px solid var(--hair);border-radius:10px;background:#fff;
+  padding:4px 6px;display:flex;flex-direction:column;align-items:center;min-width:140px
 }
 .sort-top{font-size:12px;font-weight:600;margin-bottom:2px}
 .sort-bottom{display:flex;gap:4px;flex-wrap:nowrap}
-.pill{padding:4px 8px;font-size:11px;border-radius:999px;font-weight:600;border:1px solid var(--pill-off-border);cursor:pointer;user-select:none;background:var(--pill-off-bg);color:var(--pill-off-text)}
-.pill.on{background:#dcfce7;border-color:var(--accent-weak);color:var(--accent)}
-.pill.lock{opacity:.65;cursor:not-allowed}
+.pill{padding:4px 8px;font-size:11px;border-radius:999px;font-weight:600;border:1px solid var(--hair);cursor:pointer;user-select:none;white-space:nowrap}
+.pill.on{background:#dcfce7;border-color:#86efac;color:var(--accent)}
+.pill.off{background:#f1f5f9;border-color:#cbd5e1;color:#94a3b8}
+.pill.lock{opacity:.6;cursor:not-allowed}
 
-/* ========================= HINT ========================= */
-.hint{position:sticky;top:var(--topbar-h);height:var(--hint-h);background:var(--paper);border-bottom:1px solid var(--hair);
-  text-align:center;font-size:12px;line-height:var(--hint-h);color:var(--muted);z-index:520}
+/* =================== HINT =================== */
+.hint{
+  position:sticky;top:var(--topbar-h);
+  height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair);
+  text-align:center;font-size:12px;line-height:var(--hint-h);color:var(--muted);z-index:450
+}
 
-/* ========================= STICKY ARENA SLOT (PLACE VIEW ONLY) ========================= */
+/* =================== STICKY ARENA SLOT (Plats-vy) =================== */
 .group-slot{
   position:sticky;top:calc(var(--topbar-h) + var(--hint-h));
-  height:var(--slot-h);display:flex;justify-content:space-between;align-items:center;gap:8px;
-  padding:10px 12px;font-size:14px;font-weight:700;background:var(--paper);border-bottom:1px dashed var(--hair);z-index:510;
+  height:var(--slot-h);display:flex;justify-content:space-between;align-items:center;
+  padding:10px 12px;font-size:14px;font-weight:700;background:#fff;border-bottom:1px solid var(--hair);z-index:425
 }
+.group-slot .group-title,.group-slot .group-sub{white-space:nowrap}
+.group-slot .group-sub{color:var(--muted);font-weight:700}
 
-/* ========================= STATIC SCROLLER ========================= */
+/* =================== SCROLL AREA =================== */
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg)}
-/* Prevent any horizontal float in both views */
-.scroll, .device{overflow-x:hidden}
 
-/* ========================= ARENA HEADER (IN LIST) ========================= */
+/* =================== ARENA HEADER (i scroll-listan) =================== */
 .arena-header{
-  padding:10px 12px;background:var(--paper);border-bottom:1px dashed var(--hair);
-  font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:10px 12px;background:#fff;border-bottom:1px solid var(--hair);
+  font-weight:700;display:flex;justify-content:space-between
 }
+.arena-header .dist{color:var(--muted);font-weight:700}
 .arena-header.active-hidden{visibility:hidden;height:0;padding:0;margin:0;border:none}
 
-/* ========================= GAME CARD ========================= */
-.game{background:var(--paper);border-top:1px dashed #e5e7eb;padding:8px 12px;display:grid;gap:6px}
+/* =================== GAME CARD – gemensamt =================== */
+.game{background:#fff;border-top:1px dashed #e5e7eb;padding:8px 12px;display:grid;gap:6px}
+.game-top{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0}
+.game-series a{text-decoration:none;font-weight:600;color:var(--link)}
+.game-time{font-weight:700;white-space:nowrap;color:#0f172a}
 
-/* Top row (Place view): time + series (no arena here) */
-.game-top{display:flex;align-items:center;gap:8px;min-width:0}
-.game-time{font-weight:700;white-space:nowrap}
-.game-series{min-width:0;flex:1 1 auto}
-.game-series a,.game-series span{font-weight:600;text-decoration:none;color:var(--link);display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-/* Top row (Series view): series | arena | distance */
-.game-top.series{display:grid;grid-template-columns:48% 1fr auto;align-items:baseline;gap:8px}
-.game-top.series .series-left a,.game-top.series .series-left span{
-  font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--link)
-}
-.game-top.series .arena-mid{justify-self:center;max-width:60%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
-.game-top.series .dist-right{justify-self:end;color:var(--muted);white-space:nowrap;font-weight:700}
-
-/* Bottom row: teams + fixed result box in center */
-.game-bottom{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
-
-/* Teams */
-.team{display:flex;align-items:center;gap:6px;min-width:0}
+/* = LOGO = */
+.team{display:inline-flex;align-items:center;gap:6px;font-weight:600;min-width:0}
 .team.home{justify-content:flex-end}
 .team.away{justify-content:flex-start}
-
-.team-name{
-  max-width:min(38vw,220px);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;font-size:13px;
-}
-
-/* Logos: rectangular box, smart scaled canvas output will be placed in <img> */
 .team-logo{
-  width:28px;height:28px;display:block;background:#f8fafc;border:1px solid var(--hair);border-radius:4px;object-fit:contain;
+  width:28px;height:28px;display:block;object-fit:contain;
+  /* patch: ta bort fyrkantsram/bakgrund */
+  border:none;background:transparent;
+}
+.team-name{
+  max-width:min(38vw,165px);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px
 }
 
-/* Result box: fixed width sized for "0-0"; shrink larger scores */
-.result{display:flex;align-items:center;justify-content:center}
-.result-inner{
-  min-width:54px;max-width:54px;height:26px;border:1px solid var(--hair);border-radius:8px;background:#f1f5f9;
-  display:flex;align-items:center;justify-content:center;padding:0 6px;font-weight:700;line-height:1;text-decoration:none;color:var(--text)
+/* = RESULTATBOX (fast bredd för "0-0", shrink vid stora tal) = */
+.result{
+  display:flex;align-items:center;justify-content:center
 }
-.result-inner.link{color:var(--link)}
-.result-inner.shrink{font-size:12px}
+.result-box{
+  min-width:48px; /* anpassad för "0-0" tight kant/streck-avstånd */
+  padding:2px 6px;border-radius:8px;border:1px solid var(--hair);
+  background:#f1f5f9;font-weight:800;color:var(--text);text-align:center;
+  line-height:1;display:inline-block
+}
+.result-link{color:var(--link);text-decoration:none}
+.result-no{color:var(--text)}
+.result-postponed{font-size:11px;white-space:nowrap}
 
-/* Divider between arenas */
-.divider{height:7px;background:var(--bg);border-top:1px dashed var(--hair)}
+/* ========= Plats-vy: game rows ========= */
+/* Övre rad: tid + serie (vänsterjusterad serie, dynamisk krymp & ellipsis) */
+.place .game-top{
+  display:flex;gap:8px;align-items:center;min-width:0
+}
+.place .game-top .game-series{
+  min-width:0;flex:1 1 auto;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.place .game-top .game-series a,
+.place .game-top .game-series span{
+  display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
 
-/* Empty day banner */
-.empty{padding:14px 12px;text-align:center;color:var(--muted);font-weight:700;background:var(--paper);border-top:1px solid var(--hair)}
+/* Nedre rad: [Hemmalag] [logo] [RESULTATBOX] [logo] [Bortalag] */
+.place .game-bottom{
+  display:grid;
+  grid-template-columns:1fr auto auto auto 1fr;
+  align-items:center;gap:8px
+}
+.place .game-bottom .team.home .team-name{text-align:right}
+.place .game-bottom .team.away .team-name{text-align:left}
 
-/* Debug: mark shrunk texts red */
-.debug-shrink{color:var(--danger)!important}
+/* ========= Serie-vy: game rows ========= */
+/* Övre rad (EXAKT begärt): 49% 2% 29% 2% 18%  => [Serie] [sz] [Arena] [sz] [Avstånd] */
+.series .game-top{
+  display:grid;
+  grid-template-columns:49% 2% 29% 2% 18%;
+  align-items:baseline;gap:0;min-width:0
+}
+.series .series-left{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.series .arena-mid{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:center}
+.series .dist-right{white-space:nowrap;text-align:right;color:var(--muted);font-weight:700}
 
-/* Prevent any accidental horizontal movement */
-body{overflow-x:hidden}
+/* Nedre rad – tid + 1% säkerhetszon + [hemma] [result] [borta] */
+.series .game-bottom{
+  display:grid;
+  grid-template-columns:auto 1% 1fr auto 1fr;
+  align-items:center;gap:0
+}
+.series .game-bottom .team.home .team-name{text-align:right}
+.series .game-bottom .team.away .team-name{text-align:left}
+
+/* Divider mellan arenor (liten luft) */
+.divider{height:7px;background:var(--bg);border-top:1px solid var(--hair)}
+
+/* =================== EMPTY STATE =================== */
+.empty{
+  padding:24px;margin:12px;background:#fff;border:1px dashed var(--hair);
+  border-radius:12px;text-align:center;color:var(--muted)
+}
+
+/* =================== DEBUG =================== */
+.debug .shrunk{color:var(--danger)}
+.debug .logo-miss{font-size:11px;color:var(--danger)}
 </style>
 </head>
+
 <body>
 <div class="device">
 
-  <!-- ========================= TOP BAR ========================= -->
+  <!-- =================== TOP BAR =================== -->
   <header class="topbar">
     <div class="topbar-inner">
-      <!-- left -->
       <div class="cluster-left">
         <button id="btnHome" class="icon-btn" title="Hem">
-          <img src="icons/home.jpeg" alt="Home" />
+          <img src="icons/home.jpeg" alt="home"/>
         </button>
         <button id="btnMap" class="icon-btn" title="Karta">
-          <img src="icons/map.jpeg" alt="Map" />
+          <img src="icons/map.jpeg" alt="map"/>
         </button>
       </div>
 
-      <!-- center (arrows + date) -->
       <div class="cluster-center" id="dateCluster">
-        <button id="btnPrev" class="date-arrow" data-enabled="false" title="Föregående dag" aria-label="Föregående dag">
-          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M12.7 15.3a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 0-1.4l5-5a1 1 0 1 1 1.4 1.4L8.42 10l4.3 4.3a1 1 0 0 1 0 1.3z"/></svg>
-        </button>
-        <div class="date-block" id="dateBlock"><span>Idag</span><span></span><span></span></div>
-        <button id="btnNext" class="date-arrow" data-enabled="false" title="Nästa dag" aria-label="Nästa dag">
-          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7.3 4.7a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 1 1-1.4-1.4L11.58 10 7.3 5.7a1 1 0 0 1 0-1z"/></svg>
-        </button>
+        <div id="prevDay" class="date-arrow disabled">◀</div>
+        <div class="date-block" id="dateBlock">
+          <span id="dayRel">Idag</span>
+          <span id="weekday">—</span>
+          <span id="dateText">—</span>
+        </div>
+        <div id="nextDay" class="date-arrow disabled">▶</div>
       </div>
 
-      <!-- right -->
       <div class="cluster-right">
         <div class="sort-stack">
           <div class="sort-top">Sortering</div>
           <div class="sort-bottom">
-            <span id="pillPlace" class="pill">Plats</span>
-            <span id="pillSeries" class="pill">Serie</span>
-            <span id="pillTime" class="pill">Tid</span>
+            <span id="pillPlace"  class="pill on">Plats</span>
+            <span id="pillSeries" class="pill off">Serie</span>
+            <span id="pillTime"   class="pill off">Tid</span>
           </div>
         </div>
         <button id="btnSettings" class="icon-btn" title="Inställningar">⚙️</button>
@@ -192,619 +229,681 @@ body{overflow-x:hidden}
     </div>
   </header>
 
-  <!-- hint -->
-  <div class="hint" id="hintText">Visar matcher nära: Kruniusvägen 1, Billdal</div>
+  <!-- =================== HINT =================== -->
+  <div class="hint" id="hint">Visar matcher nära: Kruniusvägen 1, Billdal</div>
 
-  <!-- sticky arena slot (place view only) -->
-  <div id="groupSlot" class="group-slot" style="display:none;">
-    <div class="group-title">—</div>
-    <div class="group-sub">—</div>
+  <!-- =================== STICKY ARENA SLOT (Plats-vy) =================== -->
+  <div id="groupSlot" class="group-slot" aria-hidden="true" style="display:none">
+    <div class="group-title"></div>
+    <div class="group-sub"></div>
   </div>
 
-  <!-- scroller -->
+  <!-- =================== SCROLL AREA =================== -->
   <main id="scrollArea" class="scroll"></main>
-
 </div>
 
 <script>
-/* ========================= CONSTANTS ========================= */
-const BASE_LAT = 57.590214281624824;
-const BASE_LON = 11.94608216084837;
-const FILE_GAMES = "data/games.csv";
-const FILE_LOGOS = "data/Clubs_Organisatons_logos__ClubOrgName_LogoFileName.txt";
+/* =================== KONFIG / STATE =================== */
+const DEBUG = new URLSearchParams(location.search).get("debug")==="1";
+if (DEBUG) document.documentElement.classList.add("debug");
 
-const MODE={ PLACE:"place", SERIES:"series", SERIES_TIME:"series_time" };
+const USER_POS = { lat:57.590214281624824, lon:11.94608216084837 }; // Billdal
+const files = {
+  games: "data/games.csv",
+  logos: "data/Clubs_Organisatons_logos__ClubOrgName_LogoFileName.txt"
+};
 
-let mode = MODE.PLACE;           // default view
-let debug = new URLSearchParams(location.search).get("debug") === "1";
+const MODE = { PLACE:"place", SERIES:"series", SERIES_TIME:"series_time" };
+let mode = MODE.PLACE;
 
-/* ========================= HELPERS ========================= */
-const pad = n => String(n).padStart(2,"0");
-function formatDateParts(d){
+let allGames = [];      // alla rader (alla datum)
+let viewGames = [];     // filtrerat på valt datum
+let dateIndex = 0;      // 0=today, -1=igår, +1=imorgon etc.
+let datesAvailable = []; // sorterade datumsträngar "YYYY-MM-DD"
+let logosMap = new Map(); // "ClubOrgName" -> "LogoFilename"
+
+const ids = sel => document.getElementById(sel);
+const scrollArea = ids("scrollArea");
+const groupSlot  = ids("groupSlot");
+
+/* =================== UTIL =================== */
+function pad(n){return String(n).padStart(2,"0")}
+function fmtDate(d){
   const wd = ["Sön","Mån","Tis","Ons","Tors","Fre","Lör"][d.getDay()];
-  const mn = ["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"][d.getMonth()];
-  const today = new Date(); today.setHours(0,0,0,0);
-  const cmp = new Date(d); cmp.setHours(0,0,0,0);
-  const isToday = (cmp.getTime()===today.getTime());
-  return { labelTop: isToday?"Idag":"", labelMid: wd, labelBot: `${d.getDate()} ${mn}` };
+  const months = ["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
+  return { wd, day: d.getDate()+" "+months[d.getMonth()] };
 }
-function parseCSVSemicolon(text){
-  // robust split by semicolon, trim spaces
-  return text.split(/\r?\n/).filter(Boolean).map(line=>line.split(";").map(s=>s.trim()));
-}
+function isoFromDate(d){return d.toISOString().slice(0,10)}
+function parseDateISO(s){const [y,m,d]=s.split("-").map(Number);return new Date(y, m-1, d)}
+
 function haversine(lat1,lon1,lat2,lon2){
-  const toRad = x => x*Math.PI/180;
-  const R=6371; // km
-  const dLat = toRad(lat2-lat1), dLon = toRad(lon2-lon1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  const R=6371, toRad = x=>x*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  return R*c;
 }
-/* shorten with single trailing dot (as you asked) */
-function truncOneDot(str,max){ if(str.length<=max) return str; return str.slice(0,Math.max(0,max-1))+"." }
+function kmStr(km){return `Avst ${Math.round(km)} km`}
 
-/* ========================= STATE ========================= */
-let allGamesRaw = [];         // raw rows
-let games = [];               // normalized objects for selected date
-let logoMap = new Map();      // "Club Name" -> "fileName"
-let dateCursor = null;        // selected Date
-let allDatesSet = new Set();  // yyyy-mm-dd present in CSV
-
-/* UI refs */
-const scrollArea = document.getElementById("scrollArea");
-const groupSlot  = document.getElementById("groupSlot");
-const slotTitle  = groupSlot.querySelector(".group-title");
-const slotSub    = groupSlot.querySelector(".group-sub");
-const dateBlock  = document.getElementById("dateBlock");
-const btnPrev = document.getElementById("btnPrev");
-const btnNext = document.getElementById("btnNext");
-const pillPlace  = document.getElementById("pillPlace");
-const pillSeries = document.getElementById("pillSeries");
-const pillTime   = document.getElementById("pillTime");
-
-/* ========================= LOADERS ========================= */
-async function loadLogoMap(){
-  const txt = await fetch(FILE_LOGOS).then(r=>r.text());
-  // file is "Club;File"
-  txt.split(/\r?\n/).forEach(line=>{
-    if(!line.trim()) return;
-    const [club,file] = line.split(";").map(s=>s.trim());
-    if(club && file){ logoMap.set(club, file); }
-  });
-}
-async function loadGames(){
-  const txt = await fetch(FILE_GAMES).then(r=>r.text());
-  const rows = parseCSVSemicolon(txt);
-  // header must match expected columns
-  const header = rows.shift();
-  // Build objects
-  allGamesRaw = rows.map(cols=>{
-    const [
-      date,time,series_name,link_to_series,admin_host,home_team,away_team,result,result_link,arena,status,iteration_fetched,iterations_total,
-      home_club_list,away_club_list,arena_nbr,PreferedName,Lat,Long
-    ] = cols;
-    const lat = parseFloat(Lat), lon = parseFloat(Long);
-    const dkey = date;
-    allDatesSet.add(dkey);
-    return {
-      date, time, series_name, link_to_series, admin_host,
-      home_team, away_team, result, result_link, arena_original: arena,
-      status, iteration_fetched, iterations_total,
-      home_club_list, away_club_list,
-      arena_nbr, arena: PreferedName || arena,
-      lat, lon,
-      dist: isFinite(lat)&&isFinite(lon) ? Math.round(haversine(BASE_LAT,BASE_LON,lat,lon)) : null
-    };
-  });
-}
-
-/* ========================= DATE HANDLING ========================= */
-function setDate(d){
-  dateCursor = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const parts = formatDateParts(dateCursor);
-  dateBlock.children[0].textContent = parts.labelTop;
-  dateBlock.children[1].textContent = parts.labelMid;
-  dateBlock.children[2].textContent = parts.labelBot;
-
-  // enable/disable arrows depending whether there are matches previous/next
-  const prev = new Date(dateCursor); prev.setDate(prev.getDate()-1);
-  const next = new Date(dateCursor); next.setDate(next.getDate()+1);
-  const prevKey = `${prev.getFullYear()}-${pad(prev.getMonth()+1)}-${pad(prev.getDate())}`;
-  const nextKey = `${next.getFullYear()}-${pad(next.getMonth()+1)}-${pad(next.getDate())}`;
-  btnPrev.dataset.enabled = allDatesSet.has(prevKey) ? "true" : "false";
-  btnNext.dataset.enabled = allDatesSet.has(nextKey) ? "true" : "false";
-}
-
-/* ========================= SERIES PRIORITY ========================= */
-function computeSeriesPriority(g){
-  const host = (g.admin_host||"").toLowerCase();
-  const sn   = (g.series_name||"").toLowerCase();
-
-  // Group 1: Svenska Ishockeyförbundet (90)
-  let group = 3, tier = 999, sub = 999, regionBias = 999;
-  if(host.includes("svenska") && host.includes("ishockey")){
-    group = 1;
-    // Top order: SHL, HA, SDHL, HockeyEttan
-    if(/\bshl\b/.test(sn)) tier = 1;
-    else if(/\bha\b|hockeyallsv/.test(sn)) tier = 2;
-    else if(/\bsdhl\b/.test(sn)) tier = 3;
-    else if(/hockeyettan|hockeyettan/.test(sn)) tier = 4;
-    // Middle: National teams SWE
-    else if(/\bswe\b|landslag|national/.test(sn)) tier = 10;
-    // Low: U series (higher U first): U20, U18, U16, ...
-    else if(/u(\d{1,2})/.test(sn)){
-      const u = +sn.match(/u(\d{1,2})/)[1];
-      tier = 100 - u; // U20 -> 80, U18 -> 82 etc (so higher U => smaller number => higher prio)
-    } else tier = 500; // rest
-  }
-  // Group 2: Regioner (Syd 93, Öst 95, Norr 96, Väst 94) with order 93,95,96,94
-  else if(/(region|syd|väst|öst|norr)/.test(host)){
-    group = 2;
-    // Region bias by order 93,95,96,94 (Syd, Öst, Norr, Väst)
-    // Try to read host code digits if any; fallback by words
-    if(/93|syd/.test(host)) regionBias = 1;
-    else if(/95|öst|ost/.test(host)) regionBias = 2;
-    else if(/96|norr/.test(host)) regionBias = 3;
-    else if(/94|väst|vast/.test(host)) regionBias = 4;
-
-    // Top order: HockeyTvåan, NDHL, HockeyTrean, U20 Regional, HockeyFyran, DamTvåan
-    if(/hockeytvåan|hockeytvaan|hockeytvåa/.test(sn)) tier = 1;
-    else if(/\bndhl\b/.test(sn)) tier = 2;
-    else if(/hockeytrean|hockeytrea/.test(sn)) tier = 3;
-    else if(/u20.*regional|regional.*u20/.test(sn)) tier = 4;
-    else if(/hockeyfyran/.test(sn)) tier = 6;
-    else if(/damtvåan|damtvaan|damtvåa/.test(sn)) tier = 5;
-    // Middle: U series (higher U first)
-    else if(/u(\d{1,2})/.test(sn)){ const u=+sn.match(/u(\d{1,2})/)[1]; tier = 100 - u; }
-    // Low: TV-pucken, Distriktslag
-    else if(/tv-?pucken|distriktslag/.test(sn)) tier = 200;
-    else tier = 500;
-  }
-  // Group 3: Districts – use explicit ordering list
-  else {
-    group = 3;
-    // District priority list (top to bottom)
-    const order = [
-      "stockholms ishockeyförbund","göteborgs ishockeyförbund","västergötlands ishockeyförbund",
-      "smålands ishockeyförbund","bohuslän dals ishockeyförbund","skånes ishockeyförbund",
-      "upplands ishockeyförbund","södermanlands ishockeyförbund","hälsinglands ishockeyförbund",
-      "östergötlands ishockeyförbund","gästriklands ishockeyförbund","norrbottens ishockeyförbund",
-      "blekinge ishockeyförbund","örebro läns ishockeyförbund","västmanlands ishockeyförbund",
-      "dalanas ishockeyförbund","jämtland-härjedalens ishockeyförbund","gotlands ishockeyförbund",
-      "ångermanlands ishockeyförbund","västerbottens ishockeyförbund","värmlands ishockeyförbund",
-      "medelpads ishockeyförbund","hallands ishockeyförbund"
-    ];
-    regionBias = (order.findIndex(x=>host.includes(x)) + 1) || 999;
-
-    // Top: Hockeyfyran, Division 5
-    if(/hockeyfyran/.test(sn)) tier = 1;
-    else if(/division\s*5/.test(sn)) tier = 2;
-    // Middle: U series (higher U first)
-    else if(/u(\d{1,2})/.test(sn)){ const u=+sn.match(/u(\d{1,2})/)[1]; tier=100-u; }
-    else tier = 500;
-  }
-
-  // secondary within same series/time later
-  return {group, tier, regionBias};
-}
-
-/* Sort helpers */
-function timeToMin(t){ const [H,M]=t.split(":"); return (+H)*60+(+M); }
-
-/* ========================= LOGO RESOLUTION ========================= */
-function firstClubName(list){
-  if(!list) return "";
-  const first = list.split(",")[0] || "";
-  return first.replace(/\s+$/,""); // trim trailing ws only
-}
-function resolveLogoForTeam(teamName, clubList){
-  const key = firstClubName(clubList) || teamName;
-  const file = logoMap.get(key);
-  if(file){
-    const lower = file.toLowerCase();
-    if(/\.(png|jpe?g|gif)$/.test(lower)) return `logos/${file}`;
-  }
-  return null; // will use fallback
-}
-
-/* Draw image onto canvas and trim white/transparent margins, then return dataURL */
-async function smartLogo(src){
-  if(!src) return null;
-  return new Promise(resolve=>{
-    const img = new Image(); img.crossOrigin='anonymous'; img.onload=()=>{
-      try{
-        const w=img.naturalWidth,h=img.naturalHeight;
-        const can=document.createElement('canvas'), ctx=can.getContext('2d');
-        can.width=w; can.height=h; ctx.drawImage(img,0,0);
-        const imgData = ctx.getImageData(0,0,w,h);
-        const d = imgData.data;
-        // find bounds of non-(white or transparent)
-        const isNonBg = (i)=>{
-          const r=d[i],g=d[i+1],b=d[i+2],a=d[i+3];
-          if(a===0) return false; // transparent
-          // consider very-light as white: all channels > 245
-          return !(r>245 && g>245 && b>245);
-        };
-        let minX=w, minY=h, maxX=0, maxY=0, found=false;
-        for(let y=0;y<h;y++){
-          for(let x=0;x<w;x++){
-            const i=(y*w+x)*4;
-            if(isNonBg(i)){ found=true; if(x<minX)minX=x; if(y<minY)minY=y; if(x>maxX)maxX=x; if(y>maxY)maxY=y; }
-          }
-        }
-        if(!found){ resolve(src); return; }
-        const tw=maxX-minX+1, th=maxY-minY+1;
-        const can2=document.createElement('canvas'), ctx2=can2.getContext('2d');
-        can2.width=tw; can2.height=th;
-        ctx2.drawImage(can,minX,minY,tw,th,0,0,tw,th);
-        resolve(can2.toDataURL());
-      }catch(e){ resolve(src); }
-    };
-    img.onerror=()=>resolve(src);
-    img.src=src;
-  });
-}
-
-/* ========================= RENDER ========================= */
-function applyPills(){
-  // Place view => pills: Plats (on), Serie (off), Tid hidden/grey
-  // Series view => pills: Plats (off), Serie (on), Tid (on/off depending)
-  const isPlace = (mode===MODE.PLACE);
-  pillPlace.className = "pill"+(isPlace?" on":"");
-  pillSeries.className= "pill"+(!isPlace?" on":"");
-  pillTime.style.display = isPlace ? "inline-block" : "inline-block"; // visible in both, but acts only in series
-  if(isPlace){
-    pillTime.className = "pill lock"; // disabled visual (cannot affect place layout)
-  }else{
-    pillTime.className = "pill"+(mode===MODE.SERIES_TIME?" on":"");
-  }
-  // sticky arena slot visible only in place mode
-  groupSlot.style.display = isPlace ? "flex" : "none";
-}
-
-function setStaticWindow(){
-  // Ensure no sideways drift on iPhone: lock to x=0
-  document.querySelector('.device').scrollLeft = 0;
-  scrollArea.scrollLeft = 0;
-}
-
-/* Build DOM nodes for a single game (view-specific) */
-function gameNode(g, isSeriesView){
-  const art = document.createElement('article');
-  art.className="game";
-  // ----- top row -----
-  const top = document.createElement('div');
-  if(isSeriesView){
-    top.className="game-top series";
-    const left = document.createElement('div');
-    left.className="series-left";
-    const sLink = g.link_to_series ? document.createElement('a') : document.createElement('span');
-    sLink.href = g.link_to_series || "#";
-    sLink.textContent = truncOneDot(g.series_name||"", 50); // device-dependent width; we still truncate early then shrink
-    left.appendChild(sLink);
-
-    const mid = document.createElement('div');
-    mid.className="arena-mid";
-    mid.textContent = truncOneDot(g.arena, 25);
-
-    const right = document.createElement('div');
-    right.className="dist-right";
-    right.textContent = (isFinite(g.dist) ? `Avst ${g.dist} km` : "");
-
-    top.append(left,mid,right);
-  }else{
-    top.className="game-top";
-    const t = document.createElement('div'); t.className="game-time"; t.textContent = g.time;
-    const s = document.createElement('div'); s.className="game-series";
-    const sNode = g.link_to_series ? document.createElement('a') : document.createElement('span');
-    sNode.href = g.link_to_series || "#";
-    sNode.textContent = truncOneDot(g.series_name||"", 50);
-    s.appendChild(sNode);
-    top.append(t,s);
-  }
-
-  // ----- bottom row -----
-  const bottom = document.createElement('div');
-  bottom.className="game-bottom";
-
-  // time (Series view bottom-left)
-  if(isSeriesView){
-    const timeL = document.createElement('div');
-    timeL.className="game-time";
-    timeL.style.justifySelf = "start";
-    timeL.textContent = g.time_display || g.time;
-    bottom.appendChild(timeL);
-  }else{
-    // placeholder to align grid columns: left team will fill
-  }
-
-  // home team
-  const home = document.createElement('div'); home.className="team home";
-  const hName = document.createElement('span'); hName.className="team-name"; hName.textContent = g.home_team;
-  const hLogo = document.createElement('img'); hLogo.className="team-logo"; hLogo.alt=g.home_team;
-  home.append(hName,hLogo);
-
-  // result box (center)
-  const resWrap = document.createElement('div'); resWrap.className="result";
-  const resInner = g.result_link ? document.createElement('a') : document.createElement('span');
-  resInner.className="result-inner";
-  if(g.result_link) { resInner.href=g.result_link; resInner.classList.add("link"); }
-  const resText = (g.result && g.result.trim()) ? g.result.trim() : "–";
-  resInner.textContent = resText;
-  // shrink if wide
-  if(resText.length>3){ resInner.classList.add("shrink"); if(debug) resInner.classList.add("debug-shrink"); }
-  resWrap.appendChild(resInner);
-
-  // away team
-  const away = document.createElement('div'); away.className="team away";
-  const aLogo = document.createElement('img'); aLogo.className="team-logo"; aLogo.alt=g.away_team;
-  const aName = document.createElement('span'); aName.className="team-name"; aName.textContent = g.away_team;
-  away.append(aLogo,aName);
-
-  if(isSeriesView){
-    // grid: [time] [center box] [away]
-    bottom.append(home,resWrap,away);
-  }else{
-    // place view bottom row only teams+result
-    bottom.append(home,resWrap,away);
-  }
-
-  art.append(top,bottom);
-
-  // smart logos
-  (async()=>{
-    let srcH = resolveLogoForTeam(g.home_team, g.home_club_list);
-    let srcA = resolveLogoForTeam(g.away_team, g.away_club_list);
-    if(debug){
-      if(!srcH){ hLogo.alt = `[no logo: ${firstClubName(g.home_club_list)||g.home_team}]`; }
-      if(!srcA){ aLogo.alt = `[no logo: ${firstClubName(g.away_club_list)||g.away_team}]`; }
+/* shrink text till max-bredd – markera i debug */
+function shrinkTo(el, maxPx){
+  requestAnimationFrame(()=>{
+    const w = el.scrollWidth;
+    if (w<=maxPx) return;
+    const style = getComputedStyle(el);
+    let fs = parseFloat(style.fontSize);
+    let tries=0;
+    while (el.scrollWidth>maxPx && fs>9 && tries<40){
+      fs -= 0.5;
+      el.style.fontSize = fs+"px";
+      tries++;
     }
-    if(srcH){ hLogo.src = await smartLogo(srcH); } else { hLogo.src = ""; }
-    if(srcA){ aLogo.src = await smartLogo(srcA); } else { aLogo.src = ""; }
-  })();
+    if (DEBUG) el.classList.add("shrunk");
+  });
+}
+
+/* =================== DATA-INLÄSNING =================== */
+async function loadLogosMap(){
+  const txt = await fetch(files.logos).then(r=>r.text());
+  txt.split(/\r?\n/).forEach(line=>{
+    if(!line.trim() || !line.includes(";")) return;
+    const [name,file] = line.split(";").map(s=>s.trim());
+    if (name && file) logosMap.set(name, "logos/"+file);
+  });
+}
+
+function parseCSVSemicolon(text){
+  const rows = text.split(/\r?\n/).filter(x=>x.trim());
+  const data = [];
+  for (const row of rows){
+    const parts = row.split(";"); // förutsätter inga ; inuti fält (enligt dina filer)
+    if(parts.length < 19) continue;
+    const [date,time,series_name,link_to_series,admin_host,home_team,away_team,result,result_link,arena,status,iteration_fetched,iterations_total,home_club_list,away_club_list,arena_nbr,PreferedName,Lat,Long] = parts;
+    data.push({date,time,series_name,link_to_series,admin_host,home_team,away_team,result,result_link,arena,status,iteration_fetched,iterations_total,home_club_list,away_club_list,arena_nbr,PreferedName,Lat:+Lat,Long:+Long});
+  }
+  return data;
+}
+
+async function loadGames(){
+  const txt = await fetch(files.games, {cache:"no-store"}).then(r=>r.text());
+  allGames = parseCSVSemicolon(txt);
+  // samla datum
+  const set = new Set(allGames.map(g=>g.date));
+  datesAvailable = Array.from(set).sort();
+}
+
+/* =================== LOGO-HANTERING =================== */
+/* Matcha exakt på första klubben i listan (trim slut-whitespace) */
+function logoFor(clubList, fallbackTeamName){
+  if (!clubList){ 
+    return {type:"initials", value:initials(fallbackTeamName)};
+  }
+  const first = clubList.split(",")[0].replace(/\s+$/,"");
+  if (logosMap.has(first)){
+    return {type:"img", value:logosMap.get(first)};
+  }
+  // Fallback initials
+  return {type:"initials", value:initials(fallbackTeamName)};
+}
+/* Skapa "initialer" */
+function initials(name){
+  if(!name) return "?";
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length===1) {
+    return parts[0].slice(0,3).toUpperCase();
+  }
+  return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+}
+
+/* Smart trim av transparent/vit kant – returnera dataURL */
+function smartCropURL(url){
+  // Vi optimerar: returnera original direkt; vid behov kan vi aktivera canvas-trim.
+  // Logos såg redan "perfekta" ut hos dig – vi behåller denna hook om du vill slå på senare.
+  return url;
+}
+
+/* =================== DATUM/UI =================== */
+function setDateUI(){
+  const today = new Date();
+  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate()+dateIndex);
+  const iso = isoFromDate(d);
+  const f = fmtDate(d);
+  ids("weekday").textContent = f.wd;
+  ids("dateText").textContent = f.day;
+  ids("dayRel").textContent = (dateIndex===0)?"Idag":(dateIndex===-1?"Igår":(dateIndex===1?"Imorgon":""));
+
+  // pilar grön/grå: finns matcher före/efter?
+  const idx = datesAvailable.indexOf(iso);
+  const prev = ids("prevDay"), next = ids("nextDay");
+  function setEnabled(el,en){el.classList.toggle("enabled",en);el.classList.toggle("disabled",!en)}
+  setEnabled(prev, idx>0);
+  setEnabled(next, idx>=0 && idx<datesAvailable.length-1);
+}
+
+function changeDate(delta){
+  const today = new Date();
+  const newD = new Date(today.getFullYear(), today.getMonth(), today.getDate()+dateIndex+delta);
+  const iso = isoFromDate(newD);
+  if (!datesAvailable.includes(iso)) return; // håll pilar grå där datum saknas
+  dateIndex += delta;
+  setDateUI();
+  filterByDate();
+  render();
+}
+
+/* =================== VY-VAL =================== */
+const pillPlace  = ids("pillPlace");
+const pillSeries = ids("pillSeries");
+const pillTime   = ids("pillTime");
+
+function applyPills(){
+  pillPlace.className  = (mode===MODE.PLACE)?"pill on":"pill off";
+  pillSeries.className = (mode===MODE.SERIES||mode===MODE.SERIES_TIME)?"pill on":"pill off";
+  pillTime.className   = (mode===MODE.SERIES_TIME)?"pill on":"pill off";
+}
+
+pillPlace.onclick  = ()=>{ mode = MODE.PLACE; applyPills(); render(); };
+pillSeries.onclick = ()=>{ mode = MODE.SERIES; applyPills(); render(); };
+pillTime.onclick   = ()=>{ if(mode!==MODE.PLACE){ mode = (mode===MODE.SERIES)?MODE.SERIES_TIME:MODE.SERIES; applyPills(); render(); } };
+
+/* =================== FILTER / SORT =================== */
+function filterByDate(){
+  const today = new Date();
+  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate()+dateIndex);
+  const iso = isoFromDate(d);
+  viewGames = allGames.filter(g=>g.date===iso);
+}
+
+function byTime(a,b){
+  const [ah,am] = a.time.split(":").map(Number);
+  const [bh,bm] = b.time.split(":").map(Number);
+  return (ah*60+am)-(bh*60+bm);
+}
+
+/* Serie-prio (enligt din specificerade ordning) */
+function seriesPriority(g){
+  const host = (g.admin_host||"").toLowerCase();
+  const name = (g.series_name||"").toLowerCase();
+
+  // 1) Svenska Ishockeyförbundet (90)
+  if (host.includes("svenska ishockey förbundet") || host.includes("svenska ishockeyförbundet")){
+    // Top: SHL, HA, SDHL, HockeyEttan
+    if (/\bshl\b/.test(name)) return 10;
+    if (/\bha\b/.test(name) || name.includes("hockeyallsvenskan")) return 11;
+    if (/\bsdhl\b/.test(name)) return 12;
+    if (name.includes("hockeyettan")) return 13;
+
+    // Middle: landslag (SWE)
+    if (/\bswe\b/.test(name) || /landslag/.test(name)) return 20;
+
+    // Low: U-serier – högre U-nummer högre prio (U20→U18→U16…)
+    const u = name.match(/u(\d+)/);
+    if (u){ return 100 - parseInt(u[1],10); }
+
+    // Lowest: rest
+    return 999;
+  }
+
+  // 2) Regionen (Syd 93, Öst 95, Norr 96, Väst 94) – ordning: 93, 95, 96, 94
+  let regionScore = null;
+  if (/syd|93/.test(host)) regionScore = 200;
+  else if (/öst|95/.test(host)) regionScore = 201;
+  else if (/norr|96/.test(host)) regionScore = 202;
+  else if (/väst|94/.test(host)) regionScore = 203;
+
+  if (regionScore!==null){
+    // Top: HockeyTvåan, NDHL, HockeyTrean, DamTvåan, U20 Regional, HockeyFyran
+    if (name.includes("hockeytvåan")) return regionScore + 10;
+    if (name.includes("ndhl"))        return regionScore + 11;
+    if (name.includes("hockeytrean")) return regionScore + 12;
+    if (name.includes("damtvåan"))    return regionScore + 13;
+    if (name.includes("u20") && name.includes("regional")) return regionScore + 14;
+    if (name.includes("hockeyfyran")) return regionScore + 15;
+
+    // Middle: U-serier – högre U-nummer högre prio
+    const u = name.match(/u(\d+)/);
+    if (u){ return regionScore + (100 - parseInt(u[1],10)); }
+
+    // Low: TV-pucken / Distriktslag
+    if (name.includes("tv-pucken") || /distriktslag|distrikt/.test(name)) return regionScore + 500;
+
+    // Lowest: Rest
+    return regionScore + 999;
+  }
+
+  // 3) Distrikt – ordning enligt listan
+  const distOrder = [
+    ["Stockholms Ishockeyförbund",15],["Göteborgs Ishockeyförbund",6],["Västergötlands Ishockeyförbund",20],
+    ["Smålands Ishockeyförbund",14],["Bohuslän Dals Ishockeyförbund",2],["Skånes Ishockeyförbund",13],
+    ["Upplands Ishockeyförbund",17],["Södermanlands Ishockeyförbund",16],["Hälsinglands Ishockeyförbund",8],
+    ["Östergötlands Ishockeyförbund",23],["Gästriklands Ishockeyförbund",5],["Norrbottens Ishockeyförbund",11],
+    ["Blekinge Ishockeyförbund",1],["Örebro läns Ishockeyförbund",12],["Västmanlands Ishockeyförbund",21],
+    ["Dalanas Ishockeyförbund",3],["Jämtland-Härjedalens Ishockeyförbund",9],["Gotlands Ishockeyförbund",4],
+    ["Ångermanlands Ishockeyförbund",22],["Västerbottens Ishockeyförbund",19],["Värmlands Ishockeyförbund",18],
+    ["Medelpads Ishockeyförbund",10],["Hallands Ishockeyförbund",7]
+  ];
+  const distIdx = distOrder.findIndex(([n])=> g.admin_host===n);
+  if (distIdx>=0){
+    const base = 300 + distIdx; // stabil ordning
+    // Top: Hockeyfyran, Division 5
+    if (name.includes("hockeyfyran")) return base + 10;
+    if (name.includes("division 5"))  return base + 11;
+    // Middle: U-serier – högre U-nummer högre prio
+    const u = name.match(/u(\d+)/);
+    if (u){ return base + (100 - parseInt(u[1],10)); }
+    // Low: Rest
+    return base + 999;
+  }
+
+  // fallback
+  return 9999;
+}
+
+/* =================== RENDER =================== */
+function render(){
+  applyPills();
+  scrollArea.innerHTML = "";
+  const wrap = document.createDocumentFragment();
+
+  if (viewGames.length===0){
+    const d = document.createElement("div");
+    d.className="empty";
+    d.textContent = "Inga matcher idag";
+    wrap.appendChild(d);
+    groupSlot.style.display="none";
+    scrollArea.appendChild(wrap);
+    return;
+  }
+
+  if (mode===MODE.PLACE){
+    renderPlace(wrap);
+  }else{
+    renderSeries(wrap);
+  }
+
+  scrollArea.appendChild(wrap);
+}
+
+/* ---------- Plats-vy ---------- */
+function renderPlace(wrap){
+  // grupper per arena med km sort (närmast först); endast arenor som har match idag
+  const byArena = new Map();
+  for (const g of viewGames){
+    const key = g.PreferedName || g.arena || "Okänd arena";
+    if(!byArena.has(key)) byArena.set(key, {arena:key, Lat:g.Lat, Long:g.Long, games:[]});
+    byArena.get(key).games.push(g);
+  }
+
+  const arenas = Array.from(byArena.values()).map(a=>{
+    const dist = haversine(USER_POS.lat, USER_POS.lon, a.Lat, a.Long);
+    return {...a, dist};
+  }).sort((a,b)=>a.dist-b.dist);
+
+  if (!arenas.length){
+    const d = document.createElement("div");
+    d.className="empty"; d.textContent="Inga matcher idag";
+    wrap.appendChild(d); groupSlot.style.display="none"; return;
+  }
+
+  // init sticky slot på första arenan
+  setActiveArenaSlot(arenas[0].arena, arenas[0].dist);
+  groupSlot.style.display="flex";
+
+  // render lista
+  arenas.forEach((A, idx)=>{
+    // arena header i scroll-listan
+    const ah = document.createElement("div");
+    ah.className="arena-header";
+    ah.dataset.arenaHeader = A.arena;
+    ah.innerHTML = `<div class="name">${A.arena}</div><div class="dist">${kmStr(A.dist)}</div>`;
+    wrap.appendChild(ah);
+
+    // matcher (tidsordning)
+    A.games.sort(byTime).forEach(g=>{
+      wrap.appendChild(renderGameCardPlace(g, A));
+    });
+
+    if (idx < arenas.length-1){
+      wrap.appendChild(divider());
+    }
+  });
+
+  // sticky logik + autoscroll (150ms delay)
+  setupPlaceSticky(arenas);
+}
+
+/* render en match – Plats-vy */
+function renderGameCardPlace(g, A){
+  const art = document.createElement("article");
+  art.className = "game place";
+  art.dataset.arena = A.arena;
+
+  // top: time + series (seriesnamn  max 50 tecken, shrink vid behov)
+  const top = document.createElement("div");
+  top.className="game-top";
+  const t  = document.createElement("div"); t.className="game-time";   t.textContent=g.time;
+  const se = document.createElement("div"); se.className="game-series";
+  if (g.link_to_series){ se.innerHTML = `<a href="${g.link_to_series}" target="_blank" rel="noopener">${truncateSeries(g.series_name,50)}</a>`; }
+  else { se.innerHTML = `<span>${truncateSeries(g.series_name,50)}</span>`; }
+  top.appendChild(t); top.appendChild(se);
+
+  // bottom: [home][homeLogo][result][awayLogo][away]
+  const bot = document.createElement("div"); bot.className="game-bottom";
+  const home = teamNode(g.home_team, g.home_club_list, "home");
+  const away = teamNode(g.away_team, g.away_club_list, "away");
+  const res  = resultNode(g);
+
+  bot.appendChild(home);
+  bot.appendChild(home.logo);
+  bot.appendChild(res);
+  bot.appendChild(away.logo);
+  bot.appendChild(away);
+
+  art.appendChild(top);
+  art.appendChild(bot);
+
+  // shrink serie text om behövs (hela raden bredd – tidens bredd ~40px)
+  requestAnimationFrame(()=>{
+    const max = art.clientWidth - 60; // tid + liten marginal
+    shrinkTo(se.querySelector("a,span"), max);
+  });
 
   return art;
 }
 
-/* Build an arena header node (list header) */
-function arenaHeaderNode(arena, dist){
-  const h = document.createElement('div');
-  h.className = "arena-header";
-  h.dataset.arenaHeader = arena;
-  const l = document.createElement('div'); l.textContent = arena;
-  const r = document.createElement('div'); r.textContent = (isFinite(dist)?`Avst ${dist} km`:"");
-  h.append(l,r);
-  return h;
+/* ---------- Serie-vy ---------- */
+function renderSeries(wrap){
+  // sortera baserat på mode
+  const arr = [...viewGames];
+  if (mode===MODE.SERIES){
+    arr.sort((a,b)=> {
+      const sp = seriesPriority(a)-seriesPriority(b);
+      if (sp!==0) return sp;
+      return byTime(a,b);
+    });
+  }else{ // SERIES_TIME
+    arr.sort((a,b)=>{
+      const t = byTime(a,b);
+      if (t!==0) return t;
+      return seriesPriority(a)-seriesPriority(b);
+    });
+  }
+
+  // INGEN aktiv arena header i Serie-vy
+  groupSlot.style.display="none";
+
+  // Render alla i följd
+  arr.forEach(g=>{
+    wrap.appendChild(renderGameCardSeries(g));
+  });
 }
 
-/* Sticky rules (Place view): 
-   - Downward: switch when current arena has no visible matches (i.e., first next arena header crosses slot or last current game scrolled out)
-   - Upward: switch when the first game of previous arena is fully visible
-*/
-function setupPlaceSticky(){
-  let arenaSections = Array.from(scrollArea.querySelectorAll('[data-arena-section]'));
-  if(arenaSections.length===0){ groupSlot.style.display="none"; return; }
+/* render en match – Serie-vy */
+function renderGameCardSeries(g){
+  const art = document.createElement("article");
+  art.className = "game series";
+
+  // TOP: [Serie 49%] [sz 2%] [Arena 29%] [sz 2%] [Avstånd 18%]
+  const top = document.createElement("div");
+  top.className="game-top";
+  const left = document.createElement("div");  left.className="series-left";
+  const mid  = document.createElement("div");  mid.className="arena-mid";
+  const right= document.createElement("div");  right.className="dist-right";
+
+  if (g.link_to_series){ left.innerHTML = `<a href="${g.link_to_series}" target="_blank" rel="noopener">${truncateSeries(g.series_name,50)}</a>`; }
+  else { left.innerHTML = `<span>${truncateSeries(g.series_name,50)}</span>`; }
+
+  mid.textContent = g.PreferedName || g.arena || "Arena";
+  const dist = haversine(USER_POS.lat, USER_POS.lon, g.Lat, g.Long);
+  right.textContent = kmStr(dist);
+
+  top.appendChild(left);
+  top.appendChild(document.createElement("div")); // 2% spacer
+  top.appendChild(mid);
+  top.appendChild(document.createElement("div")); // 2% spacer
+  top.appendChild(right);
+
+  // BOTTOM (tid + 1% + [home][result][away])
+  const bot = document.createElement("div"); bot.className="game-bottom";
+  const time = document.createElement("div"); time.className="game-time"; time.textContent=g.time;
+  const spacer = document.createElement("div"); // 1%
+  const home = teamNode(g.home_team, g.home_club_list, "home");
+  const res  = resultNode(g);
+  const away = teamNode(g.away_team, g.away_club_list, "away");
+
+  bot.appendChild(time);
+  bot.appendChild(spacer);
+  bot.appendChild(home);
+  bot.appendChild(res);
+  bot.appendChild(away);
+
+  art.appendChild(top);
+  art.appendChild(bot);
+
+  // Anpassa textbreddar (shrink) efter layoutkrav
+  requestAnimationFrame(()=>{
+    const w = art.clientWidth;
+    // top: series-left max 49% av kortets bredd
+    const maxSeries = Math.floor(w*0.49);
+    shrinkTo(left.querySelector("a,span"), maxSeries);
+    // arena-mid max 29% (separerad)
+    const maxArena = Math.floor(w*0.29);
+    mid.style.maxWidth = maxArena+"px";
+    shrinkTo(mid, maxArena);
+    // bottom: dela utrymme jämnt mellan hemmalag/away kring resultat
+    // (grid sköter detta, vi ser bara till att namn inte bryts)
+    home.querySelector(".team-name").style.maxWidth = Math.floor(w*0.28)+"px";
+    away.querySelector(".team-name").style.maxWidth = Math.floor(w*0.28)+"px";
+  });
+
+  return art;
+}
+
+/* Divider */
+function divider(){ const d=document.createElement("div"); d.className="divider"; return d; }
+
+/* Team node + logo (separerad "logo"-noder för gridplacering) */
+function teamNode(teamName, clubList, side){
+  const team = document.createElement("div"); team.className = `team ${side}`;
+  const nameSpan = document.createElement("span"); nameSpan.className="team-name"; nameSpan.textContent=teamName;
+  const logoImg = document.createElement("img");  logoImg.className="team-logo";
+
+  const L = logoFor(clubList, teamName);
+  if (L.type==="img"){
+    logoImg.alt = teamName;
+    logoImg.src = smartCropURL(L.value);
+  }else{
+    // initials-fallback (ingen synlig box; bara text som alt?)
+    logoImg.alt = L.value;
+    // Använd en 1x1 transparent pixel och title = initials (diskret fallback)
+    logoImg.src = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+    if (DEBUG){
+      const miss = document.createElement("span");
+      miss.className="logo-miss";
+      miss.textContent = `(${L.value})`;
+      team.appendChild(miss);
+    }
+  }
+
+  // Hemma: [name][logo] (högerjusterat namn, liten gap)
+  // Borta: [logo][name]
+  if (side==="home"){
+    team.appendChild(nameSpan);
+  }else{
+    team.appendChild(nameSpan);
+  }
+  // Returnera både containern & separat logonod för gridplacering
+  team.logo = logoImg;
+  return team;
+}
+
+/* Resultat-knutpunkt: länkblå när länk finns, annars svart; "Postponed" krymper till tidsbredd */
+function resultNode(g){
+  const wrap = document.createElement("div"); wrap.className="result";
+  const box  = document.createElement("span"); box.className="result-box";
+
+  const hasLink = g.result_link && g.result_link.trim() && g.result && g.result.trim() && g.result.trim()!=="–";
+  let content = g.result && g.result.trim()? g.result.trim() : "–";
+
+  if (/postponed/i.test(content)){
+    // krymp texten så att den inte breddar boxen
+    box.innerHTML = `<span class="result-postponed">Postponed</span>`;
+  }else if (hasLink){
+    box.innerHTML = `<a class="result-link" href="${g.result_link}" target="_blank" rel="noopener">${content}</a>`;
+  }else{
+    box.innerHTML = `<span class="result-no">${content}</span>`;
+  }
+
+  // shrink om > "0-0"-bredd
+  requestAnimationFrame(()=>{
+    const inner = box.querySelector("a,span");
+    // om resultat t.ex. "10 - 11" – minska font
+    const max = 48; // samma som min-width – text får aldrig tvinga större box
+    if (box.scrollWidth > max){
+      inner.style.fontSize = "12px";
+    }
+  });
+
+  wrap.appendChild(box);
+  return wrap;
+}
+
+/* Serie-trunkering med 1 punkt om trim behövs */
+function truncateSeries(text, maxChars){
+  if (!text) return "";
+  if (text.length<=maxChars) return text;
+  return text.slice(0, maxChars-1) + ".";
+}
+
+/* =================== PLATS-VY STICKY + AUTOSCROLL =================== */
+function setActiveArenaSlot(name, dist){
+  groupSlot.querySelector(".group-title").textContent = name;
+  groupSlot.querySelector(".group-sub").textContent   = kmStr(dist);
   groupSlot.style.display="flex";
+}
+function setupPlaceSticky(arenas){
+  let current = arenas[0].arena;
+  let index = 0;
+  // göm header för aktiv arena i scroll-listan
+  toggleActiveHeader(current,true);
 
-  // active = first section at top initially
-  let activeIndex = 0;
-  const setActive = (idx)=>{
-    activeIndex = Math.max(0, Math.min(arenaSections.length-1, idx));
-    const sec = arenaSections[activeIndex];
-    const a = sec.dataset.arenaSection;
-    slotTitle.textContent = a;
-    slotSub.textContent = sec.dataset.arenaDist ? `Avst ${sec.dataset.arenaDist} km` : "";
+  const delay = 150; // ms
 
-    // hide only the active arena header in list (to avoid duplicate)
-    scrollArea.querySelectorAll('.arena-header').forEach(h=>{
-      h.classList.toggle('active-hidden', h.dataset.arenaHeader===a);
-    });
-  };
-  setActive(0);
+  function switchTo(idx, direction){
+    if (idx<0 || idx>=arenas.length) return;
+    index = idx;
+    current = arenas[idx].arena;
+    setActiveArenaSlot(current, arenas[idx].dist);
+    // visa/göm headers
+    arenas.forEach((A,i)=> toggleActiveHeader(A.arena, i===idx));
 
-  const slotRect = ()=>groupSlot.getBoundingClientRect();
-
-  // Find key anchors per section
-  const anchors = arenaSections.map(sec=>{
-    const header = sec.querySelector('.arena-header');
-    const games  = Array.from(sec.querySelectorAll('.game'));
-    return { sec, header, games };
-  });
-
-  scrollArea.addEventListener('scroll', ()=>{
-    const sbot = slotRect().bottom;
-
-    // Determine if we should switch down
-    let changed = false;
-
-    // DOWNWARD: if all games of current are above slot (not visible), go next
-    while(activeIndex < anchors.length-1){
-      const curr = anchors[activeIndex];
-      const lastGame = curr.games[curr.games.length-1];
-      const r = lastGame.getBoundingClientRect();
-      if(r.bottom <= sbot + (r.height*0.25)){ // switch when last game's bottom is near/top of slot (25% rule)
-        setActive(activeIndex+1);
-        changed=true;
-      }else break;
+    // autoscroll:
+    // nedåt: scrolla så att första matchen i nya arenan hamnar överst
+    // uppåt: scrolla så att sista matchen i nya arenan syns helt
+    const sec = findArenaSection(current);
+    if (!sec) return;
+    if (direction==="down"){
+      setTimeout(()=>{
+        scrollArea.scrollTo({
+          top: sec.offsetTop - groupSlot.offsetHeight,
+          behavior: "smooth"
+        });
+      }, delay);
+    }else if (direction==="up"){
+      setTimeout(()=>{
+        scrollArea.scrollTo({
+          top: sec.offsetTop + sec.offsetHeight - scrollArea.clientHeight,
+          behavior: "smooth"
+        });
+      }, delay);
     }
+  }
 
-    // UPWARD: if first game of previous arena is fully visible (its top >= slot bottom and bottom in view), go previous
-    while(activeIndex > 0){
-      const prev = anchors[activeIndex-1];
-      const firstGame = prev.games[0];
-      const r = firstGame.getBoundingClientRect();
-      if(r.top >= sbot && r.bottom <= window.innerHeight){
-        setActive(activeIndex-1);
-        changed=true;
-      }else break;
+  function onScroll(){
+    const stickyBottom = groupSlot.getBoundingClientRect().bottom;
+
+    // hitta nästa & föregående headers rect
+    const next = arenas[index+1];
+    const prev = arenas[index-1];
+
+    if (next){
+      const nextHeader = headerRect(next.arena);
+      if (nextHeader && nextHeader.top < stickyBottom && (stickyBottom - nextHeader.top) >= nextHeader.height*0.5){
+        // byt nedåt
+        switchTo(index+1,"down"); return;
+      }
     }
-
-    if(changed) setStaticWindow();
-  }, {passive:true});
-}
-
-/* Render Place view */
-function renderPlaceView(dayGames){
-  scrollArea.innerHTML = "";
-  // group by arena (with games only)
-  const byArena = new Map();
-  dayGames.forEach(g=>{
-    const key = g.arena || "Okänd arena";
-    if(!byArena.has(key)) byArena.set(key, []);
-    byArena.get(key).push(g);
-  });
-  // sort arenas by distance asc
-  const arenas = [...byArena.keys()].map(a=>({arena:a,dist:byArena.get(a)[0].dist??9999}));
-  arenas.sort((a,b)=>(a.dist??9999)-(b.dist??9999));
-
-  // build sections
-  arenas.forEach((A,i)=>{
-    const list = byArena.get(A.arena);
-    // sort each arena by time asc
-    list.sort((x,y)=>timeToMin(x.time)-timeToMin(y.time));
-    const section = document.createElement('section');
-    section.dataset.arenaSection = A.arena;
-    if(isFinite(A.dist)) section.dataset.arenaDist = A.dist;
-
-    const hdr = arenaHeaderNode(A.arena, A.dist);
-    section.appendChild(hdr);
-
-    list.forEach(g=>{
-      const node = gameNode(g,false);
-      section.appendChild(node);
-    });
-
-    scrollArea.appendChild(section);
-    if(i<arenas.length-1) scrollArea.appendChild(document.createElement('div')).className="divider";
-  });
-
-  // Sticky setup
-  setupPlaceSticky();
-}
-
-/* Render Series view */
-function renderSeriesView(dayGames, timePrimary=false){
-  scrollArea.innerHTML = "";
-  groupSlot.style.display="none"; // no sticky in series view
-
-  // sort:
-  // if timePrimary: (time asc) then (series priority) then arena name
-  // else: (series priority) then (time asc) then arena
-  const withKey = dayGames.map(g=>{
-    const sp = computeSeriesPriority(g);
-    return {...g, spGroup:sp.group, spTier:sp.tier, spBias:sp.regionBias, tmin:timeToMin(g.time)};
-  });
-
-  if(timePrimary){
-    withKey.sort((a,b)=>{
-      if(a.tmin!==b.tmin) return a.tmin-b.tmin;
-      if(a.spGroup!==b.spGroup) return a.spGroup-b.spGroup;
-      if(a.spTier!==b.spTier) return a.spTier-b.spTier;
-      if(a.spBias!==b.spBias) return a.spBias-b.spBias;
-      return (a.series_name||"").localeCompare(b.series_name||"");
-    });
-  }else{
-    withKey.sort((a,b)=>{
-      if(a.spGroup!==b.spGroup) return a.spGroup-b.spGroup;
-      if(a.spTier!==b.spTier) return a.spTier-b.spTier;
-      if(a.spBias!==b.spBias) return a.spBias-b.spBias;
-      if(a.tmin!==b.tmin) return a.tmin-b.tmin;
-      return (a.series_name||"").localeCompare(b.series_name||"");
-    });
-  }
-
-  // NO arena headers in series view — just cards
-  if(withKey.length===0){
-    const empty = document.createElement('div'); empty.className="empty"; empty.textContent="Inga matcher idag";
-    scrollArea.appendChild(empty);
-    return;
-  }
-
-  withKey.forEach(g=>{
-    const n = gameNode(g,true);
-    // series top row tweaks: ensure widths (already grid-defined)
-    // bottom row includes time on the left (already)
-    scrollArea.appendChild(n);
-  });
-
-  setStaticWindow();
-}
-
-/* ========================= MAIN RENDER SWITCH ========================= */
-function render(){
-  applyPills();
-  setStaticWindow();
-
-  // filter games for current date
-  const key = `${dateCursor.getFullYear()}-${pad(dateCursor.getMonth()+1)}-${pad(dateCursor.getDate())}`;
-  const dayGames = allGamesRaw.filter(g=>g.date===key);
-
-  if(dayGames.length===0){
-    groupSlot.style.display = (mode===MODE.PLACE) ? "flex" : "none";
-    scrollArea.innerHTML = "";
-    const empty = document.createElement('div'); empty.className="empty"; empty.textContent="Inga matcher idag";
-    scrollArea.appendChild(empty);
-    // show a neutral slot in place view
-    if(mode===MODE.PLACE){
-      slotTitle.textContent="—";
-      slotSub.textContent="—";
+    if (prev){
+      const currHeader = headerRect(current);
+      if (currHeader && currHeader.top >= stickyBottom && currHeader.bottom <= window.innerHeight){
+        // byt uppåt när nuvarande header är helt synlig i listan
+        switchTo(index-1,"up"); return;
+      }
     }
-    return;
   }
 
-  if(mode===MODE.PLACE){
-    renderPlaceView(dayGames);
-  }else{
-    const timePrimary = (mode===MODE.SERIES_TIME);
-    renderSeriesView(dayGames, timePrimary);
+  scrollArea.removeEventListener("scroll", onScroll);
+  scrollArea.addEventListener("scroll", onScroll, {passive:true});
+
+  function headerRect(arena){
+    const h = scrollArea.querySelector(`.arena-header[data-arena-header="${arena}"]`);
+    return h?.getBoundingClientRect();
+  }
+  function toggleActiveHeader(arena, hide){
+    const h = scrollArea.querySelector(`.arena-header[data-arena-header="${arena}"]`);
+    if (h) h.classList.toggle("active-hidden", !!hide);
+  }
+  function findArenaSection(arena){
+    // från headern till precis innan nästa header/divider
+    const header = scrollArea.querySelector(`.arena-header[data-arena-header="${arena}"]`);
+    if (!header) return null;
+    // sektionen börjar direkt efter headern
+    const elems = [];
+    let node = header.nextElementSibling;
+    while (node && !node.classList.contains("arena-header")){
+      elems.push(node);
+      node = node.nextElementSibling;
+    }
+    if (!elems.length) return header; // fallback
+    // omslutande div för mätning — bygg tillfälligt
+    // (för autoscroll använder vi header.offsetTop + höjderna)
+    const sec = document.createElement("div");
+    sec.style.position="relative";
+    header.parentNode.insertBefore(sec, header.nextSibling);
+    elems.forEach(e=>sec.appendChild(e));
+    // mät och flytta tillbaka
+    const top = sec.offsetTop, h = sec.offsetHeight;
+    // flytta tillbaka barn
+    const after = sec;
+    while (sec.firstChild) after.parentNode.insertBefore(sec.firstChild, after);
+    after.remove();
+    // proxyobjekt
+    return { offsetTop: top, offsetHeight: h };
   }
 }
 
-/* ========================= CONTROLS ========================= */
-document.getElementById("btnHome").onclick=()=>{
-  const now = new Date(); setDate(now); mode=MODE.PLACE; render();
-};
-document.getElementById("btnMap").onclick=()=>{ /* reserved for future map view */ };
-document.getElementById("btnSettings").onclick=()=>{ /* reserved for settings */ };
+/* =================== INTERAKTION =================== */
+ids("prevDay").addEventListener("click",()=>changeDate(-1));
+ids("nextDay").addEventListener("click",()=>changeDate(1));
+ids("btnHome").addEventListener("click",()=>{
+  // Hem = dagens datum + Plats-vy
+  dateIndex = 0; mode = MODE.PLACE; applyPills(); setDateUI(); filterByDate(); render();
+});
+ids("btnMap").addEventListener("click",()=>{
+  // placeholder – ingen funktion i denna version
+  alert("Kartvyn kommer i en senare version.");
+});
 
-btnPrev.onclick=()=>{
-  if(btnPrev.dataset.enabled!=="true") return;
-  const d = new Date(dateCursor); d.setDate(d.getDate()-1); setDate(d); render();
-};
-btnNext.onclick=()=>{
-  if(btnNext.dataset.enabled!=="true") return;
-  const d = new Date(dateCursor); d.setDate(d.getDate()+1); setDate(d); render();
-};
-
-pillPlace.onclick = ()=>{ mode=MODE.PLACE; render(); };
-pillSeries.onclick= ()=>{ mode=MODE.SERIES; render(); };
-pillTime.onclick  = ()=>{
-  if(mode===MODE.PLACE) return; // lock in place view
-  mode = (mode===MODE.SERIES) ? MODE.SERIES_TIME : MODE.SERIES;
-  render();
-};
-
-/* ========================= INIT ========================= */
-(async()=>{
-  await loadLogoMap();
+/* =================== BOOT =================== */
+(async function init(){
+  await loadLogosMap();
   await loadGames();
 
-  // default to "today"
-  const now = new Date();
-  setDate(now);
-
-  // after we know allDates, update arrows state again for today
-  setDate(now);
-
-  // Ensure date cluster is visually centered between left cluster and sort stack on small iPhones
-  // (simple tweak: if width too tight, shrink date font slightly)
-  const center = document.getElementById("dateCluster");
-  const maybeShrinkDate = ()=>{
-    const db = document.getElementById("dateBlock");
-    db.style.fontSize = (window.innerWidth<380) ? "12.5px":"13.5px";
-  };
-  window.addEventListener('resize', maybeShrinkDate,{passive:true});
-  maybeShrinkDate();
-
+  // default: idag
+  dateIndex = 0;
+  setDateUI();
+  filterByDate();
+  applyPills();
   render();
 })();
 </script>
