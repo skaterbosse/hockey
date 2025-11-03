@@ -42,43 +42,33 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 .pill.off{background:#f1f5f9;border-color:#cbd5e1;color:#94a3b8;}
 
 /* Hintfält */
-.hint{
-  position:sticky;
-  top:var(--topbar-h);
-  height:var(--hint-h);
-  background:#fff;
-  border-bottom:1px solid var(--hair);
-  text-align:center;
-  font-size:12px;
-  line-height:var(--hint-h);
-  color:var(--muted);
-  z-index:450;
-}
+.hint{position:sticky;top:var(--topbar-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair);text-align:center;font-size:12px;line-height:var(--hint-h);color:var(--muted);z-index:450;}
 
 /* ===== SCROLLAREA ===== */
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);}
 
-/* ===== MATCHKORT ===== */
+/* ===== MATCHKORT – gemensamt för båda vyerna ===== */
 .game{background:#fff;border-top:1px dashed #e5e7eb;padding:8px 12px;display:grid;gap:6px;}
 
-/* --- ÖVRE RAD --- */
+/* --- ÖVRE RAD (Serie + Arena + Avstånd FIX COL) --- */
 .series-toprow{
   display:grid;
-  grid-template-columns: 48% 30% 70px;
+  grid-template-columns: 48% 32% 70px; /* 70px rymmer "1000 km" */
   align-items:center;
-  column-gap:8px;
+  column-gap:4px;
 }
-.series-toprow .series-name{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.series-toprow .arena-name{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.series-toprow .series-name,
+.series-toprow .arena-name{
+  min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 .series-toprow .dist{
   white-space:nowrap;
   text-align:right;
-  margin-right:4px; /* flytta lite mot höger (halverad marginal) */
   color:var(--muted);
   font-size:12px;
 }
 
-/* --- NEDRE RAD --- */
+/* --- NEDRE RAD (Resultat alltid centrerad kolumn) --- */
 .series-bottomrow{
   display:grid;
   grid-template-columns: auto 1fr auto 1fr;
@@ -89,28 +79,19 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 .series-bottomrow .left,.series-bottomrow .right{display:flex;align-items:center;gap:6px;}
 .series-bottomrow .left{justify-content:flex-end;}
 .series-bottomrow .right{justify-content:flex-start;}
-
 .team-logo{width:26px;height:26px;border-radius:4px;object-fit:contain;}
-.team-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;max-width:130px;}
+.team-name{max-width:min(38vw,165px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;}
 
 .series-result{display:flex;justify-content:center;}
-.result div,.result a{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:46px;      /* Fixerad storlek */
-  height:22px;
-  padding:0 4px;
+.result a,.result div{
+  display:inline-block;
+  padding:2px 10px;
   border-radius:8px;
   border:1px solid var(--hair);
   background:#f1f5f9;
   font-weight:700;
   text-decoration:none;
   color:var(--text);
-  font-size:13px;
-}
-.result.wide div, .result.wide a{
-  font-size:10px;      /* 75% fontstorlek för stora resultat */
 }
 </style>
 </head>
@@ -145,7 +126,7 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
     </div>
   </header>
 
-  <div class="hint" id="hint">Visar matcher nära: Kruniusvägen 1, Billdal</div>
+  <div class="hint" id="hint">Visar matcher nära dig</div>
 
   <main id="scrollArea" class="scroll"></main>
 </div>
@@ -176,15 +157,20 @@ Promise.all([
 
 /* === CSV PARSE === */
 function parseCSV(txt){
-  return txt.split('\n').slice(1).map(line=>{
-    const f = line.split(';');
-    return {
-      date:f[0], time:f[1], series_name:f[2], link_to_series:f[3],
+  const lines = txt.split('\n').filter(x=>x.trim().length>0);
+  const out=[];
+  for(let i=1;i<lines.length;i++){
+    const f = lines[i].split(';');
+    if(f.length<19) continue;
+    out.push({
+      date:f[0], time:f[1], series_name:f[2], link_to_series:f[3], admin_host:f[4],
       home_team:f[5], away_team:f[6], result:f[7], result_link:f[8],
       arena:f[9], home_club_list:f[13], away_club_list:f[14],
-      PreferedName:f[16], Lat: parseFloat(f[17]), Long: parseFloat(f[18])
-    }
-  }).filter(x=>x.date);
+      PreferedName:f[16],
+      Lat: parseFloat(f[17]), Long: parseFloat(f[18])
+    });
+  }
+  return out;
 }
 
 /* === DATUM === */
@@ -204,6 +190,10 @@ document.getElementById('btnNext').onclick = ()=>changeDate(+1);
 document.getElementById('btnHome').onclick = ()=>setToday();
 
 /* === PILLS === */
+const pillPlace = document.getElementById('pillPlace');
+const pillSeries = document.getElementById('pillSeries');
+const pillTime = document.getElementById('pillTime');
+
 pillPlace.onclick = ()=>{ mode = MODE.PLACE; applyPills(); render(); };
 pillSeries.onclick = ()=>{ mode = MODE.SERIES; applyPills(); render(); };
 pillTime.onclick   = ()=>{ mode = (mode===MODE.SERIES)? MODE.SERIES_TIME : MODE.SERIES; applyPills(); render(); };
@@ -241,7 +231,7 @@ function relWord(d){
   return '';
 }
 
-/* === PLATS-VY (SORTERAD PÅ AVSTÅND) === */
+/* === PLATS-VY (MATCHER SORTERADE PÅ AVSTÅND, men samma kortlayout) === */
 function renderPlace(list){
   const byArena = {};
   list.forEach(g=>{
@@ -255,42 +245,43 @@ function renderPlace(list){
     return da-db;
   });
 
-  scrollArea.innerHTML = arenas.flatMap(arena=>{
+  const out=[];
+  arenas.forEach(arena=>{
     byArena[arena].sort((a,b)=>a.time.localeCompare(b.time));
-    return byArena[arena].map(gameCardUnified);
-  }).join('');
+    byArena[arena].forEach(g=> out.push(gameCardUnified(g)));
+  });
+
+  scrollArea.innerHTML = out.join('');
 }
 
 /* === SERIE-VY === */
 function renderSeries(list){
   let arr=[...list];
-  if(mode===MODE.SERIES_TIME)
-    arr.sort((a,b)=>a.time.localeCompare(b.time));
+  if(mode===MODE.SERIES) arr.sort(seriesPriorityThenTime);
+  if(mode===MODE.SERIES_TIME) arr.sort((a,b)=>{
+    const t = a.time.localeCompare(b.time);
+    return t!==0 ? t : seriesPriorityThenTime(a,b);
+  });
+
   scrollArea.innerHTML = arr.map(gameCardUnified).join('');
 }
 
-/* === GEMENSAM MATCHKORT === */
+/* === GEMENSAM MATCHKORT-BYGGARE === */
 function gameCardUnified(g){
   const homeLogo = pickLogo(g.home_club_list);
   const awayLogo = pickLogo(g.away_club_list);
 
-  let arena = truncate(g.PreferedName || g.arena || "", 19);
-  let home = truncate(g.home_team || "", 15);
-  let away = truncate(g.away_team || "", 15);
-
   const distance = Math.ceil(haversine(g.Lat,g.Long,USER_LAT,USER_LON))+" km";
 
-  const isWide = (g.result && g.result.length > 3);
-  const resHTML = `
-    <div class="result ${isWide ? "wide" : ""}">
-      ${g.result_link ? `<a href="${g.result_link}" target="_blank">${g.result}</a>` : `<div>${g.result||'–'}</div>`}
-    </div>`;
+  const resHTML = (g.result_link && g.result && g.result.trim()!=='–')
+    ? `<div class="result"><a href="${g.result_link}" target="_blank">${g.result}</a></div>`
+    : `<div class="result"><div>${g.result||'–'}</div></div>`;
 
   return `
   <article class="game">
     <div class="series-toprow">
       <div class="series-name">${seriesLinkHTML(g)}</div>
-      <div class="arena-name">${escapeHtml(arena)}</div>
+      <div class="arena-name">${escapeHtml(g.PreferedName||g.arena||'')}</div>
       <div class="dist">${distance}</div>
     </div>
 
@@ -298,7 +289,7 @@ function gameCardUnified(g){
       <div class="time">${escapeHtml(g.time||'')}</div>
 
       <div class="left">
-        <span class="team-name">${escapeHtml(home)}</span>
+        <span class="team-name">${escapeHtml(g.home_team||'')}</span>
         <img class="team-logo" src="${homeLogo}">
       </div>
 
@@ -306,10 +297,15 @@ function gameCardUnified(g){
 
       <div class="right">
         <img class="team-logo" src="${awayLogo}">
-        <span class="team-name">${escapeHtml(away)}</span>
+        <span class="team-name">${escapeHtml(g.away_team||'')}</span>
       </div>
     </div>
   </article>`;
+}
+
+/* === SERIE-PRIO === */
+function seriesPriorityThenTime(a,b){
+  return (a.series_name||'').localeCompare(b.series_name||'');
 }
 
 /* === LOGO === */
@@ -319,9 +315,6 @@ function pickLogo(listStr){
 }
 
 /* === HELPERS === */
-function truncate(str,len){
-  return str.length > len ? str.substring(0,len) + "." : str;
-}
 function seriesLinkHTML(g){
   const link=(g.link_to_series||'').trim();
   return link ? `<a href="${link}" target="_blank">${escapeHtml(g.series_name||'')}</a>` : escapeHtml(g.series_name||'');
