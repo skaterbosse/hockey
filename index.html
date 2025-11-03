@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="mobile-web-app-capable" content="yes" />
-<title>LocalSport – stabil + uppscroll-fix</title>
+<title>LocalSport – stabil + autoscroll B</title>
 
 <style>
 :root{
@@ -28,7 +28,7 @@
 html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--text);overscroll-behavior:none;}
 .device{width:100%;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
 
-/* ===== TOPP HEADER (oförändrad layout/utseende) ===== */
+/* ===== TOPP HEADER (Oförändrad layout/utseende) ===== */
 .topbar{position:sticky;top:0;z-index:500;background:#fff;border-bottom:1px solid var(--hair);}
 .topbar-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:var(--topbar-h);padding:6px;}
 .cluster-left,.cluster-right{display:flex;gap:8px;align-items:center;}
@@ -50,6 +50,7 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 
 /* ===== Aktiv arena-slot (Plats-vy) ===== */
 .group-slot{position:sticky;top:calc(var(--topbar-h) + var(--hint-h));height:var(--slot-h);display:flex;justify-content:space-between;align-items:center;padding:10px 12px;font-size:14px;font-weight:700;background:#fff;border-bottom:1px dashed var(--hair);z-index:425;}
+/* OBS: streckad kant var tidigare önskad/stabil. Vi ändrar inte. */
 
 /* ===== Scrollarea ===== */
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);}
@@ -270,8 +271,8 @@ function relWord(d){
 
 /* =========================
    PLATS-VY (ORÖRD MATCHLAYOUT)
-   + stabil stickiness (oförändrad nedåt)
-   + UPPÅT-FIX (byta tidigare + autoscroll 1 match)
+   + återställd stabil stickiness
+   + autoscroll B
 ========================= */
 let arenaOrder=[];
 let currentArena=null;
@@ -322,24 +323,69 @@ function renderPlace(list){
   lastScrollTop = scrollArea.scrollTop; // init
 }
 
-// Hjälpfunktioner för element
-function firstGameEl(arena){
-  return scrollArea.querySelector(`.game[data-arena="${cssEscape(arena)}"]`);
-}
-function lastGameEl(arena){
-  const list = [...scrollArea.querySelectorAll(`.game[data-arena="${cssEscape(arena)}"]`)];
-  return list.length? list[list.length-1] : null;
+// Byt arena-triggers (återställd stabil logik) + autoscroll B:
+function onPlaceScroll(byArena){
+  const st = scrollArea.scrollTop;
+  const dir = st > lastScrollTop ? 'down' : 'up';
+  lastScrollTop = st;
+
+  const stickyBottom = slot.getBoundingClientRect().bottom;
+
+  const headers = [...scrollArea.querySelectorAll('.arena-header')];
+
+  // Hjälpare för att hitta index
+  const idx = arenaOrder.indexOf(currentArena);
+
+  if(dir==='down' && idx<arenaOrder.length-1){
+    // Byt när nuvarande arenas sista match inte längre är synlig alls
+    const lastOfCurr = lastGameEl(currentArena);
+    if(lastOfCurr && !isAnyPartVisible(lastOfCurr)){
+      const nextArena = arenaOrder[idx+1];
+      setActiveArena(nextArena, byArena);
+
+      // AUTOSCROLL NER: första matchen i nya arenan överst
+      const firstNext = firstGameEl(nextArena);
+      if(firstNext){
+        const offset = stickyOffset();
+        scrollArea.scrollTo({ top:firstNext.offsetTop - offset, behavior:'auto' });
+      }
+    }
+  }else if(dir==='up' && idx>0){
+    // Byt när föregående arenas header blivit helt synlig i listan
+    const prev = arenaOrder[idx-1];
+    const prevHeader = headers.find(h=>h.dataset.arena===prev);
+    if(prevHeader && isFullyVisible(prevHeader)){
+      setActiveArena(prev, byArena);
+
+      // AUTOSCROLL UPP: visa EN (sista) match fullt synlig
+      const lastPrev = lastGameEl(prev);
+      if(lastPrev){
+        const offset = stickyOffset();
+        // placera så att sista matchen syns helt strax under slotten
+        const targetTop = Math.max(0, lastPrev.offsetTop - (scrollArea.clientHeight - lastPrev.offsetHeight) );
+        scrollArea.scrollTo({ top: targetTop, behavior:'auto' });
+      }
+    }
+  }
+
+  // Dölj endast aktiva arenans header i listan
+  headers.forEach(h=>h.classList.toggle('active-hidden', h.dataset.arena===currentArena));
 }
 
-function stickyOffset(){
-  return (document.querySelector('.topbar').offsetHeight
-        + document.querySelector('.hint').offsetHeight
-        + slot.offsetHeight);
+function setActiveArena(arena, byArena){
+  if(arena===currentArena) return;
+  currentArena = arena;
+  slotTitle.textContent = currentArena;
+  const dkm = haversine(byArena[arena][0].Lat, byArena[arena][0].Long, USER_LAT, USER_LON).toFixed(1);
+  slotSub.textContent = `Avst ${dkm} km`;
 }
+
+function stickyOffset(){ return (document.querySelector('.topbar').offsetHeight + document.querySelector('.hint').offsetHeight + slot.offsetHeight); }
 
 function isAnyPartVisible(el){
   const r = el.getBoundingClientRect();
   const a = scrollArea.getBoundingClientRect();
+  // synlig om någon del ligger inom scrollArea-vertikal
   return (r.bottom > a.top + slot.offsetHeight) && (r.top < a.bottom);
 }
 
@@ -349,68 +395,15 @@ function isFullyVisible(el){
   return r.top >= a.top + slot.offsetHeight && r.bottom <= a.bottom;
 }
 
-function setActiveArena(arena, byArena){
-  if(arena===currentArena) return;
-  currentArena = arena;
-  slotTitle.textContent = currentArena;
-  const dkm = haversine(byArena[arena][0].Lat, byArena[arena][0].Long, USER_LAT, USER_LON).toFixed(1);
-  slotSub.textContent = `Avst ${dkm} km`;
-
-  // Dölj endast aktiva arenans header i listan
-  const headers = [...scrollArea.querySelectorAll('.arena-header')];
-  headers.forEach(h=>h.classList.toggle('active-hidden', h.dataset.arena===currentArena));
+function firstGameEl(arena){
+  // första .game som tillhör arenan (via data-arena)
+  return scrollArea.querySelector(`.game[data-arena="${cssEscape(arena)}"]`);
+}
+function lastGameEl(arena){
+  const list = [...scrollArea.querySelectorAll(`.game[data-arena="${cssEscape(arena)}"]`)];
+  return list.length? list[list.length-1] : null;
 }
 
-// Byt arena-triggers (nedåt: oförändrad) (uppåt: NY logik)
-function onPlaceScroll(byArena){
-  const st = scrollArea.scrollTop;
-  const dir = st > lastScrollTop ? 'down' : 'up';
-  lastScrollTop = st;
-
-  const stickyBottom = slot.getBoundingClientRect().bottom;
-  const idx = arenaOrder.indexOf(currentArena);
-
-  if(dir==='down' && idx<arenaOrder.length-1){
-    // Nedåt: behåll stabilt tidigare beteende: byt när sista matchen i nuvarande inte längre syns alls
-    const lastOfCurr = lastGameEl(currentArena);
-    if(lastOfCurr && !isAnyPartVisible(lastOfCurr)){
-      const nextArena = arenaOrder[idx+1];
-      setActiveArena(nextArena, byArena);
-
-      // AUTOSCROLL NER: placera första matchen i nya arenan högst upp
-      const firstNext = firstGameEl(nextArena);
-      if(firstNext){
-        const offset = stickyOffset();
-        scrollArea.scrollTo({ top:firstNext.offsetTop - offset, behavior:'auto' });
-      }
-    }
-  }
-  else if(dir==='up' && idx>0){
-    // UPPÅT: BYT TIDIGARE – så fort vi precis passerat första matchen i nuvarande arena
-    const firstCurr = firstGameEl(currentArena);
-    if(firstCurr){
-      const r = firstCurr.getBoundingClientRect();
-      // när första matchens nederkant går över (== ovanför) sticky-området, har vi passerat
-      if(r.bottom <= stickyBottom){
-        const prevArena = arenaOrder[idx-1];
-
-        // 1) Lägg tillbaka nuvarande arenas header i listan (sker implicit när currentArena byts)
-        // 2) Byt aktiv arena
-        setActiveArena(prevArena, byArena);
-
-        // 3) AUTOSCROLL UPP: visa exakt en match från nya arenan (sista matchen i den arenan) fullt synlig
-        const lastPrev = lastGameEl(prevArena);
-        if(lastPrev){
-          const offset = stickyOffset();
-          // Placera så att denna match ligger överst direkt under slotten
-          const targetTop = lastPrev.offsetTop - offset;
-          scrollArea.scrollTo({ top: Math.max(0, targetTop), behavior:'auto' });
-        }
-      }
-    }
-  }
-}
-  
 /* =========================
    SERIE-VY – statisk + resultatbox = plats-vy
 ========================= */
@@ -542,6 +535,7 @@ function seriesPriority(g){
     if(/hockeyfyran/.test(sn)) return 14;
     const u = uRank(sn); if(u) return 100 - u;
     if(/tv[- ]?pucken|distriktslag|blekinge|stockholm|göteborg|skåne|västmanland|småland|hälsingland|gästrikland|värmland|västerbotten|ångermanland|medelpad|norrbotten|gotland|halland|östergötland|örebro/.test(sn)) return 120;
+    // samma värde – finjusteras INTE mer här för att hålla det enkelt/stabilt
     return 920;
   }
 
