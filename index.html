@@ -4,34 +4,37 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 
-<!-- ✅ INSTALLERBAR WEBBAPP -->
+<!-- ✅ INSTALLERBAR PWA (iOS + Android) -->
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="mobile-web-app-capable" content="yes" />
-<meta name="theme-color" content="#16a34a" />
 
-<!-- ✅ MANIFEST -->
+<!-- ✅ MANIFEST + THEME -->
 <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#16a34a" />
+<meta name="background-color" content="#000000" />
 
-<!-- ✅ IKONER / APP ICONS -->
-<link rel="icon" type="image/png" sizes="32x32" href="icons/icon_32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon_192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="icons/icon_512.png">
+<!-- ✅ FAVICONS -->
+<link rel="icon" type="image/png" sizes="32x32"  href="icons/icon_192_jetblack_exact2.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon_192_jetblack_exact2.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon_512_jetblack_exact2.png">
 
-<link rel="apple-touch-icon" href="icons/icon_120.png" sizes="120x120">
-<link rel="apple-touch-icon" href="icons/icon_152.png" sizes="152x152">
-<link rel="apple-touch-icon" href="icons/icon_167.png" sizes="167x167">
-<link rel="apple-touch-icon" href="icons/icon_180.png" sizes="180x180">
-<link rel="apple-touch-icon" href="icons/icon_1024.png" sizes="1024x1024">
+<!-- ✅ APP ICONER – iOS -->
+<link rel="apple-touch-icon" href="icons/icon_120_jetblack_exact2.png" sizes="120x120">
+<link rel="apple-touch-icon" href="icons/icon_152_jetblack_exact2.png" sizes="152x152">
+<link rel="apple-touch-icon" href="icons/icon_167_jetblack_exact2.png" sizes="167x167">
+<link rel="apple-touch-icon" href="icons/icon_180_jetblack_exact2.png" sizes="180x180">
+<link rel="apple-touch-icon" href="icons/icon_1024_jetblack_exact2.png" sizes="1024x1024">
 
-<!-- ✅ SOCIAL SHARE -->
+<!-- ✅ SOCIAL META – Facebook / iMessage / Messenger -->
 <meta property="og:title" content="LocalSport – Live sport i en arena nära dig">
-<meta property="og:description" content="Upptäck liveidrott nära dig. Hockey, ungdomsidrott och allt däremellan.">
+<meta property="og:description" content="Se liveidrott i en arena nära dig. Hockey, ungdomsidrott och allt däremellan.">
 <meta property="og:image" content="icons/promotional_og_1200x630.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://localsport.app/">
+<meta property="og:url" content="https://skaterbosse.github.io/hockey/">
 
+<!-- ✅ SOCIAL META – Twitter -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="LocalSport – Live sport i en arena nära dig">
 <meta name="twitter:image" content="icons/promotional_social_1080x1080.png">
@@ -143,6 +146,76 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 
 <main id="scrollArea" class="scroll"></main>
 </div>
+
+<!-- ✅ INSTALLATION POPUP KNAPP -->
+<button id="btnInstall" style="
+  position:fixed;
+  bottom:18px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:12px 18px;
+  border-radius:999px;
+  background:#16a34a;
+  color:#fff;
+  font-weight:600;
+  display:none;
+  z-index:600;
+">📲 Installera LocalSport</button>
+
+<!-- ✅ REGISTER SERVICE WORKER & INSTALL-EVENT -->
+<script>
+let deferredPrompt = null;
+const btnInstall = document.getElementById("btnInstall");
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js")
+    .then(() => console.log("✅ Service Worker registrerad"))
+    .catch(err => console.warn("Service Worker FEL:", err));
+}
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  btnInstall.style.display = "block";
+});
+
+btnInstall.onclick = () => {
+  btnInstall.style.display = "none";
+  deferredPrompt.prompt();
+};
+
+window.addEventListener("appinstalled", () => {
+  console.log("📲 LocalSport installerad som PWA!");
+});
+</script>
+
+<!-- REGISTER SERVICE WORKER med auto-reload -->
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js")
+      .then(reg => {
+        console.log("✅ Service worker registrerad:", reg);
+        reg.onupdatefound = () => {
+          const newSW = reg.installing;
+          newSW.onstatechange = () => {
+            if (newSW.state === "installed" && navigator.serviceWorker.controller) {
+              console.log("🔄 Ny version installerad – laddar om…");
+              window.location.reload();
+            }
+          };
+        };
+      })
+      .catch(err => console.error("ServiceWorker error", err));
+  });
+}
+</script>
+
+<script>
+/* === STATE === */
+let allGames = [];
+
+  
 
 <script>
 /* === STATE === */
