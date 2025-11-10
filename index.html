@@ -100,7 +100,18 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
   column-gap:6px;
 }
 .series-bottomrow .time{white-space:nowrap;font-weight:700;color:#000;}
-.series-bottomrow .left,.series-bottomrow .right{display:flex;align-items:center;gap:6px;}
+.series-bottomrow .left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;  /* ← NY */
+  gap: 6px;
+}
+.series-bottomrow .right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+}
 .team-logo{width:26px;height:26px;border-radius:4px;object-fit:contain;background:transparent;}
 .team-name{max-width:min(38vw,165px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;}
 .series-result{display:flex;justify-content:center;}
