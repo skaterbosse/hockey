@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r scripts/requirements.txt
+          pip install -r ./scripts/requirements.txt
 
       - name: Run deep fetch (today + expand forward window)
         run: |
@@ -70,7 +70,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r scripts/requirements.txt
+          pip install -r ./scripts/requirements.txt
 
       - name: Run shallow update only if matches are relevant
         run: |
