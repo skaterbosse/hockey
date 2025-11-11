@@ -1,0 +1,106 @@
+name: Update games (deep nightly + shallow live)
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # Deep fetch ~03:00 Europe/Stockholm (≈ 02:00 UTC vinter / 04:00 UTC sommar).
+    - cron: "0 2 * * *"
+    # Shallow var 5:e minut 06–22 UTC
+    - cron: "*/5 6-22 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  deep_daily:
+    if: github.event_name == 'workflow_dispatch' || (github.event.schedule == '0 2 * * *')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Ensure folders
+        run: |
+          mkdir -p logs cache/deep data
+
+      - name: Run rolling deep fetch (today + ensure +8 days)
+        env:
+          TZ: Europe/Stockholm
+        run: |
+          ts=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
+          LOG="logs/deep_${ts}.log"
+          set -o pipefail
+          python3 scripts/rolling_deep_fetch.py 2>&1 | tee "$LOG"
+
+      - name: Git commit & push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/games.csv logs/
+          if ! git diff --cached --quiet; then
+            git commit -m "deep: update games.csv @ $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          else
+            echo "No deep changes."
+          fi
+
+
+  shallow_live:
+    if: github.event_name == 'workflow_dispatch' || (github.event.schedule != '0 2 * * *')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Ensure folders
+        run: |
+          mkdir -p logs data
+
+      - name: Gatekeeper — should we run shallow now?
+        id: gate
+        env:
+          TZ: UTC
+        run: |
+          ts=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
+          LOG="logs/gate_${ts}.log"
+          set -o pipefail
+          python3 scripts/shallow_update_gatekeeper.py >> "$LOG" 2>&1
+          cat "$LOG"
+
+      - name: Run shallow update for today's date
+        if: steps.gate.outputs.RUN_SHALLOW == 'true'
+        env:
+          TZ: UTC
+        run: |
+          ts=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
+          LOG="logs/shallow_${ts}.log"
+          TODAY=$(date -u +'%Y-%m-%d')
+
+          echo "Shallow update for $TODAY" | tee "$LOG"
+
+          python3 scripts/getGames.py -sh -sd "$TODAY" -ed "$TODAY" -ah null -f "shallow_${TODAY}.txt" 2>&1 | tee -a "$LOG"
+          python3 scripts/UpdateGames.py data/games.csv "shallow_${TODAY}.txt" 2>&1 | tee -a "$LOG"
+          rm -f "shallow_${TODAY}.txt" || true
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/games.csv logs/
+          if ! git diff --cached --quiet; then
+            git commit -m "shallow: live update $TODAY @ $(date -u +'%H:%M UTC')"
+            git push
+          else
+            echo "No shallow changes."
+          fi
+
