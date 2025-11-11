@@ -25,6 +25,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install certifi requests pandas
+
       - name: Ensure folders
         run: |
           mkdir -p logs cache/deep data
@@ -63,6 +68,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install certifi requests pandas
 
       - name: Ensure folders
         run: |
