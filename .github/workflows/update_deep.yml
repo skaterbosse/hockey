@@ -89,6 +89,16 @@ jobs:
           echo "✅ Deep update done, new data/games.csv created."
           wc -l $FINALFILE
 
+      - name: Print deep logs
+        if: always()
+        run: |
+          echo "=== List logs ==="
+          ls -l logs || true
+          echo "=== Deep logs ==="
+          cat logs/deep_*.log || true
+          echo "=== getGames logs ==="
+          cat logs/getGames_*.log || true
+
       - name: Commit and push
         if: always()
         env:
