@@ -1,0 +1,108 @@
+name: update-deep
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # 03:00 Swedish time (02 UTC)
+  workflow_dispatch:
+
+jobs:
+  deep-update:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Europe/Stockholm
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install -r scripts/requirements.txt certifi pytz
+
+      - name: Prepare directories
+        run: mkdir -p logs cache/deep data
+
+      - name: Run deep fetch window
+        run: |
+          set -e
+          TODAY=$(date +%F)
+          START=$(date -d "$TODAY -4 days" +%F)
+          END=$(date -d "$TODAY +7 days" +%F)
+          TMPFILE=data/games.tmp.csv
+          FINALFILE=data/games.csv
+          touch $FINALFILE
+
+          EXISTING_DATES=$(awk -F';' 'NR>1{print $1}' $FINALFILE | sort -u)
+          echo "Existing dates:"
+          echo "$EXISTING_DATES"
+
+          rm -f $TMPFILE
+          for i in $(seq 0 11); do
+            DATE=$(date -d "$START +$i days" +%F)
+            LOGFILE="logs/deep_${DATE}.log"
+            echo "===== Fetching $DATE =====" | tee -a "$LOGFILE"
+
+            if [[ "$DATE" != "$TODAY" ]] && echo "$EXISTING_DATES" | grep -q "$DATE"; then
+              echo "Skipping $DATE (already in games.csv)" | tee -a "$LOGFILE"
+              continue
+            fi
+
+            python3 ./scripts/getGames.py -sd $DATE -ed $DATE -ah null -f cache/deep/All_games_${DATE}_deep.txt \
+              >> "$LOGFILE" 2>&1 || echo "ERROR in getGames for $DATE" >> "$LOGFILE"
+
+            if [ ! -s cache/deep/All_games_${DATE}_deep.txt ]; then
+              echo "No data fetched for $DATE – skipping" | tee -a "$LOGFILE"
+              continue
+            fi
+
+            python3 ./scripts/getClubs.py -gf cache/deep/All_games_${DATE}_deep.txt \
+              -cf scripts/Clubs.txt -af scripts/Arenas.csv \
+              -scf scripts/Combined_clubs_teams.txt \
+              -ogf cache/deep/All_games_${DATE}_deep_update.txt \
+              >> "$LOGFILE" 2>&1 || echo "ERROR in getClubs for $DATE" >> "$LOGFILE"
+
+            if [ ! -s cache/deep/All_games_${DATE}_deep_update.txt ]; then
+              echo "⚠️ Empty deep_update file for $DATE" | tee -a "$LOGFILE"
+              continue
+            fi
+
+            ROWS=$(wc -l < cache/deep/All_games_${DATE}_deep_update.txt)
+            echo "✅ $ROWS rows fetched for $DATE" | tee -a "$LOGFILE"
+
+            if [ ! -f "$TMPFILE" ]; then
+              cp cache/deep/All_games_${DATE}_deep_update.txt $TMPFILE
+            else
+              tail -n +2 cache/deep/All_games_${DATE}_deep_update.txt >> $TMPFILE
+            fi
+          done
+
+          if [ ! -s "$TMPFILE" ]; then
+            echo "❌ No data fetched for any day! Keeping old games.csv."
+            exit 1
+          fi
+
+          mv $TMPFILE $FINALFILE
+          echo "✅ Deep update done, new data/games.csv created."
+          wc -l $FINALFILE
+
+      - name: Commit and push
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/games.csv logs/
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Deep update $(date '+%Y-%m-%d %H:%M')"
+          git push origin main
+
+      - name: Summary
+        run: |
+          echo "========== LOG SUMMARY =========="
+          tail -n 20 logs/deep_*.log || true
+

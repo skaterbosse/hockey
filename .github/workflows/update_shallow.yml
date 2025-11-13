@@ -1,0 +1,45 @@
+name: update-shallow
+
+on:
+  schedule:
+    - cron: '*/5 6-22 * * *'
+  workflow_dispatch:
+
+jobs:
+  shallow-update:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Europe/Stockholm
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 -m pip install --upgrade pip
+          pip install -r scripts/requirements.txt certifi pytz
+      - run: mkdir -p logs cache/shallow
+      - name: Run shallow gatekeeper
+        run: |
+          python3 ./scripts/shallow_update_gatekeeper.py | tee logs/gatekeeper.log
+          if grep -q "run=False" logs/gatekeeper.log; then
+            echo "No shallow update needed."
+            exit 0
+          fi
+      - name: Run shallow update
+        run: |
+          TODAY=$(date +%F)
+          python3 ./scripts/getGames.py -sh -sd $TODAY -ed $TODAY -ah null -f cache/shallow_today.txt
+          python3 ./scripts/UpdateGames.py data/games.csv cache/shallow_today.txt
+      - name: Commit and push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/games.csv logs/
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Shallow update $(date '+%Y-%m-%d %H:%M')"
+          git push origin main
+
