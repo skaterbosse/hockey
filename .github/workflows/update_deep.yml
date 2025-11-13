@@ -5,6 +5,9 @@ on:
     - cron: '0 2 * * *'  # 03:00 Swedish time (02 UTC)
   workflow_dispatch:
 
+permissions:
+  contents: write   # 👈 Nödvändig för att kunna pusha
+
 jobs:
   deep-update:
     runs-on: ubuntu-latest
