@@ -52,12 +52,23 @@ body.dark {
   --hair:#1f2633;
   --text:#e6edf7;
   --muted:#9fb0c6;
+  --link:#60a5fa;
 }
 body.dark .topbar,
 body.dark .hint,
-body.dark .game { background:#121826; border-color:#1f2633; }
-body.dark .result a, body.dark .result div {
-  background:#0f172a; border-color:#1f2633; color:#e6edf7;
+body.dark .game {
+  background:#121826;
+  border-color:#1f2633;
+}
+body.dark .result a,
+body.dark .result div {
+  background:#0f172a;
+  border-color:#1f2633;
+  color:#e6edf7;
+}
+body.dark .sort-stack{
+  background:#0b0f18;
+  border-color:#e5e7eb;
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -88,12 +99,28 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 .pill.off{background:#f1f5f9;border-color:#cbd5e1;color:#94a3b8;}
 .hint{position:sticky;top:var(--topbar-h);height:var(--hint-h);background:#fff;border-bottom:1px solid var(--hair);text-align:center;font-size:12px;line-height:var(--hint-h);color:var(--muted);z-index:450;}
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);}
-.game{background:#fff;border-top:1px dashed #e5e7eb;padding:8px 12px;display:grid;gap:6px;}
+.game{
+  background:#fff;
+  border-top:1.5px solid #d4d4d8; /* tydligare linje mellan matcher */
+  padding:8px 12px;
+  display:grid;
+  gap:6px;
+}
+body.dark .game{
+  border-top:1.5px solid #1f2937;
+}
 .series-toprow{
   display:grid;
   grid-template-columns: 48% 32% 70px;
   align-items:center;
   column-gap:4px;
+}
+.series-toprow .series-name,
+.series-toprow .arena-name{
+  min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.series-toprow .dist{
+  white-space:nowrap;text-align:right;color:var(--muted);font-size:12px;
 }
 .series-bottomrow{
   display:grid;
@@ -102,12 +129,31 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
   column-gap:6px;
 }
 .series-bottomrow .time{white-space:nowrap;font-weight:700;color:#000;}
+body.dark .series-bottomrow .time{color:var(--text);}
 .series-bottomrow .left{display:flex;align-items:center;gap:6px;justify-content:flex-end;}
 .series-bottomrow .right{display:flex;align-items:center;gap:6px;}
 .team-logo{width:26px;height:26px;border-radius:4px;object-fit:contain;background:transparent;}
 .team-name{max-width:min(38vw,165px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;}
 .series-result{display:flex;justify-content:center;}
-.result a,.result div{display:inline-block;padding:2px 10px;border-radius:8px;border:1px solid var(--hair);background:#f1f5f9;font-weight:700;text-decoration:none;color:var(--text);}
+.result a,.result div{
+  display:inline-block;
+  padding:2px 10px;
+  border-radius:8px;
+  border:1px solid var(--hair);
+  background:#f1f5f9;
+  font-weight:700;
+  text-decoration:none;
+  color:var(--text);
+}
+
+/* Gör serienamn-länkar tydliga */
+.series-name a{
+  color:var(--link);
+  text-decoration:none;
+}
+.series-name a:hover{
+  text-decoration:underline;
+}
 
 /* ⚙️ Settingspanel */
 #settingsPanel {
@@ -132,6 +178,9 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 .settings-section{margin-bottom:16px;}
 .settings-section h3{margin-bottom:8px;font-size:15px;}
 .settings-row{display:flex;justify-content:space-between;margin-bottom:6px;}
+#seriesTree details{margin-bottom:6px;}
+#seriesTree summary{cursor:pointer;}
+#seriesTree label{display:block;font-size:13px;margin-left:10px;margin-bottom:3px;}
 </style>
 </head>
 
@@ -172,10 +221,15 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 <div id="settingsPanel">
   <div id="settingsCard">
     <h2>⚙️ Inställningar</h2>
+
     <div class="settings-section">
       <h3>Tema</h3>
-      <label class="settings-row"><span>Mörkt läge</span><input type="checkbox" id="toggleDarkMode"></label>
+      <label class="settings-row">
+        <span>Mörkt läge</span>
+        <input type="checkbox" id="toggleDarkMode">
+      </label>
     </div>
+
     <div class="settings-section">
       <h3>Max avstånd till arena (plats-vy)</h3>
       <select id="maxDistance">
@@ -186,10 +240,12 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
         <option value="9999999">obegränsat</option>
       </select>
     </div>
+
     <div class="settings-section">
       <h3>Favoritserier</h3>
       <div id="seriesTree"></div>
     </div>
+
     <button id="settingsClose" style="margin-top:16px;width:100%;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:8px;">Stäng</button>
   </div>
 </div>
@@ -197,15 +253,22 @@ html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSys
 <script>
 let deferredPrompt=null;
 if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("service-worker.js").then(()=>console.log("✅ SW registrerad")).catch(err=>console.warn("SW FEL:",err));
+  navigator.serviceWorker.register("service-worker.js")
+    .then(()=>console.log("✅ SW registrerad"))
+    .catch(err=>console.warn("SW FEL:",err));
 }
 window.addEventListener("beforeinstallprompt",e=>{
-  e.preventDefault();deferredPrompt=e;btnInstall.style.display="block";
+  e.preventDefault();
+  deferredPrompt=e;
+  btnInstall.style.display="block";
 });
-btnInstall.onclick=()=>{btnInstall.style.display="none";deferredPrompt.prompt();};
+btnInstall.onclick=()=>{
+  btnInstall.style.display="none";
+  if(deferredPrompt){ deferredPrompt.prompt(); }
+};
 </script>
 
-<!-- ⚙️ SETTINGS SCRIPT -->
+<!-- ⚙️ SETTINGS SCRIPT (inkl. serie-träd + persistens) -->
 <script>
 const settingsPanel=document.getElementById("settingsPanel");
 const settingsButton=document.getElementById("btnSettings");
@@ -214,34 +277,168 @@ const toggleDarkMode=document.getElementById("toggleDarkMode");
 const maxDistance=document.getElementById("maxDistance");
 const seriesTreeContainer=document.getElementById("seriesTree");
 
+const SERIES_KEY_PREFIX="fav_series:";
+
+// === SETTINGS LOAD/SAVE ===
 function loadSettings(){
   const dark=JSON.parse(localStorage.getItem("darkMode"));
-  document.body.classList.toggle("dark",dark);
+  document.body.classList.toggle("dark",!!dark);
   toggleDarkMode.checked=!!dark;
-  maxDistance.value=localStorage.getItem("maxDistance")||"9999999";
+
+  const md=localStorage.getItem("maxDistance") || "9999999";
+  maxDistance.value=md;
 }
 function saveSettings(){
   localStorage.setItem("darkMode",toggleDarkMode.checked);
   localStorage.setItem("maxDistance",maxDistance.value);
 }
-settingsButton.onclick=()=>settingsPanel.style.display="flex";
-settingsClose.onclick=()=>{saveSettings();settingsPanel.style.display="none";};
 
-function buildSeriesTree(groups){
+// Direkt-feedback på dark mode
+toggleDarkMode.addEventListener("change",()=>{
+  document.body.classList.toggle("dark",toggleDarkMode.checked);
+  localStorage.setItem("darkMode",toggleDarkMode.checked);
+});
+
+// Öppna/stäng panel
+settingsButton.onclick=()=>{settingsPanel.style.display="flex";};
+settingsClose.onclick=()=>{
+  saveSettings();
+  settingsPanel.style.display="none";
+  // applicera filtrering direkt
+  if(typeof render==="function") render();
+};
+
+// === Seriefilter – persisterat ===
+function isSeriesAllowed(seriesName){
+  const key=SERIES_KEY_PREFIX+(seriesName||"");
+  const val=localStorage.getItem(key);
+  if(val===null) return true; // default: allt påslaget
+  return val==="1";
+}
+
+function setSeriesAllowed(seriesName,on){
+  const key=SERIES_KEY_PREFIX+(seriesName||"");
+  localStorage.setItem(key,on?"1":"0");
+}
+
+// Klassificera region enligt din struktur
+function classifyRegion(host){
+  const h=(host||"").toLowerCase();
+  if(/svenska ishockeyförbundet/.test(h) || /\b90\b/.test(h)) return "Nationell";
+  if(/region syd/.test(h)) return "Region Syd";
+  if(/region öst/.test(h) || /region ost/.test(h)) return "Region Öst";
+  if(/region norr/.test(h)) return "Region Norr";
+  if(/region väst/.test(h) || /region vast/.test(h)) return "Region Väst";
+
+  if(/göteborgs ishockeyförbund|blekinge ishockeyförbund|bohuslän dals ishockeyförbund|hallands ishockeyförbund|skånes ishockeyförbund|smålands ishockeyförbund|östergötlands ishockeyförbund|västergötlands ishockeyförbund/.test(h))
+    return "Region Syd";
+  if(/stockholms ishockeyförbund|upplands ishockeyförbund|gotlands ishockeyförbund|södermanlands ishockeyförbund/.test(h))
+    return "Region Öst";
+  if(/västerbottens ishockeyförbund|ångermanlands ishockeyförbund|norrbottens ishockeyförbund|jämtland-härjedalens ishockeyförbund|medelpads ishockeyförbund/.test(h))
+    return "Region Norr";
+  if(/värmlands ishockeyförbund|örebro läns ishockeyförbund|västmanlands ishockeyförbund|hälsinglands ishockeyförbund|dalanas ishockeyförbund|gästriklands ishockeyförbund/.test(h))
+    return "Region Väst";
+  return "Övrigt";
+}
+
+// Klassificera seriegrupp, inkl. särbehandling U20/U18 Regional vs Div 1
+function classifyGroup(seriesLower){
+  const s=seriesLower;
+
+  if(/u20/.test(s) && /regional/.test(s)) return "U20 Regional";
+  if(/u20/.test(s) && /(division\s*1|\bdiv\s*1\b|\bdiv1\b)/.test(s)) return "U20 Division 1";
+  if(/u18/.test(s) && /regional/.test(s)) return "U18 Regional";
+  if(/u18/.test(s) && /(division\s*1|\bdiv\s*1\b|\bdiv1\b)/.test(s)) return "U18 Division 1";
+
+  if(/^shl\b/.test(s)) return "SHL";
+  if(/^(ha\b|hockeyallsvenskan)/.test(s)) return "HockeyAllsvenskan";
+  if(/^sdhl\b/.test(s)) return "SDHL";
+  if(/hockeyettan/.test(s)) return "Hockeyettan";
+  if(/hockeytvåan|hockeytvaan|hockeytwoan/.test(s)) return "Hockeytvåan";
+  if(/hockeytrean/.test(s)) return "Hockeytrean";
+  if(/hockeyfyran/.test(s)) return "Hockeyfyran";
+
+  return "Övriga serier";
+}
+
+// Prio: slutspel/kval > topp > forts/vår > grundserie
+function seriesPrioScore(name){
+  const s=(name||"").toLowerCase();
+  if(/play[- ]?off|play[- ]?in|slutspel|final|kval/.test(s)) return 0;
+  if(/topp|top\s*\d+|superelit/.test(s)) return 1;
+  if(/fortsättningsserie|forts\.|fortsättning|vårserie|vår\s/.test(s)) return 2;
+  return 3;
+}
+
+// Bygger upp serie-trädet från allGames
+function buildSeriesTreeFromGames(allGames){
+  const tree={}; // region -> group -> Set(serienamn)
+
+  for(const g of allGames||[]){
+    const seriesName=(g.series_name||"").trim();
+    if(!seriesName) continue;
+    const host=g.admin_host||"";
+    const region=classifyRegion(host);
+    const group=classifyGroup(seriesName.toLowerCase());
+
+    if(!tree[region]) tree[region]={};
+    if(!tree[region][group]) tree[region][group]=new Set();
+    tree[region][group].add(seriesName);
+  }
+
+  const regionOrder=["Nationell","Region Syd","Region Öst","Region Norr","Region Väst","Övrigt"];
+  const finalTree={};
+
+  regionOrder.forEach(r=>{
+    if(tree[r]){
+      finalTree[r]={};
+      const groupNames=Object.keys(tree[r]).sort();
+      for(const gName of groupNames){
+        const arr=Array.from(tree[r][gName]);
+        arr.sort((a,b)=>{
+          const pa=seriesPrioScore(a), pb=seriesPrioScore(b);
+          if(pa!==pb) return pa-pb;
+          return a.localeCompare(b,"sv");
+        });
+        finalTree[r][gName]=arr;
+      }
+    }
+  });
+
+  renderSeriesTree(finalTree);
+}
+
+// Renderar serie-trädet till DOM
+function renderSeriesTree(tree){
   const html=[];
-  for(const g of Object.keys(groups)){
-    html.push(`<details><summary>${g}</summary>`);
-    groups[g].forEach(s=>{
-      const checked=localStorage.getItem("fav_"+s)==="1"?"checked":"";
-      html.push(`<label><input type="checkbox" data-serie="${s}" ${checked}> ${s}</label>`);
-    });
-    html.push("</details>");
+  for(const region of Object.keys(tree)){
+    html.push(`<details open><summary><strong>${region}</strong></summary>`);
+    const groups=tree[region];
+    for(const groupName of Object.keys(groups)){
+      const seriesList=groups[groupName];
+      html.push(`<details><summary>${groupName}</summary>`);
+      seriesList.forEach(s=>{
+        const checked=isSeriesAllowed(s) ? "checked" : "";
+        const safeLabel=s.replace(/"/g,"&quot;");
+        html.push(
+          `<label><input type="checkbox" data-serie="${safeLabel}" ${checked}> ${safeLabel}</label>`
+        );
+      });
+      html.push(`</details>`);
+    }
+    html.push(`</details>`);
   }
   seriesTreeContainer.innerHTML=html.join("");
-  seriesTreeContainer.querySelectorAll("input").forEach(cb=>{
-    cb.onchange=()=>localStorage.setItem("fav_"+cb.dataset.serie,cb.checked?"1":"0");
+
+  seriesTreeContainer.querySelectorAll("input[type=checkbox]").forEach(cb=>{
+    cb.onchange=()=>{
+      const serieName=cb.getAttribute("data-serie") || "";
+      setSeriesAllowed(serieName,cb.checked);
+      if(typeof render==="function") render();
+    };
   });
 }
+
 loadSettings();
 </script>
 
@@ -266,6 +463,12 @@ Promise.all([
     if(n && f) logoMap[n.trim()] = f.trim();
   });
   allGames = parseCSV(csvTxt);
+
+  // Bygg serie-träd dynamiskt från games
+  if(typeof buildSeriesTreeFromGames==="function"){
+    buildSeriesTreeFromGames(allGames);
+  }
+
   setToday();
 });
 
@@ -346,7 +549,7 @@ function relWord(d){
   return '';
 }
 
-/* === PLATS-VY (enhetlig layout; sorteras på avstånd) === */
+/* === PLATS-VY (enhetlig layout; sorteras på avstånd + maxDist-filter) === */
 function renderPlace(list){
   const byArena = {};
   list.forEach(g=>{
@@ -354,11 +557,27 @@ function renderPlace(list){
     (byArena[name] ||= []).push(g);
   });
 
-  const arenas = Object.keys(byArena).sort((a,b)=>{
-    const da = haversine(byArena[a][0].Lat, byArena[a][0].Long, USER_LAT, USER_LON);
-    const db = haversine(byArena[b][0].Lat, byArena[b][0].Long, USER_LAT, USER_LON);
-    return da-db;
-  });
+  const maxDistMeters = parseInt(localStorage.getItem("maxDistance") || "9999999",10);
+
+  // filtrera bort arenor utanför max-avstånd
+  const arenas = Object.keys(byArena)
+    .filter(arenaName=>{
+      const g0 = byArena[arenaName][0];
+      if(!g0 || isNaN(g0.Lat) || isNaN(g0.Long)) return true; // behåll om vi saknar koordinater
+      const distKm = haversine(g0.Lat,g0.Long,USER_LAT,USER_LON);
+      return (distKm*1000) <= maxDistMeters;
+    })
+    .sort((a,b)=>{
+      const da = haversine(byArena[a][0].Lat, byArena[a][0].Long, USER_LAT, USER_LON);
+      const db = haversine(byArena[b][0].Lat, byArena[b][0].Long, USER_LAT, USER_LON);
+      return da-db;
+    });
+
+  if(arenas.length===0){
+    document.getElementById('scrollArea').innerHTML =
+      `<div style="padding:20px;font-size:16px;text-align:center;background:#fff;">Inga matcher inom valt maxavstånd</div>`;
+    return;
+  }
 
   const out=[];
   arenas.forEach(arena=>{
@@ -369,9 +588,18 @@ function renderPlace(list){
   document.getElementById('scrollArea').innerHTML = out.join('');
 }
 
-/* === SERIE-VY === */
+/* === SERIE-VY (respekt för favoritserier) === */
 function renderSeries(list){
-  let arr=[...list];
+  const base=list;
+  const filtered = base.filter(g=>isSeriesAllowed(g.series_name||""));
+
+  if(filtered.length===0){
+    document.getElementById('scrollArea').innerHTML =
+      `<div style="padding:20px;font-size:16px;text-align:center;background:#fff;">Inga matcher idag med valda seriefilter</div>`;
+    return;
+  }
+
+  let arr=[...filtered];
   if(mode===MODE.SERIES){
     arr.sort(seriesComparator); // prio → alfabetiskt
   }else if(mode===MODE.SERIES_TIME){
@@ -395,7 +623,6 @@ function gameCardUnified(g){
     ? `<div class="result"><a href="${escapeHtml(g.result_link)}" target="_blank">${escapeHtml(g.result)}</a></div>`
     : `<div class="result"><div>${escapeHtml(g.result||'–')}</div></div>`;
 
-  // Trunkeringar med EN punkt
   const seriesLabel = truncateDot(g.series_name||'', 40);
   const homeName = truncateDot(g.home_team||'', 14);
   const awayName = truncateDot(g.away_team||'', 14);
@@ -431,7 +658,6 @@ function gameCardUnified(g){
 /* === SERIE-PRIO & SORT === */
 function seriesComparator(a,b){
   const ka = seriesSortKey(a), kb = seriesSortKey(b);
-  // lexikografisk jämförelse av key-arr
   for(let i=0;i<Math.max(ka.length,kb.length);i++){
     const va = ka[i], vb = kb[i];
     if(va<vb) return -1;
@@ -445,28 +671,23 @@ function seriesSortKey(g){
   const sname = (g.series_name||'');
   const s = sname.toLowerCase();
 
-  // extrahera U och +N
-  const U = extractU(s);                 // t.ex. 20 för U20, 0 om saknas
-  const PLUS = extractPlus(s);           // t.ex. 50 för +50, 0 om saknas
+  const U = extractU(s);
+  const PLUS = extractPlus(s);
 
   const isSIF = host.includes('90') || /svenska\s+ishockeyförbundet/i.test(host);
-  const regionCode = detectRegionCode(host); // 93,95,96,94 eller 0
+  const regionCode = detectRegionCode(host);
   const isRegion = regionCode>0;
-  const districtCode = detectDistrictCode(host); // 1..23 enl lista eller 0
+  const districtCode = detectDistrictCode(host);
   const isDistrict = (!isSIF && !isRegion) && /förbund/i.test(host);
 
-  // globalt: +serier lägst prio av allt
   const globalPlusPenalty = PLUS>0 ? 1 : 0;
 
-  // TOP-nivå per grupp
-  let groupRank; // lägre är bättre
+  let groupRank;
   if(isSIF) groupRank = 1;
   else if(isRegion) groupRank = 2;
   else if(isDistrict) groupRank = 3;
-  else groupRank = 4; // övrigt
+  else groupRank = 4;
 
-  // Inom varje grupp – sub-rank
-  // SIF topp
   const SIF_top = 1, SIF_mid=2, SIF_lowU=3, SIF_rest=4;
   const REG_top = 1, REG_mid=2, REG_low=3, REG_rest=4;
   const DIS_top = 1, DIS_mid=2, DIS_low=3;
@@ -479,14 +700,12 @@ function seriesSortKey(g){
     else if(/^sdhl\b/.test(s)) { subRank=SIF_top; detailA=3; }
     else if(/hockeyettan/.test(s)) { subRank=SIF_top; detailA=4; }
     else if(/\bswe\b/.test(s)) { subRank=SIF_mid; }
-    else if(U>0){ subRank=SIF_lowU; detailA = -U; } // högre U först
+    else if(U>0){ subRank=SIF_lowU; detailA = -U; }
     else { subRank=SIF_rest; }
-    // alfabetiskt inom samma subRank
     return [groupRank, subRank, globalPlusPenalty, detailA, sname.toLowerCase()];
   }
 
   if(isRegion){
-    // top order: HockeyTvåan, NDHL, HockeyTrean, DamTvåan, U20 Regional, HockeyFyran
     if(/hockeytvåan|hockeytvaan|hockeytwoan/.test(s)) { subRank=REG_top; detailA=1; }
     else if(/\bndhl\b/.test(s)) { subRank=REG_top; detailA=2; }
     else if(/hockeytrean/.test(s)) { subRank=REG_top; detailA=3; }
@@ -499,7 +718,6 @@ function seriesSortKey(g){
     }
     else { subRank=REG_rest; }
 
-    // extra sort inom samma subRank: region-order 93,95,96,94
     const regionOrder = [93,95,96,94];
     const regIdx = regionOrder.indexOf(regionCode);
     detailB = (regIdx===-1? 999 : regIdx);
@@ -508,24 +726,20 @@ function seriesSortKey(g){
   }
 
   if(isDistrict){
-    // Top: Hockeyfyran eller Div 4-varianter; 2: Div 5-varianter
     if(/hockeyfyran|division\s*4|\bdiv\s*4\b|\bdiv4\b/i.test(s)) { subRank=DIS_top; detailA=1; }
     else if(/division\s*5|\bdiv\s*5\b|\bdiv5\b/i.test(s)) { subRank=DIS_top; detailA=2; }
     else if(U>0){ subRank=DIS_mid; detailA = -U; }
     else { subRank=DIS_low; }
 
-    // extra sort inom samma subRank: distriktsordningen
     const distIdx = districtCode>0 ? districtCode : 999;
     return [groupRank, subRank, globalPlusPenalty, detailA, distIdx, sname.toLowerCase()];
   }
 
-  // Övrigt: tryck ner +serier längst
-  return [5 /*others*/, (PLUS>0? 2:1), globalPlusPenalty, -U, sname.toLowerCase()];
+  return [5,(PLUS>0? 2:1),globalPlusPenalty,-U,sname.toLowerCase()];
 }
 
 /* Hjälp: regionkod från admin_host */
 function detectRegionCode(host){
-  // titta efter 93/94/95/96, annars ord
   const m = host.match(/\b(93|94|95|96)\b/);
   if(m) return parseInt(m[1],10);
   if(/syd/.test(host)) return 93;
@@ -562,8 +776,9 @@ function detectDistrictCode(host){
     ["ångermanlands ishockeyförbund",22],
     ["östergötlands ishockeyförbund",23],
   ];
+  const h = (host||"").toLowerCase();
   for(const [k,v] of map){
-    if(host.includes(k)) return v;
+    if(h.includes(k)) return v;
   }
   return 0;
 }
@@ -575,7 +790,7 @@ function extractU(s){
 function extractPlus(s){
   const m = s.match(/\+(\d{2})\b/);
   const n = m ? parseInt(m[1],10) : 0;
-  return (n>=30)? n : 0; // endast +>=30 är relevanta
+  return (n>=30)? n : 0;
 }
 
 /* === LOGO === */
@@ -593,7 +808,6 @@ function seriesLinkHTML(g, label){
 function truncateDot(str, max){
   const s = String(str||'');
   if(s.length<=max) return s;
-  // en enda punkt
   return s.slice(0, max-1) + '.';
 }
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
