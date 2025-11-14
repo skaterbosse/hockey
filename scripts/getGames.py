@@ -269,6 +269,13 @@ def parse_games_from_html(html: str, date: str) -> List[Game]:
 
         for time_cell, game_cell, result_cell, venue_cell in row_pat.findall(block):
             time_txt = normalize_ws(ihtml.unescape(re.sub("<.*?>", "", time_cell)))
+            # Replace postponed/inställd match times with "PPD"
+            time_clean = time_txt.lower()
+            if time_clean in ["postponed", "inställd", "inst", "ppd"]:
+                time_txt = "PPD"
+            elif any(k in time_clean for k in ["postponed", "instäl", "ppd"]):
+                time_txt = "PPD"
+
             game_main = re.split(r"<br\s*/?>", game_cell, flags=re.IGNORECASE)[0]
             game_txt = normalize_ws(ihtml.unescape(re.sub("<.*?>", "", game_main)))
             venue_txt = normalize_ws(ihtml.unescape(re.sub("<.*?>", "", venue_cell)))

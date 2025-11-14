@@ -23,6 +23,39 @@ jobs:
           python3 -m pip install --upgrade pip
           pip install -r scripts/requirements.txt certifi pytz
 
+      - name: Diagnostics before deep update
+        run: |
+          echo "=== 🔍 DIAGNOSTIK — START ==="
+
+          echo "--- games.csv: datum som finns ---"
+          if [ -f data/games.csv ]; then
+            cut -d';' -f1 data/games.csv | sort | uniq -c
+          else
+            echo "❌ data/games.csv saknas"
+          fi
+
+          echo "--- oldGames.csv: datum som finns ---"
+          if [ -f data/oldGames.csv ]; then
+            cut -d';' -f1 data/oldGames.csv | sort | uniq -c
+          else
+            echo "ℹ️ data/oldGames.csv hittades inte (ok om första gången)"
+          fi
+
+          echo "--- 🗓️ Dagens datum (Sweden) ---"
+          SWEDEN_NOW=$(TZ="Europe/Stockholm" date +%Y-%m-%d)
+          echo $SWEDEN_NOW
+
+          echo "--- Datumfönster som ska hämtas (deep) ---"
+          for i in {-4..7}; do
+            date -d "$SWEDEN_NOW $i day" +%Y-%m-%d
+          done
+
+          echo "=== 🔍 DIAGNOSTIK — SLUT ==="
+
+      - name: Archive old games
+        run: |
+          python3 scripts/archive_old_games.py
+
       - name: Prepare directories
         run: mkdir -p logs cache/deep data
 
