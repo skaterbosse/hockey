@@ -1,86 +1,103 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-archive_old_games.py
-Flyttar matcher som faller ut ur rullande datumfönstret från games.csv till oldGames.csv.
-Körs som första steg i update-deep.
-
-Krav:
-- oldGames.csv måste redan finnas (vi rör den bara).
-- games.csv måste finnas.
-- Skriptet är idempotent: körningar under samma datum gör ingen skada.
-"""
-
 import csv
-from pathlib import Path
 from datetime import datetime, timedelta
+import os
+import sys
 
-GAMES = Path("data/games.csv")
-OLD = Path("data/oldGames.csv")
-STATE_FILE = Path("data/archive_state.txt")   # håller reda på senaste arkiverade datum
+GAMES_FILE = "data/games.csv"
+OLD_GAMES_FILE = "data/oldGames.csv"
 
+DATE_FORMAT = "%Y-%m-%d"
 
-def parse_date(s):
-    return datetime.strptime(s, "%Y-%m-%d").date()
+def log(msg):
+    print(f"[ARCHIVE] {msg}")
 
+def parse_date(d):
+    try:
+        return datetime.strptime(d, DATE_FORMAT).date()
+    except:
+        return None
 
 def main():
-    today = datetime.now().date()
+    log("Startar arkivering av gamla matcher...")
 
-    # Räkna ut vilket datum som ska arkiveras
-    # Aktivt fönster: -4 bakåt → +7 framåt
-    oldest_active = today - timedelta(days=4)
-    date_to_archive = oldest_active - timedelta(days=1)
+    today = datetime.utcnow().date()
+    expire_date = today - timedelta(days=5)
 
-    # Idempotens: om vi redan arkiverat detta datum, gör ingenting
-    if STATE_FILE.exists():
-        last = STATE_FILE.read_text().strip()
-        if last == str(date_to_archive):
-            print(f"[archive] Redan arkiverat {date_to_archive}, gör ingenting.")
-            return
+    log(f"Idag: {today}")
+    log(f"EXPIRE_DATE = {expire_date}")
 
-    print(f"[archive] Arkiverar matcher från datum: {date_to_archive}")
+    # --- Steg 1: Läs games.csv ---
+    if not os.path.exists(GAMES_FILE):
+        log(f"Filen {GAMES_FILE} saknas! Ingenting att arkivera.")
+        return 0  # OK
 
-    # Läs games.csv
-    if not GAMES.exists():
-        print("[archive] games.csv saknas – kan inte arkivera.")
-        return
+    with open(GAMES_FILE, newline='', encoding="utf-8") as f:
+        reader = csv.DictReader(f, delimiter=';')
+        games = list(reader)
+        fieldnames = reader.fieldnames
 
-    with GAMES.open() as f:
-        reader = csv.reader(f, delimiter=";")
-        rows = list(reader)
+    if not games:
+        log("games.csv är tom – ingen arkivering behövs.")
+        return 0
 
-    archive_rows = [r for r in rows if r and r[0] == str(date_to_archive)]
+    # --- Steg 2: Hitta rader att flytta ---
+    rows_for_expire = [g for g in games if parse_date(g["date"]) == expire_date]
 
-    if not archive_rows:
-        print(f"[archive] Inga matcher att arkivera för {date_to_archive}.")
-    else:
-        # Se till att oldGames.csv finns
-        OLD.parent.mkdir(parents=True, exist_ok=True)
-        if not OLD.exists():
-            OLD.write_text("")
+    if not rows_for_expire:
+        log(f"Inga matcher hittades i games.csv för {expire_date}. Ingenting att arkivera idag.")
+        return 0  # Viktigt: detta är OK – andra körningen ska inte faila
 
-        # Läs befintliga oldGames
-        with OLD.open() as f:
-            existing = {tuple(r) for r in csv.reader(f, delimiter=";")}
+    log(f"Hittade {len(rows_for_expire)} rader att arkivera från {expire_date}")
 
-        # Appendera nya rader som inte finns
-        with OLD.open("a") as f:
-            w = csv.writer(f, delimiter=";")
-            added = 0
-            for r in archive_rows:
-                t = tuple(r)
-                if t not in existing:
-                    w.writerow(r)
-                    added += 1
+    # --- Steg 3: Skriv / uppdatera oldGames.csv ---
+    existing_old = []
+    if os.path.exists(OLD_GAMES_FILE):
+        with open(OLD_GAMES_FILE, newline='', encoding="utf-8") as f:
+            old_reader = csv.DictReader(f, delimiter=';')
+            existing_old = list(old_reader)
 
-        print(f"[archive] La till {added} nya matcher i oldGames.csv")
+    # Undvik dubblering
+    existing_ids = {(g["date"], g["home_team"], g["away_team"], g["series_name"])
+                    for g in existing_old}
 
-    # Uppdatera state
-    STATE_FILE.write_text(str(date_to_archive))
+    merged = list(existing_old)
+
+    new_unique = []
+    for row in rows_for_expire:
+        key = (row["date"], row["home_team"], row["away_team"], row["series_name"])
+        if key not in existing_ids:
+            new_unique.append(row)
+
+    log(f"Lägger till {len(new_unique)} NYA matcher i oldGames.csv")
+
+    merged.extend(new_unique)
+
+    # Sortera oldGames efter datum
+    merged.sort(key=lambda g: parse_date(g["date"]))
+
+    # Skriv tillbaka oldGames.csv
+    with open(OLD_GAMES_FILE, "w", newline='', encoding="utf-8") as f:
+        writer = csv.DictWriter(f, delimiter=';', fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(merged)
+
+    log(f"oldGames.csv uppdaterad ({len(merged)} matcher totalt).")
+
+    # --- Steg 4: Skriv tillbaka games.csv utan de arkiverade raderna ---
+    remaining = [g for g in games if parse_date(g["date"]) != expire_date]
+
+    with open(GAMES_FILE, "w", newline='', encoding="utf-8") as f:
+        writer = csv.DictWriter(f, delimiter=';', fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(remaining)
+
+    log(f"games.csv uppdaterad – {len(remaining)} rader kvar.")
+
+    log("Arkivering klar.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
 
