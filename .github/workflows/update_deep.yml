@@ -93,15 +93,18 @@ jobs:
         echo "===================="
 
     # ----------------------------------------------------------
-    # 6. Combine deep files → tmp_concat_deep.txt
+    # 6. Collect output from rolling_deep_fetch.py → tmp_concat_deep.txt
     # ----------------------------------------------------------
-    - name: Combine files
+    - name: Collect deep fetch output
       run: |
-        echo "[COMBINE] Kombinerar alla deep-cache-filer..."
+        echo "[COLLECT] Samlar ihop output..."
 
-        cat cache/deep/All_games_*_deep_update.txt > tmp_concat_deep.txt
+        if [ ! -f tmp_concat_deep.txt ]; then
+          echo "[COLLECT] tmp_concat_deep.txt saknas – deep fetch misslyckades."
+          exit 1
+        fi
 
-        echo "[COMBINE] Klart."
+        echo "[COLLECT] tmp_concat_deep.txt hittad – fortsätter."
 
     # ----------------------------------------------------------
     # 7. Generate updated games.csv using getClubs.py
