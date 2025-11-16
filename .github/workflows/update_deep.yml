@@ -2,153 +2,155 @@ name: update-deep
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # 03:00 Swedish time (02 UTC)
+    - cron: "0 3 * * *"   # Kör dagligen kl 03:00
   workflow_dispatch:
 
-permissions:
-  contents: write   # 👈 Nödvändig för att kunna pusha
-
 jobs:
-  deep-update:
+  update-deep:
     runs-on: ubuntu-latest
-    env:
-      TZ: Europe/Stockholm
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          python3 -m pip install --upgrade pip
-          pip install -r scripts/requirements.txt certifi pytz
+    # ----------------------------------------------------------
+    # 1. CHECKOUT
+    # ----------------------------------------------------------
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: main
 
-      - name: Diagnostics before deep update
-        run: |
-          echo "=== 🔍 DIAGNOSTIK — START ==="
+    # ----------------------------------------------------------
+    # 2. Setup Python
+    # ----------------------------------------------------------
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
 
-          echo "--- games.csv: datum som finns ---"
-          if [ -f data/games.csv ]; then
-            cut -d';' -f1 data/games.csv | sort | uniq -c
-          else
-            echo "❌ data/games.csv saknas"
-          fi
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        pip install beautifulsoup4 requests certifi
 
-          echo "--- oldGames.csv: datum som finns ---"
-          if [ -f data/oldGames.csv ]; then
-            cut -d';' -f1 data/oldGames.csv | sort | uniq -c
-          else
-            echo "ℹ️ data/oldGames.csv hittades inte (ok om första gången)"
-          fi
+    # ----------------------------------------------------------
+    # 3. Ensure directories exist
+    # ----------------------------------------------------------
+    - name: Create required directories
+      run: |
+        mkdir -p cache/deep
+        mkdir -p logs
 
-          echo "--- 🗓️ Dagens datum (Sweden) ---"
-          SWEDEN_NOW=$(TZ="Europe/Stockholm" date +%Y-%m-%d)
-          echo $SWEDEN_NOW
+    # ----------------------------------------------------------
+    # 4. Archive oldest date (ONLY if not archived today)
+    # ----------------------------------------------------------
+    - name: Archive expired day into oldGames.csv
+      run: |
+        echo "[ARCHIVE] Steg 1 – Identifierar datum som ska flyttas..."
 
-          echo "--- Datumfönster som ska hämtas (deep) ---"
-          for i in {-4..7}; do
-            date -d "$SWEDEN_NOW $i day" +%Y-%m-%d
-          done
+        TODAY=$(date +%Y-%m-%d)
+        EXPIRE_DATE=$(date -d "$TODAY -5 days" +%Y-%m-%d)
 
-          echo "=== 🔍 DIAGNOSTIK — SLUT ==="
+        echo "[ARCHIVE] EXPIRE_DATE = $EXPIRE_DATE"
 
-      - name: Archive old games
-        run: |
-          python3 scripts/archive_old_games.py
+        if [ ! -f data/games.csv ]; then
+          echo "[ARCHIVE] games.csv saknas – hoppar över arkivering."
+          exit 0
+        fi
 
-      - name: Prepare directories
-        run: mkdir -p logs cache/deep data
+        if grep -q "$EXPIRE_DATE" data/oldGames.csv ; then
+          echo "[ARCHIVE] Redan arkiverad för idag – hoppar över."
+          exit 0
+        fi
 
-      - name: Run deep fetch window
-        run: |
-          set -e
-          TODAY=$(date +%F)
-          START=$(date -d "$TODAY -4 days" +%F)
-          END=$(date -d "$TODAY +7 days" +%F)
-          TMPFILE=data/games.tmp.csv
-          FINALFILE=data/games.csv
-          touch $FINALFILE
+        echo "[ARCHIVE] Flyttar matcher från $EXPIRE_DATE → oldGames.csv"
 
-          EXISTING_DATES=$(awk -F';' 'NR>1{print $1}' $FINALFILE | sort -u)
-          echo "Existing dates:"
-          echo "$EXISTING_DATES"
+        grep "^$EXPIRE_DATE" data/games.csv >> data/oldGames.csv
 
-          rm -f $TMPFILE
-          for i in $(seq 0 11); do
-            DATE=$(date -d "$START +$i days" +%F)
-            LOGFILE="logs/deep_${DATE}.log"
-            echo "===== Fetching $DATE =====" | tee -a "$LOGFILE"
+        grep -v "^$EXPIRE_DATE" data/games.csv > data/games.tmp
+        mv data/games.tmp data/games.csv
 
-            if [[ "$DATE" != "$TODAY" ]] && echo "$EXISTING_DATES" | grep -q "$DATE"; then
-              echo "Skipping $DATE (already in games.csv)" | tee -a "$LOGFILE"
-              continue
-            fi
+        echo "[ARCHIVE] Arkivering klar."
 
-            python3 ./scripts/getGames.py -sd $DATE -ed $DATE -ah null -f cache/deep/All_games_${DATE}_deep.txt \
-              >> "$LOGFILE" 2>&1 || echo "ERROR in getGames for $DATE" >> "$LOGFILE"
+    # ----------------------------------------------------------
+    # 5. RUN DEEP WINDOW FETCH
+    # ----------------------------------------------------------
+    - name: Run rolling deep fetch
+      run: |
+        echo "===================="
+        echo "RUNNING DEEP WINDOW"
+        echo "===================="
 
-            if [ ! -s cache/deep/All_games_${DATE}_deep.txt ]; then
-              echo "No data fetched for $DATE – skipping" | tee -a "$LOGFILE"
-              continue
-            fi
+        python3 scripts/rolling_deep_fetch.py --window 12
 
-            python3 ./scripts/getClubs.py -gf cache/deep/All_games_${DATE}_deep.txt \
-              -cf scripts/Clubs.txt -af scripts/Arenas.csv \
-              -scf scripts/Combined_clubs_teams.txt \
-              -ogf cache/deep/All_games_${DATE}_deep_update.txt \
-              >> "$LOGFILE" 2>&1 || echo "ERROR in getClubs for $DATE" >> "$LOGFILE"
+        echo "===================="
+        echo "DEEP WINDOW DONE"
+        echo "===================="
 
-            if [ ! -s cache/deep/All_games_${DATE}_deep_update.txt ]; then
-              echo "⚠️ Empty deep_update file for $DATE" | tee -a "$LOGFILE"
-              continue
-            fi
+    # ----------------------------------------------------------
+    # 6. Combine deep files → tmp_concat_deep.txt
+    # ----------------------------------------------------------
+    - name: Combine files
+      run: |
+        echo "[COMBINE] Kombinerar alla deep-cache-filer..."
 
-            ROWS=$(wc -l < cache/deep/All_games_${DATE}_deep_update.txt)
-            echo "✅ $ROWS rows fetched for $DATE" | tee -a "$LOGFILE"
+        cat cache/deep/All_games_*_deep_update.txt > tmp_concat_deep.txt
 
-            if [ ! -f "$TMPFILE" ]; then
-              cp cache/deep/All_games_${DATE}_deep_update.txt $TMPFILE
-            else
-              tail -n +2 cache/deep/All_games_${DATE}_deep_update.txt >> $TMPFILE
-            fi
-          done
+        echo "[COMBINE] Klart."
 
-          if [ ! -s "$TMPFILE" ]; then
-            echo "❌ No data fetched for any day! Keeping old games.csv."
-            exit 1
-          fi
+    # ----------------------------------------------------------
+    # 7. Generate updated games.csv using getClubs.py
+    # ----------------------------------------------------------
+    - name: Build games.csv
+      run: |
+        echo "[CLUBS] Genererar games.csv baserat på tmp_concat_deep.txt"
 
-          mv $TMPFILE $FINALFILE
-          echo "✅ Deep update done, new data/games.csv created."
-          wc -l $FINALFILE
+        python3 scripts/getClubs.py \
+          -gf tmp_concat_deep.txt \
+          -cf scripts/Clubs.txt \
+          -af scripts/Arenas.csv \
+          -scf scripts/Combined_clubs_teams.txt \
+          -ogf tmp_deep_update.txt
 
-      - name: Print deep logs
-        if: always()
-        run: |
-          echo "=== List logs ==="
-          ls -l logs || true
-          echo "=== Deep logs ==="
-          cat logs/deep_*.log || true
-          echo "=== getGames logs ==="
-          cat logs/getGames_*.log || true
+        mv tmp_deep_update.txt data/games.csv
 
-      - name: Commit and push
-        if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/games.csv logs/
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
-          fi
-          git commit -m "Deep update $(date '+%Y-%m-%d %H:%M')"
-          git push origin main
+        echo "[CLUBS] Ny games.csv klar."
 
-      - name: Summary
-        run: |
-          echo "========== LOG SUMMARY =========="
-          tail -n 20 logs/deep_*.log || true
+    # ----------------------------------------------------------
+    # 8. Print diagnostics
+    # ----------------------------------------------------------
+    - name: Diagnostic summary
+      run: |
+        echo "========== DIAGNOSTIK =========="
+
+        FIRST=$(head -1 data/games.csv | cut -d',' -f1)
+        LAST=$(tail -1 data/games.csv | cut -d',' -f1)
+
+        echo "Games.csv date range: $FIRST → $LAST"
+
+        echo "Antal rader i games.csv:"
+        wc -l data/games.csv
+
+        echo "Antal rader i oldGames.csv:"
+        wc -l data/oldGames.csv
+
+        echo "========== SLUT =========="
+
+    # ----------------------------------------------------------
+    # 9. Commit changes
+    # ----------------------------------------------------------
+    - name: Commit & Push deep update
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        git add data/games.csv data/oldGames.csv cache/deep logs || true
+
+        if git diff --cached --quiet; then
+          echo "Inga ändringar att commita."
+          exit 0
+        fi
+
+        git commit -m "Deep update $(date -u +'%Y-%m-%d %H:%M UTC')"
+        git push origin main
 
