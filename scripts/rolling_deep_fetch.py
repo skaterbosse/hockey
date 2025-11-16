@@ -150,6 +150,7 @@ def run_getgames_for_date(date_str: str) -> List[str]:
 
 # --- Main ---
 def main(argv=None) -> int:
+    print(">>> TESTVERSION <<<")
     today = datetime.utcnow().date()
     log(f"=== rolling_deep_fetch start (today={today}) ===")
 
