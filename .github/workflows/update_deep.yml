@@ -42,35 +42,40 @@ jobs:
         mkdir -p logs
 
     # ----------------------------------------------------------
-    # 4. Archive oldest date (ONLY if not archived today)
+    # 4. Archive oldest date (ROBUST VERSION)
     # ----------------------------------------------------------
-    - name: Archive expired day into oldGames.csv
+    - name: Archive expired day into oldGames.csv (robust)
       run: |
-        echo "[ARCHIVE] Steg 1 – Identifierar datum som ska flyttas...TORE"
+        echo "[ARCHIVE] Steg 1 – Identifierar datum som ska flyttas..."
 
         TODAY=$(date +%Y-%m-%d)
         EXPIRE_DATE=$(date -d "$TODAY -5 days" +%Y-%m-%d)
 
         echo "[ARCHIVE] EXPIRE_DATE = $EXPIRE_DATE"
 
+        # Om games.csv saknas → hoppa över
         if [ ! -f data/games.csv ]; then
           echo "[ARCHIVE] games.csv saknas – hoppar över arkivering."
           exit 0
         fi
 
-        if grep -q "$EXPIRE_DATE" data/oldGames.csv ; then
-          echo "[ARCHIVE] Redan arkiverad för idag – hoppar över."
+        # Kontrollera om det finns något att arkivera
+        if ! grep -q "^$EXPIRE_DATE" data/games.csv ; then
+          echo "[ARCHIVE] Inga matcher på $EXPIRE_DATE i games.csv – hoppar över."
           exit 0
         fi
 
-        echo "[ARCHIVE] Flyttar matcher från $EXPIRE_DATE → oldGames.csv"
+        echo "[ARCHIVE] Det finns rader att arkivera."
 
-        grep "^$EXPIRE_DATE" data/games.csv >> data/oldGames.csv
+        # Flytta matcherna, utan att krascha om grep hittar få/inga rader
+        grep "^$EXPIRE_DATE" data/games.csv >> data/oldGames.csv || true
 
-        grep -v "^$EXPIRE_DATE" data/games.csv > data/games.tmp
+        # Skapa ny games.csv utan de flyttade raderna
+        grep -v "^$EXPIRE_DATE" data/games.csv > data/games.tmp || true
         mv data/games.tmp data/games.csv
 
         echo "[ARCHIVE] Arkivering klar."
+        echo "[ARCHIVE] $(grep -c "^$EXPIRE_DATE" data/oldGames.csv) rader totalt med detta datum i oldGames.csv."
 
     # ----------------------------------------------------------
     # 5. RUN DEEP WINDOW FETCH
