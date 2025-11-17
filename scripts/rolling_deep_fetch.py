@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List
 
 # ----------------------------------------------------------
-# Konfiguration
+# Paths
 # ----------------------------------------------------------
 GAMES_CSV = Path("data/games.csv")
 CACHE_DIR = Path("cache/deep")
@@ -16,8 +16,11 @@ OUTPUT_FILE = Path("tmp_concat_deep.txt")
 LOG_FILE = Path("logs/rolling_deep_fetch.log")
 
 
+# ----------------------------------------------------------
+# Logging
+# ----------------------------------------------------------
 def log(msg: str) -> None:
-    """Logga både till terminal och loggfil."""
+    """Log to stdout and a file."""
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     full = f"[{ts}] {msg}"
     print(full, flush=True)
@@ -31,14 +34,14 @@ def log(msg: str) -> None:
 
 
 # ----------------------------------------------------------
-# Läs datum och matcher från games.csv
+# Read games.csv → dict(date → [rows])
 # ----------------------------------------------------------
 def read_games_by_date(path: Path) -> Dict[str, List[str]]:
-    games_by_date: Dict[str, List[str]] = {}
+    games: Dict[str, List[str]] = {}
 
     if not path.exists():
-        log("games.csv saknas – börjar med tom struktur.")
-        return games_by_date
+        log("games.csv saknas – använder tom struktur.")
+        return games
 
     with path.open(encoding="utf-8") as f:
         for raw in f:
@@ -48,38 +51,36 @@ def read_games_by_date(path: Path) -> Dict[str, List[str]]:
 
             first = line.split(",", 1)[0].strip()
 
-            # Skippa header
+            # Skip header
             if first.lower() == "date":
                 continue
 
-            # Endast giltiga datum (YYYY-MM-DD)
+            # Accept only YYYY-MM-DD
             if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", first):
                 continue
 
-            games_by_date.setdefault(first, []).append(line)
+            games.setdefault(first, []).append(line)
 
-    if games_by_date:
-        dates = sorted(games_by_date.keys())
+    if games:
+        dates = sorted(games.keys())
         log(f"Läste {len(dates)} datum från games.csv")
-        log(f"Nuvarande intervall: {dates[0]} .. {dates[-1]}")
+        log(f"Intervall i games.csv: {dates[0]} .. {dates[-1]}")
     else:
-        log("games.csv innehåller inga giltiga datumrader.")
+        log("games.csv innehåller inga giltiga datum.")
 
-    return games_by_date
+    return games
 
 
 # ----------------------------------------------------------
-# Deep-fetch för ett datum med getGames.py
+# Deep fetch with getGames.py
 # ----------------------------------------------------------
 def deep_fetch_date(d: date) -> List[str]:
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-
     d_str = d.strftime("%Y-%m-%d")
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
     cache_file = CACHE_DIR / f"All_games_{d_str}_deep.txt"
 
-    log(f"🔄 getGames.py för {d_str}")
+    log(f"🔄 Deep-fetch {d_str}")
 
-    # Helt korrekt interface baserat på din hjälp-text:
     cmd = [
         sys.executable,
         "scripts/getGames.py",
@@ -89,20 +90,24 @@ def deep_fetch_date(d: date) -> List[str]:
     ]
 
     res = subprocess.run(cmd, capture_output=True, text=True)
+
     if res.returncode != 0:
         log(f"❌ getGames.py misslyckades (exit={res.returncode})")
         if res.stderr:
             log("STDERR:\n" + res.stderr)
         raise SystemExit(res.returncode)
 
-    # Läs rader från cachefilen
     if cache_file.exists():
-        lines = [ln.rstrip("\n") for ln in cache_file.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        rows = [
+            ln.rstrip("\n")
+            for ln in cache_file.read_text(encoding="utf-8").splitlines()
+            if ln.strip()
+        ]
     else:
-        lines = []
+        rows = []
 
-    log(f"✅ {len(lines)} rader fetched för {d_str}")
-    return lines
+    log(f"✅ {len(rows)} fetched för {d_str}")
+    return rows
 
 
 # ----------------------------------------------------------
@@ -110,9 +115,10 @@ def deep_fetch_date(d: date) -> List[str]:
 # ----------------------------------------------------------
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--window", type=int, default=12)
+    parser.add_argument("--window", type=int, default=12)  # Ignored now
     args = parser.parse_args(argv)
 
+    # Reset log file
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     LOG_FILE.write_text("", encoding="utf-8")
 
@@ -120,55 +126,65 @@ def main(argv=None) -> int:
     log(f"=== rolling_deep_fetch start (today={today}) ===")
     print(">>> TESTVERSION <<<")
 
-    # 1. Läs befintliga matcher
-    games_by_date = read_games_by_date(GAMES_CSV)
-    known_dates = sorted(games_by_date.keys())
+    # 1. Read games.csv
+    games = read_games_by_date(GAMES_CSV)
 
-    if known_dates:
-        min_date = datetime.strptime(known_dates[0], "%Y-%m-%d").date()
-    else:
-        # Om inga fasta datum finns → börja vid idag
-        min_date = today
-        log("games.csv saknas eller innehåller inga datum – startar vid idag.")
+    # 2. Define the correct window
+    window_start = today - timedelta(days=4)
+    window_end   = today + timedelta(days=7)
 
-    # 2. Bygg fönstret
-    window_start = min_date
-    window_end = min_date + timedelta(days=args.window)
-
-    window_dates = []
+    window_dates: List[date] = []
     d = window_start
     while d <= window_end:
         window_dates.append(d)
         d += timedelta(days=1)
 
-    log(f"Fönster ({len(window_dates)} dagar): {window_dates[0]} .. {window_dates[-1]}")
+    log(f"Fönster {len(window_dates)} dagar: {window_dates[0]} .. {window_dates[-1]}")
 
-    # 3. Loop över datum
-    all_rows = []
+    special_today     = today
+    special_future    = today + timedelta(days=7)
 
+    all_rows: List[str] = []
+
+    # 3. Process each date in window
     for d in window_dates:
         d_str = d.strftime("%Y-%m-%d")
+        is_special = (d == special_today or d == special_future)
 
-        if d_str in games_by_date:
-            rows = games_by_date[d_str]
-            log(f"♻️ {d_str}: återanvänder {len(rows)} rader från games.csv")
+        if d_str in games:
+            rows = games[d_str]
 
-            # Synka cache-filen
-            cache_file = CACHE_DIR / f"All_games_{d_str}_deep.txt"
-            CACHE_DIR.mkdir(parents=True, exist_ok=True)
-            cache_file.write_text("\n".join(rows) + "\n", encoding="utf-8")
+            if is_special:
+                log(f"♻️ {d_str}: finns i games.csv men är specialdag → deep-fetch istället")
+                fetched = deep_fetch_date(d)
+                all_rows.extend(fetched)
+            else:
+                log(f"♻️ {d_str}: återanvänder {len(rows)} rader från games.csv")
 
-            all_rows.extend(rows)
+                # Sync cache
+                cache_file = CACHE_DIR / f"All_games_{d_str}_deep.txt"
+                cache_file.write_text("\n".join(rows) + "\n", encoding="utf-8")
+
+                all_rows.extend(rows)
+
         else:
-            log(f"📡 {d_str}: tomt datum eller nytt datum → deep-fetch")
-            fetched = deep_fetch_date(d)
-            all_rows.extend(fetched)
+            # Missing in games.csv
+            if is_special:
+                log(f"📡 {d_str}: saknas → deep-fetch (specialdag)")
+                fetched = deep_fetch_date(d)
+                all_rows.extend(fetched)
+            else:
+                log(f"⭕ {d_str}: tom matchdag → 0 rader")
+                cache_file = CACHE_DIR / f"All_games_{d_str}_deep.txt"
+                cache_file.write_text("", encoding="utf-8")
+                # Add no lines
 
-    # 4. Skriv ut samlad concat-fil
+    # 4. Write output
     OUTPUT_FILE.write_text("\n".join(all_rows) + "\n", encoding="utf-8")
 
     log(f"💾 Skrev {len(all_rows)} rader till {OUTPUT_FILE.resolve()}")
     log("=== rolling_deep_fetch klar ===")
+
     return 0
 
 
