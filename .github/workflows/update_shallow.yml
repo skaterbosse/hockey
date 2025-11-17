@@ -5,44 +5,156 @@ permissions:
 
 on:
   schedule:
-    - cron: '*/5 6-22 * * *'
+    - cron: "*/30 * * * *"   # Kör var 30:e minut (justera om du vill)
   workflow_dispatch:
 
 jobs:
-  shallow-update:
+  update-shallow:
     runs-on: ubuntu-latest
-    env:
-      TZ: Europe/Stockholm
 
     steps:
-      - uses: actions/checkout@v4
-      - run: |
-          python3 -m pip install --upgrade pip
-          pip install -r scripts/requirements.txt certifi pytz
-      - run: mkdir -p logs cache/shallow
-      - name: Run shallow gatekeeper
-        run: |
-          python3 ./scripts/shallow_update_gatekeeper.py | tee logs/gatekeeper.log
-          if grep -q "run=False" logs/gatekeeper.log; then
-            echo "No shallow update needed."
-            exit 0
-          fi
-      - name: Run shallow update
-        run: |
-          TODAY=$(date +%F)
-          python3 ./scripts/getGames.py -sh -sd $TODAY -ed $TODAY -ah null -f cache/shallow_today.txt
-          python3 ./scripts/UpdateGames.py data/games.csv cache/shallow_today.txt
-      - name: Commit and push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/games.csv logs/
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
-          fi
-          git commit -m "Shallow update $(date '+%Y-%m-%d %H:%M')"
-          git push origin main
+    # ----------------------------------------------------------
+    # 1. Checkout
+    # ----------------------------------------------------------
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: main
+
+    # ----------------------------------------------------------
+    # 2. Setup Python
+    # ----------------------------------------------------------
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        pip install requests beautifulsoup4 certifi
+
+    # ----------------------------------------------------------
+    # 3. Ensure dirs exist
+    # ----------------------------------------------------------
+    - name: Create required directories
+      run: |
+        mkdir -p data
+        mkdir -p logs
+
+    # ----------------------------------------------------------
+    # 4. Check for active matches today
+    # ----------------------------------------------------------
+    - name: Check for active matches in shallow window
+      id: active
+      run: |
+        echo "=== Kollar efter aktiva matcher idag i games.csv ==="
+        python3 - << 'PY' > active_flag.txt
+        from pathlib import Path
+        from datetime import datetime, timedelta
+        from zoneinfo import ZoneInfo
+        import csv
+        import re
+
+        GAMES_CSV = Path("data/games.csv")
+        tz = ZoneInfo("Europe/Stockholm")
+        now = datetime.now(tz)
+
+        DATE_COL = 0   # datumkolumn
+        TIME_COL = 3   # tidskolumn
+
+        active = False
+
+        if not GAMES_CSV.exists():
+            print("active=false")
+        else:
+            with GAMES_CSV.open(encoding="utf-8") as f:
+                reader = csv.reader(f)
+                header = next(reader, None)
+
+                for row in reader:
+                    if not row or len(row) <= max(DATE_COL, TIME_COL):
+                        continue
+
+                    date_str = row[DATE_COL].strip()
+                    time_str = row[TIME_COL].strip()
+
+                    # Datum måste vara giltigt YYYY-MM-DD
+                    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_str):
+                        continue
+
+                    # Endast matcher IDAG
+                    if date_str != now.strftime("%Y-%m-%d"):
+                        continue
+
+                    # Tiden accepteras fritt, men endast HH:MM är “riktig”
+                    # För aktiv kontroll krävs:
+                    # - match ^\d{2}:\d{2}$
+                    # - tiden != 00:00
+                    if not re.fullmatch(r"\d{2}:\d{2}", time_str):
+                        continue
+                    if time_str == "00:00":
+                        continue
+
+                    # Nu är tiden giltig för spelstart
+                    game_dt = datetime.strptime(
+                        f"{date_str} {time_str}", "%Y-%m-%d %H:%M"
+                    ).replace(tzinfo=tz)
+
+                    # Aktivt fönster:
+                    # match_start - 1:30  <  nu  <  match_start + 2:45
+                    window_start = game_dt - timedelta(hours=1, minutes=30)
+                    window_end   = game_dt + timedelta(hours=2, minutes=45)
+
+                    if window_start < now < window_end:
+                        active = True
+                        break
+
+            print(f"active={'true' if active else 'false'}")
+        PY
+
+        echo "Result from active check:"
+        cat active_flag.txt
+        cat active_flag.txt >> $GITHUB_OUTPUT
+
+    # ----------------------------------------------------------
+    # 5. Skip när ingen aktiv match finns
+    # ----------------------------------------------------------
+    - name: Skip when no active matches
+      if: steps.active.outputs.active == 'false'
+      run: |
+        echo "Ingen aktiv match i shallow-fönster → avbryter utan fetch/commit."
+        exit 0
+
+    # ----------------------------------------------------------
+    # 6. Run shallow fetch (endast om aktiv match)
+    # ----------------------------------------------------------
+    - name: Run shallow fetch
+      if: steps.active.outputs.active == 'true'
+      run: |
+        echo "=== SHALLOW FETCH START ==="
+        # 🟦 BYT UT DETTA KOMMANDO TILL DITT RIKTIGA SHALLOW-SCRIPT
+        python3 scripts/shallow_fetch.py -o tmp_shallow.txt
+        echo "=== SHALLOW FETCH DONE ==="
+
+    # ----------------------------------------------------------
+    # 7. Check if this is the first shallow file
+    # ----------------------------------------------------------
+    - name: First-time shallow check
+      if: steps.active.outputs.active == 'true'
+      id: firstcheck
+      run: |
+        if [ ! -f data/games_shallow.csv ]; then
+          echo "first_time=true" >> $GITHUB_OUTPUT
+        else
+          echo "first_time=false" >> $GITHUB_OUTPUT
+        fi
+
+    # ----------------------------------------------------------
+    # 8. Diff new vs old (om ej första gången)
+    # ----------------------------------------------------------
+    - name: Compare new and old shallow output
+      if: steps.active.outputs.active == 'true' && steps.firstcheck.outputs.first_time == 'false'
+      id: diffche
 
