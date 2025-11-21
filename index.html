@@ -193,7 +193,7 @@ body.dark .series-bottomrow .time{color:var(--text);}
 }
 #localsport-header img {
   width:100%;
-  max-height:calc(var(--topbar-h) * 1.5); /* ca 1.5× toppheadern */
+  max-height:calc(var(--topbar-h) * 1.5);
   object-fit:contain;
 }
 </style>
@@ -208,32 +208,32 @@ body.dark .series-bottomrow .time{color:var(--text);}
   </div>
 
 <header class="topbar">
-    <div class="topbar-inner">
-      <div class="cluster-left">
-        <button class="icon-btn" id="btnHome" title="Hem"><img class="icon-img" src="icons/home.jpeg" alt="home"></button>
-        <button class="icon-btn" id="btnMap" title="Karta"><img class="icon-img" src="icons/map.jpeg" alt="map"></button>
-      </div>
-      <div class="cluster-center">
-        <button class="icon-btn" id="btnPrev" title="Föregående">◀</button>
-        <div class="date-block"><span id="lblRel">Idag</span><span id="lblWday">Tors</span><span id="lblDate">23 okt</span></div>
-        <button class="icon-btn" id="btnNext" title="Nästa">▶</button>
-      </div>
-      <div class="cluster-right">
-        <div class="sort-stack">
-          <div class="sort-top">Sortering</div>
-          <div class="sort-bottom">
-            <span id="pillPlace" class="pill on">Plats</span>
-            <span id="pillSeries" class="pill off">Serie</span>
-            <span id="pillTime" class="pill off">Tid</span>
-          </div>
-        </div>
-        <button class="icon-btn" id="btnSettings" title="Inställningar">⚙️</button>
-      </div>
+  <div class="topbar-inner">
+    <div class="cluster-left">
+      <button class="icon-btn" id="btnHome" title="Hem"><img class="icon-img" src="icons/home.jpeg" alt="home"></button>
+      <button class="icon-btn" id="btnMap" title="Karta"><img class="icon-img" src="icons/map.jpeg" alt="map"></button>
     </div>
-  </header>
+    <div class="cluster-center">
+      <button class="icon-btn" id="btnPrev" title="Föregående">◀</button>
+      <div class="date-block"><span id="lblRel">Idag</span><span id="lblWday">Tors</span><span id="lblDate">23 okt</span></div>
+      <button class="icon-btn" id="btnNext" title="Nästa">▶</button>
+    </div>
+    <div class="cluster-right">
+      <div class="sort-stack">
+        <div class="sort-top">Sortering</div>
+        <div class="sort-bottom">
+          <span id="pillPlace" class="pill on">Plats</span>
+          <span id="pillSeries" class="pill off">Serie</span>
+          <span id="pillTime" class="pill off">Tid</span>
+        </div>
+      </div>
+      <button class="icon-btn" id="btnSettings" title="Inställningar">⚙️</button>
+    </div>
+  </div>
+</header>
 
-  <div class="hint" id="hint">Visar matcher nära: Kruniusvägen 1, Billdal</div>
-  <main id="scrollArea" class="scroll"></main>
+<div class="hint" id="hint">Visar matcher nära: Kruniusvägen 1, Billdal</div>
+<main id="scrollArea" class="scroll"></main>
 </div>
 
 <button id="btnInstall" style="position:fixed;bottom:18px;left:50%;transform:translateX(-50%);padding:12px 18px;border-radius:999px;background:#16a34a;color:#fff;font-weight:600;display:none;z-index:600;">📲 Installera LocalSport</button>
@@ -471,6 +471,7 @@ function applyLogo(){
 }
 applyLogo();
 toggleDarkMode.addEventListener("change",applyLogo);
+
 </script>
 
 <script>
@@ -555,11 +556,6 @@ function applyPills(){
 
 /* === RENDER === */
 function render(){
-  const hintEl=document.getElementById('hint');
-  if(mode===MODE.PLACE){ hintEl.style.display='block'; } else { hintEl.style.display='none'; }
-
-  const hint=document.getElementById("hint");
-
   const d = new Date(currentDateISO);
   document.getElementById('lblRel').textContent = relWord(d);
   document.getElementById('lblWday').textContent = ['Sön','Mån','Tis','Ons','Tors','Fre','Lör'][d.getDay()];
@@ -571,8 +567,8 @@ function render(){
     return;
   }
 
-  if(mode===MODE.PLACE){ hint.style.display="block"; renderPlace(todays);
-  else { hint.style.display="none"; renderSeries(todays);
+  if(mode===MODE.PLACE) renderPlace(todays);
+  else renderSeries(todays);
 }
 
 function relWord(d){
@@ -604,8 +600,8 @@ function renderPlace(list){
       return (distKm*1000) <= maxDistMeters;
     })
     .sort((a,b)=>{
-      const da = haversine(byArena[a][0].Lat, byArena[a][0].Long, USER_LAT,USER_LON);
-      const db = haversine(byArena[b][0].Lat, byArena[b][0].Long, USER_LAT,USER_LON);
+      const da = haversine(byArena[a][0].Lat, byArena[a][0].Long, USER_LAT, USER_LON);
+      const db = haversine(byArena[b][0].Lat, byArena[b][0].Long, USER_LAT, USER_LON);
       return da-db;
     });
 
