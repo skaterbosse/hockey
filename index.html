@@ -204,7 +204,7 @@ body.dark .series-bottomrow .time{color:var(--text);}
 
   <!-- 🔹 Local Sport-logga högst upp, inte scrollande, ovanför toppbaren -->
   <div id="localsport-header">
-    <img src="icons/local_sport_full_logo.svg" alt="Local Sport">
+    <img id="lsLogo" src="icons/local_sport_full_logo_day_mode.svg" alt="Local Sport">
   </div>
 
 <header class="topbar">
@@ -461,6 +461,16 @@ function renderSeriesTree(tree){
 }
 
 loadSettings();
+const lsLogo=document.getElementById("lsLogo");
+function applyLogo(){
+  if(document.body.classList.contains("dark")){
+    lsLogo.src="icons/local_sport_full_logo_night_mode.svg";
+  } else {
+    lsLogo.src="icons/local_sport_full_logo_day_mode.svg";
+  }
+}
+applyLogo();
+toggleDarkMode.addEventListener("change",applyLogo);
 </script>
 
 <script>
@@ -545,6 +555,8 @@ function applyPills(){
 
 /* === RENDER === */
 function render(){
+  const hint=document.getElementById("hint");
+
   const d = new Date(currentDateISO);
   document.getElementById('lblRel').textContent = relWord(d);
   document.getElementById('lblWday').textContent = ['Sön','Mån','Tis','Ons','Tors','Fre','Lör'][d.getDay()];
@@ -556,8 +568,8 @@ function render(){
     return;
   }
 
-  if(mode===MODE.PLACE) renderPlace(todays);
-  else renderSeries(todays);
+  if(mode===MODE.PLACE){ hint.style.display="block"; renderPlace(todays);
+  else { hint.style.display="none"; renderSeries(todays);
 }
 
 function relWord(d){
