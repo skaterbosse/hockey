@@ -1,153 +1,189 @@
-name: update-shallow
-
-permissions:
-  contents: write
+name: update_shallow
 
 on:
-  schedule:
-    - cron: "*/45 * * * *"     # Kör var 5:e minut
   workflow_dispatch:
+  schedule:
+    - cron: "*/10 * * * *"   # Kör var 10:e minut (pollning)
 
 jobs:
-  shallow:
+  shallow_update:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    env:
+      TZ: Europe/Stockholm
 
     steps:
 
-    # ----------------------------------------------------------
-    # 1. CHECKOUT
-    # ----------------------------------------------------------
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: main
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    # ----------------------------------------------------------
-    # 2. PYTHON & TOOLS SETUP
-    # ----------------------------------------------------------
-    - name: Set up Python
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.11"
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    - name: Install Python dependencies
-      run: |
-        python3 -m pip install --upgrade pip
-        pip install beautifulsoup4 requests certifi
+      - name: Install deps
+        run: |
+          pip install --upgrade pip
+          pip install requests beautifulsoup4
 
-    - name: Install jq (CLI JSON-verktyg)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y jq
+      - name: Ensure data dir exists
+        run: mkdir -p data
 
-    # ----------------------------------------------------------
-    # 3. DATE
-    # ----------------------------------------------------------
-    - name: Determine today's date
-      id: datestep
-      run: echo "today=$(date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+      #######################################################################
+      # 1) Läs in vilka serier som är Live = Yes eller Light, och ej DoneToday
+      #######################################################################
+      - name: Load series needing poll
+        id: series
+        run: |
+          echo "series_to_poll=$(cat data/series.csv | \
+            awk -F';' 'NR>1 && ($3=="Yes" || $3=="YesLight") && $4=="No" {print $1}' \
+            | paste -sd ',' -)" >> $GITHUB_OUTPUT
 
-    # ----------------------------------------------------------
-    # 4. SAFETY CHECK: games.csv & series.csv
-    # ----------------------------------------------------------
-    - name: Check required data files
-      run: |
-        if [ ! -f data/games.csv ]; then
-          echo "data/games.csv saknas – shallow update avbryts."
-          exit 0
-        fi
+      - name: Show series list
+        run: echo "Series needing poll: ${{ steps.series.outputs.series_to_poll }}"
 
-        if [ ! -f data/series.csv ]; then
-          echo "data/series.csv saknas – shallow update avbryts."
-          exit 0
-        fi
+      #######################################################################
+      # 2) Hämta GameLinks för alla Live-serier
+      #######################################################################
+      - name: Fetch Live GameLinks (Events only)
+        run: |
+          if [ -n "${{ steps.series.outputs.series_to_poll }}" ]; then
+            python3 scripts/fetchLiveGameLinks.py \
+              --series "${{ steps.series.outputs.series_to_poll }}" \
+              -o data/live_games.csv -dbg
+          else
+            echo "No Live or Light series need polling today."
+          fi
 
-    # ----------------------------------------------------------
-    # 5. POLL-CONTROL
-    # ----------------------------------------------------------
-    - name: Run poll_control.py
-      id: poll
-      run: |
-        TODAY=${{ steps.datestep.outputs.today }}
-        echo "Running poll_control.py for $TODAY"
-        OUT=$(python3 scripts/poll_control.py "$TODAY")
-        echo "$OUT" > poll_output.json
-        echo "poll_output=$OUT" >> "$GITHUB_OUTPUT"
+      #######################################################################
+      # 3) Utför pollning per serie
+      #######################################################################
+      - name: Perform per-series polling
+        run: |
+          if [ ! -f data/live_games.csv ]; then
+            echo "No live_games.csv generated — skipping polling."
+            exit 0
+          fi
 
-    # ----------------------------------------------------------
-    # 6. EXTRACT POLL-CONTROL DATA (serier & matcher)
-    # ----------------------------------------------------------
-    - name: Extract polling lists
-      id: extract
-      run: |
-        SERIES=$(jq -r '.series_to_poll_for_gamelinks[]?' poll_output.json | tr '\n' ' ')
-        LINEUPS=$(jq -r '.matches_to_poll_for_lineups[]?' poll_output.json | tr '\n' ' ')
-        LIVE=$(jq -r '.matches_to_poll_live[]?' poll_output.json | tr '\n' ' ')
-        DONE=$(jq -r '.matches_done[]?' poll_output.json | tr '\n' ' ')
+          echo "=== START POLLING ==="
 
-        echo "series_to_poll_for_gamelinks=$SERIES" >> "$GITHUB_OUTPUT"
-        echo "lineups_to_poll=$LINEUPS" >> "$GITHUB_OUTPUT"
-        echo "live_to_poll=$LIVE" >> "$GITHUB_OUTPUT"
-        echo "done_matches=$DONE" >> "$GITHUB_OUTPUT"
+          while IFS=';' read -r SerieID GameID LinkType GameLink; do
+            if [ "$SerieID" == "SerieID" ]; then
+              continue
+            fi
 
-        echo "Serier att polla GameLinks för: $SERIES"
-        echo "Matcher att polla lineups för: $LINEUPS"
-        echo "Matcher att polla live för: $LIVE"
-        echo "Matcher markerade som klara: $DONE"
+            # Hämta seriespecifik typ (Normal / Light)
+            SLINE=$(grep "$SerieID" data/series.csv)
+            STYPE=$(echo "$SLINE" | awk -F';' '{print $3}')
 
-    # ----------------------------------------------------------
-    # 7. POLL GAMELINKS (PER SERIE)
-    # ----------------------------------------------------------
-    - name: Fetch GameLinks for relevant Live-series
-      run: |
-        SERIES="${{ steps.extract.outputs.series_to_poll_for_gamelinks }}"
-        if [ -z "$SERIES" ]; then
-          echo "Inga serier behöver GameLink-pollning."
-          exit 0
-        fi
+            echo "Serie $SerieID : Type=$STYPE GameID=$GameID Link=$GameLink"
 
-        for SID in $SERIES; do
-          echo "Hämtar GameLinks för SerieID=$SID"
-          python3 scripts/fetchLiveGameLinks.py --sid "$SID"
-        done
+            ###################################################################
+            # NORMAL – Full poll (Lineups + GameEvents)
+            ###################################################################
+            if [ "$STYPE" = "Yes" ]; then
+              if [ "$GameLink" != "NoLink" ] && [ "$GameID" != "" ]; then
+                echo "Polling NORMAL match $GameID"
+                python3 getLineups.py -gid "$GameID" -ga "$GameLink" || true
+                python3 getGameEvents.py -gid "$GameID" -ga "$GameLink" || true
+              else
+                echo "Normal series but no link yet – waiting."
+              fi
+            fi
 
-    # ----------------------------------------------------------
-    # 8. POLL LINEUP-MATCHER
-    # ----------------------------------------------------------
-    - name: Update lineup matches
-      if: ${{ steps.extract.outputs.lineups_to_poll != '' }}
-      run: |
-        LIST="${{ steps.extract.outputs.lineups_to_poll }}"
-        echo "Uppdaterar lineups för matcher: $LIST"
-        python3 scripts/updateGamesShallow.py --gid-list "$LIST" -dbg
+            ###################################################################
+            # LIGHT – Endast Stats/Resultat från Overview
+            ###################################################################
+            if [ "$STYPE" = "YesLight" ]; then
+              echo "Polling LIGHT series $SerieID"
 
-    # ----------------------------------------------------------
-    # 9. POLL LIVE-MATCHER (EVENTS + STATS)
-    # ----------------------------------------------------------
-    - name: Update live matches
-      if: ${{ steps.extract.outputs.live_to_poll != '' }}
-      run: |
-        LIST="${{ steps.extract.outputs.live_to_poll }}"
-        echo "Uppdaterar live-matcher: $LIST"
-        python3 scripts/updateGamesShallow.py --gid-list "$LIST" -dbg
+              SERIELINK=$(echo "$SLINE" | awk -F';' '{print $1}')
+              python3 scripts/updateLightSeriesResults.py \
+                --serie "$SERIELINK" \
+                --serieid "$SerieID" \
+                -dbg || true
+            fi
 
-    # ----------------------------------------------------------
-    # 10. COMMIT & PUSH
-    # ----------------------------------------------------------
-    - name: Commit & Push changes
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          done < data/live_games.csv
 
-        git add data/games.csv data/live_games.csv data/series.csv poll_output.json || true
+          echo "=== END POLLING ==="
 
-        if git diff --cached --quiet; then
-          echo "Inga ändringar att committa."
-          exit 0
-        fi
 
-        git commit -m "Shallow update $(date -u +'%Y-%m-%d %H:%M UTC')"
-        git push origin main
+      #######################################################################
+      # 4) Utvärdera om serier är färdiga (SerieDone)
+      #######################################################################
+      - name: Check per-series completion
+        run: |
+          cp data/series.csv data/series_tmp.csv
+
+          while IFS=';' read -r SerieLink SerieName LiveFlag DoneToday; do
+            if [ "$SerieLink" = "SerieLink" ]; then
+              continue
+            fi
+
+            if [ "$DoneToday" = "Yes" ]; then
+              continue
+            fi
+
+            ID=$(echo "$SerieLink" | sed 's/.*Overview\///')
+            LG=$(grep "^$ID;" data/live_games.csv | wc -l)
+            if [ "$LG" -eq 0 ]; then
+              continue
+            fi
+
+            DONE=true
+
+            while IFS=';' read -r _ GameID _ GameLink; do
+              if [ -z "$GameID" ]; then
+                continue
+              fi
+
+              # Kontrollera om Final Score finns
+              if ls data/Events_${GameID}.txt >/dev/null 2>&1 ; then
+                if ! grep -q "Final Score" data/Events_${GameID}.txt ; then
+                  DONE=false
+                fi
+              else
+                DONE=false
+              fi
+
+            done < <(grep "^$ID;" data/live_games.csv)
+
+            if [ "$DONE" = true ]; then
+              echo "Serie $ID klar → DoneToday=Yes"
+
+              awk -F';' -v id="$SerieLink" '
+                BEGIN{OFS=";"}
+                NR==1 {print $0; next}
+                $1==id {$4="Yes"; print; next}
+                {print}
+              ' data/series_tmp.csv > data/series2.csv
+
+              mv data/series2.csv data/series_tmp.csv
+            fi
+
+          done < data/series.csv
+
+          mv data/series_tmp.csv data/series.csv
+
+
+      #######################################################################
+      # 5) Commit changes if needed
+      #######################################################################
+      - name: Commit & push if changed
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          if git status --porcelain | grep -q .; then
+            git add data/*
+            git commit -m "shallow_update $(date +'%F %T')"
+            git push
+          else
+            echo "Nothing to commit."
+          fi
 

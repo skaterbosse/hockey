@@ -1,99 +1,82 @@
-name: update-deep
+name: update_deep
 
 permissions:
   contents: write
 
 on:
-  schedule:
-    - cron: "0 3 * * *"     # Kör dagligen kl 03:00
   workflow_dispatch:
+    inputs:
+      date:
+        description: "Override date (YYYY-MM-DD) for deep update"
+        required: false
+  schedule:
+    - cron: "0 3 * * *"   # Kör dagligen kl 03:00
 
 jobs:
-  deep-update:
+  deep_update:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    env:
+      TZ: Europe/Stockholm
 
     steps:
 
-    # ----------------------------------------------------------
-    # CHECKOUT
-    # ----------------------------------------------------------
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: main
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    # ----------------------------------------------------------
-    # Python + jq
-    # ----------------------------------------------------------
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.11"
+      - name: Set TODAY
+        id: today
+        run: |
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+              DATE="${{ github.event.inputs.date }}"
+          else
+              DATE=$(date +%F)
+          fi
+          echo "TODAY=$DATE" >> $GITHUB_ENV
+          echo "Using TODAY=$DATE"
 
-    - name: Install tools
-      run: |
-        python3 -m pip install --upgrade pip
-        pip install beautifulsoup4 requests certifi pandas
-        sudo apt-get update
-        sudo apt-get install -y jq
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    # ----------------------------------------------------------
-    # DATE
-    # ----------------------------------------------------------
-    - name: Determine today's date
-      id: datestep
-      run: echo "today=$(date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+      - name: Install Python deps
+        run: |
+          pip install --upgrade pip
+          pip install requests beautifulsoup4
 
-    # ----------------------------------------------------------
-    # FETCH MATCHES FOR TODAY..TODAY+7 (write to games_new.csv)
-    # ----------------------------------------------------------
-    - name: Fetch matches for date window
-      run: |
-        TODAY=${{ steps.datestep.outputs.today }}
-        for i in {0..7}; do
-          DATE=$(date -d "$TODAY + $i days" +%Y-%m-%d)
-          echo "Fetching matches for $DATE"
-          python3 scripts/createGamesFile.py --date "$DATE" --outfile "data/games_new_tmp_$i.csv"
-        done
+      - name: Ensure data dir exists
+        run: mkdir -p data
 
-        # Combine all tmp into games_new.csv
-        echo "Combining into games_new.csv"
-        head -1 data/games_new_tmp_0.csv > data/games_new.csv
-        tail -q -n +2 data/games_new_tmp_*.csv >> data/games_new.csv
+      # 1) FETCH today's matches → data/games_new.csv
+      - name: Fetch today’s matches
+        run: |
+          echo "Fetching matches for $TODAY"
+          python3 scripts/createGamesFile.py --date "$TODAY" -dbg
 
-    # ----------------------------------------------------------
-    # MERGE WITH EXISTING games.csv
-    # ----------------------------------------------------------
-    - name: Merge games.csv
-      run: |
-        TODAY=${{ steps.datestep.outputs.today }}
-        python3 scripts/mergeGames.py --date "$TODAY"
-        rm data/games_new_tmp_*.csv data/games_new.csv || true
+      # 2) MERGE games_new.csv with games.csv → gör att inget försvinner
+      - name: Merge into games.csv
+        run: |
+          python3 scripts/mergeGames.py
 
-    # ----------------------------------------------------------
-    # UPDATE SERIES (reset DoneToday)
-    # ----------------------------------------------------------
-    - name: Update series.csv
-      run: |
-        TODAY=${{ steps.datestep.outputs.today }}
-        python3 scripts/updateSeriesFile.py --date "$TODAY" --reset-done
+      # 3) Uppdatera series.csv med Live=Yes/YesLight/No
+      - name: Update series table (Simple/Light/Normal)
+        run: |
+          python3 scripts/updateSeriesFile.py --date "$TODAY"
 
-    # ----------------------------------------------------------
-    # COMMIT & PUSH
-    # ----------------------------------------------------------
-    - name: Commit & Push changes
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-        git add data/games.csv data/series.csv || true
-
-        if git diff --cached --quiet; then
-          echo "No changes to commit."
-          exit 0
-        fi
-
-        git commit -m "Deep update $(date -u +'%Y-%m-%d %H:%M UTC')"
-        git push origin main
+      # 4) Commit files if changed
+      - name: Commit & push if changed
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          if git status --porcelain | grep -q .; then
+            git add data/*
+            git commit -m "deep_update $(date +'%F %T')"
+            git push
+          else
+            echo "No changes to commit."
+          fi
 

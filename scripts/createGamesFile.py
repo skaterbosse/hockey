@@ -1,140 +1,97 @@
 #!/usr/bin/env python3
-import argparse
-import csv
-import os
+# -*- coding: utf-8 -*-
+
+"""
+createGamesFile.py
+
+Hämtar matcher för ett specifikt datum via GamesByDate.
+Skriver output till: data/games_new.csv
+"""
+
 import sys
+import csv
 import requests
 from bs4 import BeautifulSoup
 
-BASE_URL = "https://stats.swehockey.se/ScheduleAndResults/Date/"
-OUTPUT_FILE = "data/games_new.csv"
 
-HEADER = [
-    "date",
-    "time",
-    "series_name",
-    "link_to_series",
-    "admin_host",
-    "home_team",
-    "away_team",
-    "result",
-    "result_link",
-    "arena",
-    "status",
-    "iteration_fetched",
-    "iterations_total",
-    "home_club_list",
-    "away_club_list",
-    "arena_nbr",
-    "PreferedName",
-    "Lat",
-    "Long"
-]
+def fetch_gamesbydate(date):
+    url = f"https://stats.swehockey.se/GamesByDate/{date}/ByTime/null"
+    print(f"[createGamesFile] Fetching URL: {url}")
 
-def debug(dbg, *args):
-    if dbg:
-        print("[createGamesFile]", *args, file=sys.stderr)
+    r = requests.get(url, timeout=20)
+    if r.status_code != 200:
+        raise Exception(f"Failed fetch: {r.status_code}")
+    return r.text
 
-def fetch_html(url, dbg=False):
-    try:
-        debug(dbg, f"Fetching URL: {url}")
-        r = requests.get(url, timeout=20)
-        r.raise_for_status()
-        return r.text
-    except Exception as e:
-        print(f"ERROR: Failed to fetch {url}: {e}", file=sys.stderr)
-        return ""
 
-def parse_matches(html, date, dbg=False):
+def parse_games(html):
     soup = BeautifulSoup(html, "html.parser")
+    rows = soup.find_all("tr")
 
-    rows = soup.select("tr")
-    matches = []
-
+    games = []
     for tr in rows:
         tds = tr.find_all("td")
-        if len(tds) < 5:
+        if len(tds) < 8:
             continue
 
-        time_text = tds[0].get_text(strip=True)
+        # Extract columns
+        time = tds[0].get_text(strip=True)
+        series = tds[1].get_text(strip=True)
+        link = tds[1].find("a", href=True)["href"]
+        home = tds[2].get_text(strip=True)
+        away = tds[4].get_text(strip=True)
+        result = tds[5].get_text(strip=True)
+        arena = tds[7].get_text(strip=True)
 
-        series_a = tds[1].find("a")
-        if series_a:
-            series_name = series_a.get_text(strip=True)
-            link_to_series = "https://stats.swehockey.se" + series_a["href"]
-        else:
-            series_name = ""
-            link_to_series = ""
-
-        teams_text = tds[2].get_text(" ", strip=True)
-        if " - " in teams_text:
-            home_team, away_team = teams_text.split(" - ", 1)
-        else:
-            home_team = teams_text
-            away_team = ""
-
-        arena_text = tds[3].get_text(" ", strip=True)
-
-        result = tds[4].get_text(strip=True)
-        link = ""
-        a = tds[4].find("a")
-        if a and a.get("href", "").startswith("/Game"):
-            link = "https://stats.swehockey.se" + a["href"]
-
-        matches.append({
-            "date": date,
-            "time": time_text,
-            "series_name": series_name,
-            "link_to_series": link_to_series,
-            "admin_host": "",
-            "home_team": home_team,
-            "away_team": away_team,
+        games.append({
+            "time": time,
+            "series_name": series,
+            "link_to_series": link,
+            "home_team": home,
+            "away_team": away,
             "result": result,
-            "result_link": link,
-            "arena": arena_text,
-            "status": "0",
-            "iteration_fetched": "0",
-            "iterations_total": "0",
-            "home_club_list": "",
-            "away_club_list": "",
-            "arena_nbr": "",
-            "PreferedName": arena_text,
-            "Lat": "",
-            "Long": ""
+            "arena": arena,
         })
 
-    debug(dbg, f"Parsed {len(matches)} matches")
-    return matches
+    return games
 
-def write_output(matches, dbg=False):
-    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
-    with open(OUTPUT_FILE, "w", encoding="utf-8", newline="") as fh:
-        writer = csv.writer(fh, delimiter=";")
-        writer.writerow(HEADER)
-        for m in matches:
-            row = [m.get(col, "") for col in HEADER]
-            writer.writerow(row)
-
-    debug(dbg, f"Wrote {len(matches)} to {OUTPUT_FILE}")
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--date", required=True)
-    parser.add_argument("-dbg", "--debug", action="store_true")
-    args = parser.parse_args()
+    if "--date" not in sys.argv:
+        print("Usage: createGamesFile.py --date YYYY-MM-DD")
+        sys.exit(1)
 
-    date = args.date
-    dbg = args.debug
+    date = sys.argv[sys.argv.index("--date") + 1]
+    dbg = "-dbg" in sys.argv
 
-    html = fetch_html(BASE_URL + date, dbg)
+    try:
+        html = fetch_gamesbydate(date)
+    except Exception as e:
+        print(f"[createGamesFile] ERROR: {e}")
+        html = ""
 
-    if not html.strip():
-        print("WARNING: No HTML received, writing empty output.", file=sys.stderr)
-        write_output([], dbg)
-        return
+    if not html:
+        print("[createGamesFile] WARNING: Empty HTML, writing empty file.")
+        with open("data/games_new.csv", "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f, delimiter=";")
+            w.writerow(["date", "time", "series_name", "link_to_series",
+                        "home_team", "away_team", "result", "arena"])
+        sys.exit(0)
 
-    matches = parse_matches(html, date, dbg)
-    write_output(matches, dbg)
+    games = parse_games(html)
+
+    with open("data/games_new.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f, delimiter=";")
+        w.writerow(["date", "time", "series_name", "link_to_series",
+                    "home_team", "away_team", "result", "arena"])
+
+        for g in games:
+            w.writerow([date, g["time"], g["series_name"],
+                        g["link_to_series"], g["home_team"],
+                        g["away_team"], g["result"], g["arena"]])
+
+    print(f"[createGamesFile] Wrote {len(games)} matches → data/games_new.csv")
+
 
 if __name__ == "__main__":
     main()

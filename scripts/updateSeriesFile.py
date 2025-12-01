@@ -1,153 +1,122 @@
 #!/usr/bin/env python3
-import argparse
-import csv
-import os
-import re
-import subprocess
+# -*- coding: utf-8 -*-
+
+"""
+updateSeriesFile.py
+
+Uppdaterar data/series.csv genom att lägga till serier som spelar IDAG.
+Avgör automatiskt typ:
+
+  SIMPLE     → ingen Live-sida
+  NORMAL     → Live-sida + GameLinks existerar
+  LIGHT      → Live-sida + inga GameLinks men resultat visas
+
+Format:
+SerieLink;SerieName;Live;DoneToday
+där Live ∈ { No, YesLight, Yes }
+"""
+
 import sys
+import os
+import csv
+import re
+import requests
+from bs4 import BeautifulSoup
+
 
 SERIES_FILE = "data/series.csv"
-GAMES_FILE = "data/games.csv"
-
-HEADER = ["SerieLink", "SerieName", "Live", "DoneToday"]
 
 
-def debug(enabled, *args):
-    if enabled:
-        print("[updateSeriesFile]", *args, file=sys.stderr)
-
-
-def read_games_for_date(date, dbg=False):
-    """Return a list of (SerieLink, SerieName) for all games on given date."""
-    if not os.path.exists(GAMES_FILE):
-        print(f"ERROR: {GAMES_FILE} missing", file=sys.stderr)
-        return []
-
-    result = []
-    with open(GAMES_FILE, "r", encoding="utf-8") as fh:
-        reader = csv.DictReader(fh, delimiter=";")
-        for row in reader:
-            if row.get("date") == date:
-                link = row.get("link_to_series", "")
-                name = row.get("series_name", "")
-                if link:
-                    result.append((link, name))
-    return result
-
-
-def detect_live_status(serie_link, dbg=False):
-    """
-    Determine Live=Yes/No by checking if the Overview page contains a Live-link.
-    """
-    m = re.search(r"/Overview/([0-9]+)", serie_link)
-    if not m:
-        return "No"
-
-    sid = m.group(1)
-    url = f"https://stats.swehockey.se/ScheduleAndResults/Overview/{sid}"
-
-    cmd = f"curl -L -s {url} | egrep '/ScheduleAndResults/Live/{sid}' | wc -l"
+def fetch_url(url):
     try:
-        out = subprocess.check_output(cmd, shell=True, text=True).strip()
-        return "Yes" if out != "0" else "No"
-    except Exception as e:
-        debug(dbg, f"detect_live_status failed for {serie_link}: {e}")
-        return "No"
+        r = requests.get(url, timeout=20)
+        r.raise_for_status()
+        return r.text
+    except:
+        return ""
 
 
-def load_existing_series(dbg=False):
-    """
-    Load existing series.csv if it exists and has expected columns.
-    Otherwise return empty dict.
-    """
-    if not os.path.exists(SERIES_FILE):
-        debug(dbg, "No existing series.csv found, starting fresh.")
-        return {}
-
-    with open(SERIES_FILE, "r", encoding="utf-8") as fh:
-        reader = csv.DictReader(fh, delimiter=";")
-        fieldnames = reader.fieldnames or []
-        fieldnames = [f.strip() for f in fieldnames]
-
-        # Require at least SerieLink & SerieName to consider this usable
-        if "SerieLink" not in fieldnames or "SerieName" not in fieldnames:
-            debug(dbg, f"Existing series.csv has unsupported header {fieldnames}, ignoring previous content.")
-            return {}
-
-        result = {}
-        for row in reader:
-            link = row.get("SerieLink", "").strip()
-            if not link:
-                continue
-            result[link] = {
-                "SerieName": row.get("SerieName", ""),
-                "Live": row.get("Live", "No"),
-                # If DoneToday missing in old file, treat as "No"
-                "DoneToday": row.get("DoneToday", "No")
-            }
-
-    debug(dbg, f"Loaded {len(result)} existing series from series.csv.")
-    return result
+def has_live_link(html):
+    return '/ScheduleAndResults/Live/' in html
 
 
-def write_series_file(series_dict, dbg=False):
-    os.makedirs(os.path.dirname(SERIES_FILE), exist_ok=True)
-    with open(SERIES_FILE, "w", encoding="utf-8", newline="") as fh:
-        writer = csv.writer(fh, delimiter=";")
-        writer.writerow(HEADER)
-        for link, data in sorted(series_dict.items()):
-            writer.writerow([
-                link,
-                data.get("SerieName", ""),
-                data.get("Live", "No"),
-                data.get("DoneToday", "No")
-            ])
-    debug(dbg, f"Wrote {len(series_dict)} series rows to {SERIES_FILE}.")
+def overview_has_results(html):
+    return bool(re.search(r"\(\s*\d+\s*-\s*\d+", html))
+
+
+def live_page_has_gamelinks(html):
+    return bool(re.search(r"openonlinewindow\('(/Game/(Events|LineUps)/\d+)", html))
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--date", required=True, help="YYYY-MM-DD")
-    parser.add_argument("--reset-done", action="store_true",
-                        help="Reset DoneToday=No for all series")
-    parser.add_argument("-dbg", "--debug", action="store_true")
-    args = parser.parse_args()
+    if "--date" not in sys.argv:
+        print("Usage: updateSeriesFile.py --date YYYY-MM-DD")
+        sys.exit(1)
 
-    dbg = args.debug
-    date = args.date
+    date = sys.argv[sys.argv.index("--date") + 1]
+    print(f"[updateSeriesFile] Updating series info for {date}")
 
-    # 1) Load existing series (if usable)
-    existing = load_existing_series(dbg)
+    os.makedirs("data", exist_ok=True)
 
-    # 2) Extract series from today's games
-    todays_series = read_games_for_date(date, dbg)
-    debug(dbg, f"Found {len(todays_series)} series from games on {date}")
+    # Load today's matches
+    games_today = []
+    with open("data/games.csv", newline="", encoding="utf-8") as f:
+        r = csv.DictReader(f, delimiter=";")
+        for row in r:
+            if row["date"] == date:
+                games_today.append(row)
 
-    # Start from existing and update/add
-    result = existing.copy()
+    print(f"[updateSeriesFile] Found {len(games_today)} matches today")
 
-    for link, name in todays_series:
-        if link not in result:
-            # New serie -> detect Live, set DoneToday=No
-            debug(dbg, f"NEW serie: {link}")
-            live = detect_live_status(link, dbg)
-            result[link] = {
-                "SerieName": name,
-                "Live": live,
-                "DoneToday": "No"
-            }
+    # Load existing series
+    existing = {}
+    if os.path.exists(SERIES_FILE):
+        with open(SERIES_FILE, newline="", encoding="utf-8") as f:
+            r = csv.DictReader(f, delimiter=";")
+            for row in r:
+                existing[row["SerieLink"]] = row
+
+    updated = dict(existing)
+
+    for g in games_today:
+        serie_link = g["link_to_series"]
+        serie_name = g["series_name"]
+
+        if serie_link in updated:
+            continue
+
+        ov_html = fetch_url(serie_link)
+
+        if not has_live_link(ov_html):
+            live_flag = "No"      # SIMPLE
         else:
-            # Existing serie -> refresh name (if changed)
-            result[link]["SerieName"] = name
+            live_url = serie_link.replace("/Overview/", "/Live/")
+            live_html = fetch_url(live_url)
 
-    # 3) Optionally reset DoneToday for ALL series
-    if args.reset_done:
-        debug(dbg, "Resetting DoneToday=No for all series.")
-        for link in result:
-            result[link]["DoneToday"] = "No"
+            if live_page_has_gamelinks(live_html):
+                live_flag = "Yes"         # NORMAL
+            else:
+                if overview_has_results(ov_html):
+                    live_flag = "YesLight"  # LIGHT
+                else:
+                    live_flag = "No"        # fallback
 
-    # 4) Write back to CSV
-    write_series_file(result, dbg)
+        updated[serie_link] = {
+            "SerieLink": serie_link,
+            "SerieName": serie_name,
+            "Live": live_flag,
+            "DoneToday": "No"
+        }
+
+        print(f"[updateSeriesFile] Added: {serie_name} → {live_flag}")
+
+    with open(SERIES_FILE, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f, delimiter=";")
+        w.writerow(["SerieLink", "SerieName", "Live", "DoneToday"])
+        for row in updated.values():
+            w.writerow([row["SerieLink"], row["SerieName"], row["Live"], row["DoneToday"]])
+
+    print(f"[updateSeriesFile] Wrote {len(updated)} series to {SERIES_FILE}")
 
 
 if __name__ == "__main__":
