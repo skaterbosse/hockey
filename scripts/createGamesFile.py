@@ -152,5 +152,13 @@ def main():
     html = fetch_html(url, dbg)
 
     if not html.strip():
-        print("WARNING: No HTML returned, writing empty output file."
+        print("WARNING: No HTML returned, writing empty output file.", file=sys.stderr)
+        write_output([], dbg)
+        return
+
+    matches = parse_matches(html, date, dbg)
+    write_output(matches, dbg)
+
+
+if __name__ == "__main__":
 
