@@ -5,16 +5,17 @@ permissions:
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # Kör var 30:e minut (justera om du vill)
+    - cron: "*/45 * * * *"     # Kör var 5:e minut
   workflow_dispatch:
 
 jobs:
-  update-shallow:
+  shallow:
     runs-on: ubuntu-latest
 
     steps:
+
     # ----------------------------------------------------------
-    # 1. Checkout
+    # 1. CHECKOUT
     # ----------------------------------------------------------
     - name: Checkout code
       uses: actions/checkout@v4
@@ -23,138 +24,130 @@ jobs:
         ref: main
 
     # ----------------------------------------------------------
-    # 2. Setup Python
+    # 2. PYTHON & TOOLS SETUP
     # ----------------------------------------------------------
-    - name: Setup Python
+    - name: Set up Python
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: "3.11"
 
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
         python3 -m pip install --upgrade pip
-        pip install requests beautifulsoup4 certifi
+        pip install beautifulsoup4 requests certifi
 
-    # ----------------------------------------------------------
-    # 3. Ensure dirs exist
-    # ----------------------------------------------------------
-    - name: Create required directories
+    - name: Install jq (CLI JSON-verktyg)
       run: |
-        mkdir -p data
-        mkdir -p logs
+        sudo apt-get update
+        sudo apt-get install -y jq
 
     # ----------------------------------------------------------
-    # 4. Check for active matches today
+    # 3. DATE
     # ----------------------------------------------------------
-    - name: Check for active matches in shallow window
-      id: active
+    - name: Determine today's date
+      id: datestep
+      run: echo "today=$(date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+    # ----------------------------------------------------------
+    # 4. SAFETY CHECK: games.csv & series.csv
+    # ----------------------------------------------------------
+    - name: Check required data files
       run: |
-        echo "=== Kollar efter aktiva matcher idag i games.csv ==="
-        python3 - << 'PY' > active_flag.txt
-        from pathlib import Path
-        from datetime import datetime, timedelta
-        from zoneinfo import ZoneInfo
-        import csv
-        import re
+        if [ ! -f data/games.csv ]; then
+          echo "data/games.csv saknas – shallow update avbryts."
+          exit 0
+        fi
 
-        GAMES_CSV = Path("data/games.csv")
-        tz = ZoneInfo("Europe/Stockholm")
-        now = datetime.now(tz)
-
-        DATE_COL = 0   # datumkolumn
-        TIME_COL = 3   # tidskolumn
-
-        active = False
-
-        if not GAMES_CSV.exists():
-            print("active=false")
-        else:
-            with GAMES_CSV.open(encoding="utf-8") as f:
-                reader = csv.reader(f)
-                header = next(reader, None)
-
-                for row in reader:
-                    if not row or len(row) <= max(DATE_COL, TIME_COL):
-                        continue
-
-                    date_str = row[DATE_COL].strip()
-                    time_str = row[TIME_COL].strip()
-
-                    # Datum måste vara giltigt YYYY-MM-DD
-                    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_str):
-                        continue
-
-                    # Endast matcher IDAG
-                    if date_str != now.strftime("%Y-%m-%d"):
-                        continue
-
-                    # Tiden accepteras fritt, men endast HH:MM är “riktig”
-                    # För aktiv kontroll krävs:
-                    # - match ^\d{2}:\d{2}$
-                    # - tiden != 00:00
-                    if not re.fullmatch(r"\d{2}:\d{2}", time_str):
-                        continue
-                    if time_str == "00:00":
-                        continue
-
-                    # Nu är tiden giltig för spelstart
-                    game_dt = datetime.strptime(
-                        f"{date_str} {time_str}", "%Y-%m-%d %H:%M"
-                    ).replace(tzinfo=tz)
-
-                    # Aktivt fönster:
-                    # match_start - 1:30  <  nu  <  match_start + 2:45
-                    window_start = game_dt - timedelta(hours=1, minutes=30)
-                    window_end   = game_dt + timedelta(hours=2, minutes=45)
-
-                    if window_start < now < window_end:
-                        active = True
-                        break
-
-            print(f"active={'true' if active else 'false'}")
-        PY
-
-        echo "Result from active check:"
-        cat active_flag.txt
-        cat active_flag.txt >> $GITHUB_OUTPUT
-
-    # ----------------------------------------------------------
-    # 5. Skip när ingen aktiv match finns
-    # ----------------------------------------------------------
-    - name: Skip when no active matches
-      if: steps.active.outputs.active == 'false'
-      run: |
-        echo "Ingen aktiv match i shallow-fönster → avbryter utan fetch/commit."
-        exit 0
-
-    # ----------------------------------------------------------
-    # 6. Run shallow fetch (endast om aktiv match)
-    # ----------------------------------------------------------
-    - name: Run shallow fetch
-      if: steps.active.outputs.active == 'true'
-      run: |
-        echo "=== SHALLOW FETCH START ==="
-        # 🟦 BYT UT DETTA KOMMANDO TILL DITT RIKTIGA SHALLOW-SCRIPT
-        python3 scripts/shallow_fetch.py -o tmp_shallow.txt
-        echo "=== SHALLOW FETCH DONE ==="
-
-    # ----------------------------------------------------------
-    # 7. Check if this is the first shallow file
-    # ----------------------------------------------------------
-    - name: First-time shallow check
-      if: steps.active.outputs.active == 'true'
-      id: firstcheck
-      run: |
-        if [ ! -f data/games_shallow.csv ]; then
-          echo "first_time=true" >> $GITHUB_OUTPUT
-        else
-          echo "first_time=false" >> $GITHUB_OUTPUT
+        if [ ! -f data/series.csv ]; then
+          echo "data/series.csv saknas – shallow update avbryts."
+          exit 0
         fi
 
     # ----------------------------------------------------------
-    # 8. Diff new vs old (om ej första gången)
+    # 5. POLL-CONTROL
     # ----------------------------------------------------------
-    - name: Compare new and old shallow output
-      if: steps.active.outputs.active == 'true' && steps.firstcheck.outputs.first_time == 'false'
-      id: diffche
+    - name: Run poll_control.py
+      id: poll
+      run: |
+        TODAY=${{ steps.datestep.outputs.today }}
+        echo "Running poll_control.py for $TODAY"
+        OUT=$(python3 scripts/poll_control.py "$TODAY")
+        echo "$OUT" > poll_output.json
+        echo "poll_output=$OUT" >> "$GITHUB_OUTPUT"
+
+    # ----------------------------------------------------------
+    # 6. EXTRACT POLL-CONTROL DATA (serier & matcher)
+    # ----------------------------------------------------------
+    - name: Extract polling lists
+      id: extract
+      run: |
+        SERIES=$(jq -r '.series_to_poll_for_gamelinks[]?' poll_output.json | tr '\n' ' ')
+        LINEUPS=$(jq -r '.matches_to_poll_for_lineups[]?' poll_output.json | tr '\n' ' ')
+        LIVE=$(jq -r '.matches_to_poll_live[]?' poll_output.json | tr '\n' ' ')
+        DONE=$(jq -r '.matches_done[]?' poll_output.json | tr '\n' ' ')
+
+        echo "series_to_poll_for_gamelinks=$SERIES" >> "$GITHUB_OUTPUT"
+        echo "lineups_to_poll=$LINEUPS" >> "$GITHUB_OUTPUT"
+        echo "live_to_poll=$LIVE" >> "$GITHUB_OUTPUT"
+        echo "done_matches=$DONE" >> "$GITHUB_OUTPUT"
+
+        echo "Serier att polla GameLinks för: $SERIES"
+        echo "Matcher att polla lineups för: $LINEUPS"
+        echo "Matcher att polla live för: $LIVE"
+        echo "Matcher markerade som klara: $DONE"
+
+    # ----------------------------------------------------------
+    # 7. POLL GAMELINKS (PER SERIE)
+    # ----------------------------------------------------------
+    - name: Fetch GameLinks for relevant Live-series
+      run: |
+        SERIES="${{ steps.extract.outputs.series_to_poll_for_gamelinks }}"
+        if [ -z "$SERIES" ]; then
+          echo "Inga serier behöver GameLink-pollning."
+          exit 0
+        fi
+
+        for SID in $SERIES; do
+          echo "Hämtar GameLinks för SerieID=$SID"
+          python3 scripts/fetchLiveGameLinks.py --sid "$SID"
+        done
+
+    # ----------------------------------------------------------
+    # 8. POLL LINEUP-MATCHER
+    # ----------------------------------------------------------
+    - name: Update lineup matches
+      if: ${{ steps.extract.outputs.lineups_to_poll != '' }}
+      run: |
+        LIST="${{ steps.extract.outputs.lineups_to_poll }}"
+        echo "Uppdaterar lineups för matcher: $LIST"
+        python3 scripts/updateGamesShallow.py --gid-list "$LIST" -dbg
+
+    # ----------------------------------------------------------
+    # 9. POLL LIVE-MATCHER (EVENTS + STATS)
+    # ----------------------------------------------------------
+    - name: Update live matches
+      if: ${{ steps.extract.outputs.live_to_poll != '' }}
+      run: |
+        LIST="${{ steps.extract.outputs.live_to_poll }}"
+        echo "Uppdaterar live-matcher: $LIST"
+        python3 scripts/updateGamesShallow.py --gid-list "$LIST" -dbg
+
+    # ----------------------------------------------------------
+    # 10. COMMIT & PUSH
+    # ----------------------------------------------------------
+    - name: Commit & Push changes
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        git add data/games.csv data/live_games.csv data/series.csv poll_output.json || true
+
+        if git diff --cached --quiet; then
+          echo "Inga ändringar att committa."
+          exit 0
+        fi
+
+        git commit -m "Shallow update $(date -u +'%Y-%m-%d %H:%M UTC')"
+        git push origin main
 
