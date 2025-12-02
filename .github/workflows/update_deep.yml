@@ -35,8 +35,11 @@ jobs:
           echo "TODAY=$TODAY" >> $GITHUB_OUTPUT
           echo "WINDOW_END=$WINDOW_END" >> $GITHUB_OUTPUT
 
+          echo "TODAY=$TODAY"
+          echo "WINDOW_END=$WINDOW_END"
+
       ####################################################################
-      # 1. Hämta matcher för dagens datum och fönstrets slutdatum
+      # 1. Hämta matcher för TODAY och merg:a in dem
       ####################################################################
 
       - name: Fetch matches for TODAY
@@ -44,21 +47,31 @@ jobs:
           echo "Fetching matches for ${{ steps.dates.outputs.TODAY }}"
           python3 scripts/createGamesFile.py \
             --date "${{ steps.dates.outputs.TODAY }}" \
-            --window-end "${{ steps.dates.outputs.WINDOW_END }}" \
-            --mode deep \
             -dbg
+
+      - name: Merge TODAY games into games.csv
+        run: |
+          echo "Merging TODAY games into data/games.csv"
+          python3 scripts/UpdateGames.py
+
+      ####################################################################
+      # 2. Hämta matcher för WINDOW_END och merg:a in dem
+      ####################################################################
 
       - name: Fetch matches for WINDOW_END
         run: |
           echo "Fetching matches for ${{ steps.dates.outputs.WINDOW_END }}"
           python3 scripts/createGamesFile.py \
             --date "${{ steps.dates.outputs.WINDOW_END }}" \
-            --window-end "${{ steps.dates.outputs.WINDOW_END }}" \
-            --mode deep \
             -dbg
 
+      - name: Merge WINDOW_END games into games.csv
+        run: |
+          echo "Merging WINDOW_END games into data/games.csv"
+          python3 scripts/UpdateGames.py
+
       ####################################################################
-      # 2. Uppdatera series.csv
+      # 3. Uppdatera series.csv utifrån dagens matcher
       ####################################################################
 
       - name: Update Series File
@@ -69,7 +82,7 @@ jobs:
             -dbg
 
       ####################################################################
-      # 3. Uppdatera Light-seriernas resultat
+      # 4. Uppdatera LIGHT-seriernas resultat
       ####################################################################
 
       - name: Update Light-series results
@@ -80,7 +93,7 @@ jobs:
             -dbg
 
       ####################################################################
-      # 4. Commit & push
+      # 5. Commit & push ändringar
       ####################################################################
 
       - name: Commit & Push changes
