@@ -1,4 +1,4 @@
-name: Shallow Update (Polling)
+name: Shallow Update (Polling, Version 6)
 
 on:
   schedule:
@@ -25,68 +25,66 @@ jobs:
         run: |
           pip install -r scripts/requirements.txt
 
-      - name: Define dates and environment variables
+      - name: Define TODAY
         id: dates
         run: |
           TODAY=$(date +"%Y-%m-%d")
-          echo "TODAY=$TODAY" >> $GITHUB_OUTPUT
+          echo "TODAY=$TODAY" >> "$GITHUB_OUTPUT"
+          echo "TODAY is $TODAY"
 
-      ###########################################################################
-      # 1. FETCH LIVE GAME LINKS
-      ###########################################################################
+      ##################################################################
+      # 1) Gatekeeper: ska vi överhuvudtaget köra shallow just nu?
+      #    - Läser data/games.csv
+      #    - Tittar bara på matcher med dagens datum
+      #    - Kollar om nu (SE-tid) ligger inom:
+      #         matchstart - 1h45m  ≤ nu ≤  matchstart + 3h15m
+      #    - Skriver RUN_SHALLOW=true/false till GITHUB_OUTPUT
+      ##################################################################
+      - name: Decide if shallow update should run
+        id: gatekeeper
+        run: |
+          python3 scripts/shallow_update_gatekeeper.py
+
+      ##################################################################
+      # 2) Hämta LIVE-gamelinks (bara om gatekeeper säger ja)
+      ##################################################################
       - name: Fetch current Live GameLinks
+        if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
         run: |
-          echo "Running fetchLiveGameLinks.py..."
-          python3 scripts/fetchLiveGameLinks.py \
-            --date "${{ steps.dates.outputs.TODAY }}" -dbg
+          echo "Gatekeeper says RUN_SHALLOW=true → fetching live game links"
+          python3 scripts/fetchLiveGameLinks.py
 
-      ###########################################################################
-      # 2. LOAD POLL-CONTROL AND SERIES INFO
-      ###########################################################################
-
-      - name: Prepare Poll-Control
+      ##################################################################
+      # 3) Uppdatera LIGHT-seriernas resultat för dagens datum
+      #    (LIGHT = Live=YesLight i series.csv)
+      #    Hela scriptet är datumstyrt (–date) så det jobbar bara på idag.
+      ##################################################################
+      - name: Update Light-series results for TODAY
+        if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
         run: |
-          if [ ! -f data/poll_control.csv ]; then
-            echo "SerieID;GameID;LastPoll;NextPoll;PollCount;Done" > data/poll_control.csv
-          fi
-
-      - name: Ensure Series File Exists
-        run: |
-          if [ ! -f data/series.csv ]; then
-            echo "SerieLink;SerieName;Live;DoneToday" > data/series.csv
-          fi
-
-      ###########################################################################
-      # 3. LOOP ALL SERIES FOR SHALLOW UPDATE
-      ###########################################################################
-      - name: Perform shallow update per series
-        run: |
-          echo "Starting shallow update pass..."
-
-          python3 scripts/shallow_update_gatekeeper.py \
-            --today "${{ steps.dates.outputs.TODAY }}" \
-            --dbg
-
-      ###########################################################################
-      # 4. UPDATE LIGHT SERIES RESULTS
-      ###########################################################################
-      - name: Update Light-series results
-        run: |
-          echo "Updating light-series results..."
+          echo "Updating LIGHT series results for ${{ steps.dates.outputs.TODAY }}"
           python3 scripts/updateLightSeriesResults.py \
             --date "${{ steps.dates.outputs.TODAY }}" \
             -dbg
 
-      ###########################################################################
-      # 5. CLEANUP: REMOVE OLD POLL-CONTROL ENTRIES
-      ###########################################################################
-      - name: Cleanup finished poll entries
-        run: |
-          python3 scripts/cleanup_poll_control.py -dbg || true
+      ##################################################################
+      # 4) (Framtida plats för normal-serie-event/lineup polling)
+      #    Här kan du senare lägga in skript som:
+      #      - läser data/live_games.csv
+      #      - pollar getGameEvents.py för aktiva matcher
+      #    Också med:
+      #      if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
+      ##################################################################
+      # - name: Update events & stats for NORMAL series
+      #   if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
+      #   run: |
+      #     python3 scripts/your_normal_series_poller.py \
+      #       --date "${{ steps.dates.outputs.TODAY }}" \
+      #       -dbg
 
-      ###########################################################################
-      # 6. COMMIT & PUSH CHANGES
-      ###########################################################################
+      ##################################################################
+      # 5) Commit & push (bara om något faktiskt ändrats)
+      ##################################################################
       - name: Commit & push changes
         run: |
           git config --global user.email "github-actions@github.com"
@@ -97,7 +95,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "Shallow update at $(date)"
+            git commit -m "Shallow update at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
             git push
           fi
 
