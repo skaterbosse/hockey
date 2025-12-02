@@ -23,22 +23,21 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r scripts/requirements.txt
 
       - name: Define dates
         id: dates
         run: |
           TODAY=$(date +"%Y-%m-%d")
-          # deep update = endast TODAY och WINDOW_END
           WINDOW_DAYS=7
           WINDOW_END=$(date -d "$TODAY +$WINDOW_DAYS day" +"%Y-%m-%d")
 
           echo "TODAY=$TODAY" >> $GITHUB_OUTPUT
           echo "WINDOW_END=$WINDOW_END" >> $GITHUB_OUTPUT
 
-      ###############################################################
-      # 1. Hämta matcher för dagens datum och sista datum i fönstret
-      ###############################################################
+      ####################################################################
+      # 1. Hämta matcher för dagens datum och fönstrets slutdatum
+      ####################################################################
 
       - name: Fetch matches for TODAY
         run: |
@@ -58,9 +57,9 @@ jobs:
             --mode deep \
             -dbg
 
-      ###############################################################
-      # 2. Uppdatera series.csv (Live/YesLight/No)
-      ###############################################################
+      ####################################################################
+      # 2. Uppdatera series.csv
+      ####################################################################
 
       - name: Update Series File
         run: |
@@ -69,9 +68,9 @@ jobs:
             --date "${{ steps.dates.outputs.TODAY }}" \
             -dbg
 
-      ###############################################################
-      # 3. Uppdatera Light-serier (uppdatera bara resultat)
-      ###############################################################
+      ####################################################################
+      # 3. Uppdatera Light-seriernas resultat
+      ####################################################################
 
       - name: Update Light-series results
         run: |
@@ -80,9 +79,9 @@ jobs:
             --date "${{ steps.dates.outputs.TODAY }}" \
             -dbg
 
-      ###############################################################
-      # 4. Git commit & push
-      ###############################################################
+      ####################################################################
+      # 4. Commit & push
+      ####################################################################
 
       - name: Commit & Push changes
         run: |
