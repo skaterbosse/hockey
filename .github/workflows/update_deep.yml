@@ -1,82 +1,100 @@
-name: update_deep
+name: Deep Update (Daily)
+
+on:
+  schedule:
+    - cron: "0 3 * * *"    # kör dagligen 03:00
+  workflow_dispatch:       # manuell start
 
 permissions:
   contents: write
-
-on:
-  workflow_dispatch:
-    inputs:
-      date:
-        description: "Override date (YYYY-MM-DD) for deep update"
-        required: false
-  schedule:
-    - cron: "0 3 * * *"   # Kör dagligen kl 03:00
 
 jobs:
   deep_update:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-
-    env:
-      TZ: Europe/Stockholm
-
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set TODAY
-        id: today
-        run: |
-          if [ -n "${{ github.event.inputs.date }}" ]; then
-              DATE="${{ github.event.inputs.date }}"
-          else
-              DATE=$(date +%F)
-          fi
-          echo "TODAY=$DATE" >> $GITHUB_ENV
-          echo "Using TODAY=$DATE"
-
-      - name: Setup python
-        uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
-      - name: Install Python deps
+      - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install requests beautifulsoup4
+          pip install -r requirements.txt
 
-      - name: Ensure data dir exists
-        run: mkdir -p data
-
-      # 1) FETCH today's matches → data/games_new.csv
-      - name: Fetch today’s matches
+      - name: Define dates
+        id: dates
         run: |
-          echo "Fetching matches for $TODAY"
-          python3 scripts/createGamesFile.py --date "$TODAY" -dbg
+          TODAY=$(date +"%Y-%m-%d")
+          # deep update = endast TODAY och WINDOW_END
+          WINDOW_DAYS=7
+          WINDOW_END=$(date -d "$TODAY +$WINDOW_DAYS day" +"%Y-%m-%d")
 
-      # 2) MERGE games_new.csv with games.csv → gör att inget försvinner
-      - name: Merge into games.csv
-        run: |
-          python3 scripts/mergeGames.py
+          echo "TODAY=$TODAY" >> $GITHUB_OUTPUT
+          echo "WINDOW_END=$WINDOW_END" >> $GITHUB_OUTPUT
 
-      # 3) Uppdatera series.csv med Live=Yes/YesLight/No
-      - name: Update series table (Simple/Light/Normal)
-        run: |
-          python3 scripts/updateSeriesFile.py --date "$TODAY"
+      ###############################################################
+      # 1. Hämta matcher för dagens datum och sista datum i fönstret
+      ###############################################################
 
-      # 4) Commit files if changed
-      - name: Commit & push if changed
+      - name: Fetch matches for TODAY
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          if git status --porcelain | grep -q .; then
-            git add data/*
-            git commit -m "deep_update $(date +'%F %T')"
-            git push
-          else
+          echo "Fetching matches for ${{ steps.dates.outputs.TODAY }}"
+          python3 scripts/createGamesFile.py \
+            --date "${{ steps.dates.outputs.TODAY }}" \
+            --window-end "${{ steps.dates.outputs.WINDOW_END }}" \
+            --mode deep \
+            -dbg
+
+      - name: Fetch matches for WINDOW_END
+        run: |
+          echo "Fetching matches for ${{ steps.dates.outputs.WINDOW_END }}"
+          python3 scripts/createGamesFile.py \
+            --date "${{ steps.dates.outputs.WINDOW_END }}" \
+            --window-end "${{ steps.dates.outputs.WINDOW_END }}" \
+            --mode deep \
+            -dbg
+
+      ###############################################################
+      # 2. Uppdatera series.csv (Live/YesLight/No)
+      ###############################################################
+
+      - name: Update Series File
+        run: |
+          echo "Running updateSeriesFile.py for TODAY"
+          python3 scripts/updateSeriesFile.py \
+            --date "${{ steps.dates.outputs.TODAY }}" \
+            -dbg
+
+      ###############################################################
+      # 3. Uppdatera Light-serier (uppdatera bara resultat)
+      ###############################################################
+
+      - name: Update Light-series results
+        run: |
+          echo "Running updateLightSeriesResults.py"
+          python3 scripts/updateLightSeriesResults.py \
+            --date "${{ steps.dates.outputs.TODAY }}" \
+            -dbg
+
+      ###############################################################
+      # 4. Git commit & push
+      ###############################################################
+
+      - name: Commit & Push changes
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+          git add data/*.csv || true
+
+          if git diff --cached --quiet; then
             echo "No changes to commit."
+          else
+            git commit -m "Deep update for ${{ steps.dates.outputs.TODAY }}"
+            git push
           fi
 
