@@ -1,101 +1,117 @@
-name: Shallow Update (Polling, Version 6)
+name: update_shallow
 
 on:
-  schedule:
-    - cron: "*/55 * * * *"   # kör var 10:e minut
   workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"    # Kör var 5:e minut
 
 permissions:
   contents: write
 
 jobs:
   shallow_update:
+    name: Shallow Update Engine
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
+    #######################################################################
+    # 1) Checkout repository
+    #######################################################################
+    - name: Checkout repo
+      uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          pip install -r scripts/requirements.txt
 
-      - name: Define TODAY
-        id: dates
-        run: |
-          TODAY=$(date +"%Y-%m-%d")
-          echo "TODAY=$TODAY" >> "$GITHUB_OUTPUT"
-          echo "TODAY is $TODAY"
+    #######################################################################
+    # 2) Set up Python
+    #######################################################################
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
 
-      ##################################################################
-      # 1) Gatekeeper: ska vi överhuvudtaget köra shallow just nu?
-      #    - Läser data/games.csv
-      #    - Tittar bara på matcher med dagens datum
-      #    - Kollar om nu (SE-tid) ligger inom:
-      #         matchstart - 1h45m  ≤ nu ≤  matchstart + 3h15m
-      #    - Skriver RUN_SHALLOW=true/false till GITHUB_OUTPUT
-      ##################################################################
-      - name: Decide if shallow update should run
-        id: gatekeeper
-        run: |
-          python3 scripts/shallow_update_gatekeeper.py
+    - name: Install dependencies
+      run: |
+        pip install -r scripts/requirements.txt
 
-      ##################################################################
-      # 2) Hämta LIVE-gamelinks (bara om gatekeeper säger ja)
-      ##################################################################
-      - name: Fetch current Live GameLinks
-        if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
-        run: |
-          echo "Gatekeeper says RUN_SHALLOW=true → fetching live game links"
-          python3 scripts/fetchLiveGameLinks.py
 
-      ##################################################################
-      # 3) Uppdatera LIGHT-seriernas resultat för dagens datum
-      #    (LIGHT = Live=YesLight i series.csv)
-      #    Hela scriptet är datumstyrt (–date) så det jobbar bara på idag.
-      ##################################################################
-      - name: Update Light-series results for TODAY
-        if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
-        run: |
-          echo "Updating LIGHT series results for ${{ steps.dates.outputs.TODAY }}"
-          python3 scripts/updateLightSeriesResults.py \
-            --date "${{ steps.dates.outputs.TODAY }}" \
-            -dbg
+    #######################################################################
+    # 3) Gatekeeper – avgör om vi ska göra shallow eller ej
+    #######################################################################
+    - name: Run shallow gatekeeper
+      id: gatekeeper
+      run: |
+        echo "Running shallow_update_gatekeeper.py..."
+        python3 scripts/shallow_update_gatekeeper.py > gatekeeper.out
+        cat gatekeeper.out
+        RUN_SHALLOW=$(grep RUN_SHALLOW gatekeeper.out | awk -F '=' '{print $2}')
+        echo "RUN_SHALLOW=$RUN_SHALLOW" >> $GITHUB_OUTPUT
 
-      ##################################################################
-      # 4) (Framtida plats för normal-serie-event/lineup polling)
-      #    Här kan du senare lägga in skript som:
-      #      - läser data/live_games.csv
-      #      - pollar getGameEvents.py för aktiva matcher
-      #    Också med:
-      #      if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
-      ##################################################################
-      # - name: Update events & stats for NORMAL series
-      #   if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
-      #   run: |
-      #     python3 scripts/your_normal_series_poller.py \
-      #       --date "${{ steps.dates.outputs.TODAY }}" \
-      #       -dbg
 
-      ##################################################################
-      # 5) Commit & push (bara om något faktiskt ändrats)
-      ##################################################################
-      - name: Commit & push changes
-        run: |
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"
+    #######################################################################
+    # STOPPA OM VI INTE SKA KÖRA SHALLOW
+    #######################################################################
+    - name: Stop early
+      if: steps.gatekeeper.outputs.RUN_SHALLOW != 'true'
+      run: |
+        echo "Shallow update NOT allowed at this time window."
+        exit 0
 
-          git add data/*.csv || true
 
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-          else
-            git commit -m "Shallow update at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-            git push
-          fi
+    #######################################################################
+    # 4) Fetch/GameLink discovery for Live-series
+    #######################################################################
+    - name: Fetch live GameLinks
+      run: |
+        echo "Running fetchLiveGameLinks.py"
+        python3 scripts/fetchLiveGameLinks.py
+
+
+    #######################################################################
+    # 5) Update results for LIGHT-series (ingen Event-polling)
+    #######################################################################
+    - name: Update Light-series results
+      run: |
+        echo "Running updateLightSeriesResults.py"
+        python3 scripts/updateLightSeriesResults.py \
+          --date "$(date +'%Y-%m-%d')"
+
+
+    #######################################################################
+    # 6) Poll NORMAL Live-series (Event + Stats)
+    #######################################################################
+    - name: Poll events for NORMAL Live-series
+      run: |
+        echo "Polling normal series via pollNormalSeries.py"
+        python3 scripts/pollNormalSeries.py
+
+
+    #######################################################################
+    # 7) Merge everything into games.csv
+    #######################################################################
+    - name: Merge game updates
+      run: |
+        echo "Merging updates via UpdateGames.py"
+        python3 scripts/UpdateGames.py
+
+
+    #######################################################################
+    # 8) Commit back to GitHub (om något ändrats)
+    #######################################################################
+    - name: Commit changes
+      run: |
+        git config --local user.email "actions@github.com"
+        git config --local user.name  "GitHub Actions"
+
+        git add data/games.csv \
+               data/live_games.csv \
+               data/series.csv \
+               events/
+
+        if git diff --cached --quiet; then
+          echo "No changes to commit."
+        else
+          git commit -m "Shallow update: $(date)"
+          git push
+        fi
 
