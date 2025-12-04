@@ -3,7 +3,7 @@ name: update_shallow
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/55 * * * *"    # Kör var 55:e minut
+    - cron: "*/55 * * * *"    # Kör var 5:e minut
 
 permissions:
   contents: write
@@ -21,14 +21,13 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
 
-
     #######################################################################
     # 2) Set up Python
     #######################################################################
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: 3.11
+        python-version: "3.11"
 
     - name: Install dependencies
       run: |
@@ -49,18 +48,7 @@ jobs:
 
 
     #######################################################################
-    # STOPPA OM VI INTE SKA KÖRA SHALLOW
-    #######################################################################
-    - name: Stop early
-      if: steps.gatekeeper.outputs.RUN_SHALLOW != 'true'
-      run: |
-        echo "Shallow update NOT allowed at this time window."
-        exit 0
-
-
-    #######################################################################
-    # 4) Fetch/GameLink discovery for Live-series
-    #    → Körs endast inom aktivt matchfönster (gatekeeper styr)
+    # 4) Fetch GameLinks for LIVE-series
     #######################################################################
     - name: Fetch live GameLinks
       if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
@@ -70,37 +58,42 @@ jobs:
 
 
     #######################################################################
-    # 5) Update results for LIGHT-series (ingen Event-polling)
+    # 5) Update LIGHT-series results (ingen Event-polling)
     #######################################################################
     - name: Update Light-series results
+      if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
       run: |
         echo "Running updateLightSeriesResults.py"
         python3 scripts/updateLightSeriesResults.py \
-          --date "$(date +'%Y-%m-%d')"
+          --date "$(date +'%Y-%m-%d')" \
+          -dbg
 
 
     #######################################################################
-    # 6) Poll NORMAL Live-series (Event + Stats)
+    # 6) Poll NORMAL-series (Event + Stats)
     #######################################################################
     - name: Poll events for NORMAL Live-series
+      if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
       run: |
-        echo "Polling normal series via pollNormalSeries.py"
+        echo "Running pollNormalSeries.py"
         python3 scripts/pollNormalSeries.py
 
 
     #######################################################################
-    # 7) Merge everything into games.csv
+    # 7) Merge all updates into games.csv
     #######################################################################
     - name: Merge game updates
+      if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
       run: |
         echo "Merging updates via UpdateGames.py"
         python3 scripts/UpdateGames.py
 
 
     #######################################################################
-    # 8) Commit back to GitHub (om något ändrats)
+    # 8) Commit changes (om något har ändrats)
     #######################################################################
     - name: Commit changes
+      if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
       run: |
         git config --local user.email "actions@github.com"
         git config --local user.name  "GitHub Actions"
