@@ -3,7 +3,7 @@ name: update_shallow
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/55 * * * *"    # Kör var 5:e minut
+    - cron: "*/55 * * * *"    # Kör var 55:e minut
 
 permissions:
   contents: write
@@ -60,8 +60,10 @@ jobs:
 
     #######################################################################
     # 4) Fetch/GameLink discovery for Live-series
+    #    → Körs endast inom aktivt matchfönster (gatekeeper styr)
     #######################################################################
     - name: Fetch live GameLinks
+      if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
       run: |
         echo "Running fetchLiveGameLinks.py"
         python3 scripts/fetchLiveGameLinks.py

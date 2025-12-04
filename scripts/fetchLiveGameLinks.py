@@ -106,11 +106,17 @@ def ensure_unique(rows):
 # ---------------------------------------------------------------------------
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: fetchLiveGameLinks.py series.csv")
-        sys.exit(1)
 
-    series_file = sys.argv[1]
+    # -------------------------------------------------------------
+    # NEW DEFAULT BEHAVIOR:
+    #   If no argument → use data/series.csv
+    # -------------------------------------------------------------
+    if len(sys.argv) < 2:
+        series_file = "data/series.csv"
+        print("[fetchLiveGameLinks] No argument provided → using data/series.csv")
+    else:
+        series_file = sys.argv[1]
+
     out_file = "data/live_games.csv"
 
     print(f"[fetchLiveGameLinks] Reading series from: {series_file}")
@@ -120,7 +126,6 @@ def main():
     with open(series_file, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f, delimiter=";")
         for row in reader:
-            # Row has: SerieLink;SerieName;Live
             series.append(row)
 
     all_rows = []   # rows for live_games.csv
@@ -161,7 +166,6 @@ def main():
                 linktype = "NoLink"
 
             if n == 0:
-                # fallback (serier utan matcher)
                 all_rows.append((serie_id, "", "", linktype))
             else:
                 for _ in range(n):
