@@ -418,6 +418,45 @@ def fill_admin_hosts_for_date(date: str, games: List[Game], test_dir: Optional[s
     if remaining_idx:
         log(f"⚠️ {len(remaining_idx)} matcher saknar fortfarande admin_host efter {iteration} iterationer")
 
+def offline_fill_admin_hosts_for_date(date: str, games: List[Game], base_html_dir: Path) -> None:
+    """
+    Offline-variant av fill_admin_hosts_for_date, som bara använder lokala HTML-filer
+    och INTE fetchar något online. Saknade HTML-filer för en admin_host ignoreras tyst.
+    """
+    if not games:
+        return
+
+    remaining_idx = {i for i, g in enumerate(games) if not g.admin_host}
+    iteration = 0
+
+    for host_name, host_code in ADMIN_FETCH_ORDER:
+        if not remaining_idx:
+            break
+        iteration += 1
+
+        html = read_local_html(date, host_code, str(base_html_dir))
+        if html is None:
+            # Ingen lokal HTML för denna admin_host → inga matcher här
+            continue
+
+        host_games = parse_games_from_html(html, date)
+        matches_this_host = 0
+
+        for hg in host_games:
+            matched_i = None
+            for i in list(remaining_idx):
+                if game_match(games[i], hg):
+                    matched_i = i
+                    break
+            if matched_i is not None:
+                games[matched_i].admin_host = host_name
+                games[matched_i].iteration_fetched = iteration
+                remaining_idx.remove(matched_i)
+                matches_this_host += 1
+
+    # Sätt iterations_total till antal iterationer vi faktiskt gjorde
+    for g in games:
+        g.iterations_total = iteration
 
 def sort_and_write(games_by_date: Dict[str, List[Game]], out_path: str) -> None:
     dates_sorted = sorted(games_by_date.keys())
@@ -441,22 +480,20 @@ def main(argv: List[str]) -> int:
     # ============================================================
     # OFFLINE TEST MODE (PRE-COMMIT COMPATIBLE)
     # ============================================================
+    ###########################################################################
+    # OFFLINE TEST-RUNNER
+    ###########################################################################
+        # Test-läge (offline test runner) – ingen loggning här
     if args.test_file:
         test_file = args.test_file
-        test_dir = args.test_dir or "tests/html"
-        expected_dir = Path("tests/expected")
+        base_html_dir = Path(args.test_dir or "tests/html")
         tmp_dir = Path("tests/tmp")
         tmp_dir.mkdir(parents=True, exist_ok=True)
 
-        print(f"[TEST] Running offline test cases from: {test_file}")
-        print(f"[TEST] Using HTML dir: {test_dir}")
+        print(f"[TEST] Running test cases from: {test_file}")
 
-        # ------------------------------------------------------------
-        # Läs testfall
-        # Format:
-        # id;name;mode;start_date;end_date;admin_host;shallow|deep;expected_file;PASS/FAIL
-        # ------------------------------------------------------------
         test_cases = []
+
         with open(test_file, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
@@ -464,121 +501,225 @@ def main(argv: List[str]) -> int:
                     continue
                 parts = line.split(";")
                 if len(parts) < 8:
-                    print(f"[TEST] Skipping invalid test line: {line}")
+                    print(f"[TEST] Skipping malformed line ({len(parts)} cols): {line}")
                     continue
 
-                (
-                    cid,
-                    case_name,
-                    offline_mode,   # ex "offline" – ignoreras, vi kör alltid offline
-                    sd,
-                    ed,
-                    admin_host,
-                    depth_mode,     # "shallow" eller "deep"
-                    expected_file,
-                ) = parts[:8]
+                cid, case_name, mode = parts[0], parts[1], parts[2]
 
-                test_cases.append({
-                    "id": cid,
-                    "name": case_name,
-                    "start_date": sd,
-                    "end_date": ed,
-                    "admin_host": admin_host,
-                    "depth_mode": depth_mode.lower(),
-                    "expected": expected_file,
-                })
+                if mode == "offline":
+                    # Format:
+                    # id;name;offline;sd;ed;admin_host;depth;expected[;PASS]
+                    sd, ed, admin_host, depth, expected_file = parts[3:8]
+                    expected_status = parts[8] if len(parts) > 8 else ""
+                    test_cases.append({
+                        "id": cid,
+                        "name": case_name,
+                        "mode": "offline",
+                        "start_date": sd,
+                        "end_date": ed,
+                        "admin_host": admin_host,
+                        "depth": depth,  # "shallow" eller "deep"
+                        "expected": expected_file,
+                        "expected_status": expected_status,
+                    })
+                elif mode == "offline-update":
+                    # Format:
+                    # id;name;offline-update;sd;ed;admin_host;before_file;expected[;PASS]
+                    sd, ed, admin_host, before_file, expected_file = parts[3:8]
+                    expected_status = parts[8] if len(parts) > 8 else ""
+                    test_cases.append({
+                        "id": cid,
+                        "name": case_name,
+                        "mode": "offline-update",
+                        "start_date": sd,
+                        "end_date": ed,
+                        "admin_host": admin_host,
+                        "before_file": before_file,
+                        "expected": expected_file,
+                        "expected_status": expected_status,
+                    })
+                else:
+                    print(f"[TEST] Unknown mode '{mode}' in line: {line}")
+
+        if not test_cases:
+            print("[TEST] No valid test cases found.")
+            return 1
+
+        def sorted_text(path: Path) -> str:
+            if not path.exists():
+                return ""
+            lines = path.read_text(encoding="utf-8").splitlines()
+            # Ta bort helt tomma rader och normalisera radslut
+            lines = [ln.rstrip("\r\n") for ln in lines if ln.strip() != ""]
+            lines_sorted = sorted(lines)
+            return "\n".join(lines_sorted)
 
         all_passed = True
 
+        # ==== Kör alla testfall ====
         for tc in test_cases:
-            print(f"\n[TEST] === CASE {tc['id']} : {tc['name']} ===")
-
-            sd = datetime.strptime(tc["start_date"], "%Y-%m-%d").date()
-            ed = datetime.strptime(tc["end_date"], "%Y-%m-%d").date()
-            host_code = tc["admin_host"]
-            depth_mode = tc["depth_mode"]
-
-            tmp_out = tmp_dir / f"{tc['name']}_output.txt"
-            games_by_date: Dict[str, List[Game]] = {}
-
-            # Vi kör alltid helt offline i testläget
-            offline_only = True
-            debug = False
-
+            print(f"\n[TEST] === CASE {tc['id']} : {tc['name']} ({tc['mode']}) ===")
             try:
-                for d in daterange(sd, ed):
-                    date_s = d.strftime("%Y-%m-%d")
+                # -----------------------------------------------------------
+                # A) offline shallow/deep (null eller specifik admin_host)
+                # -----------------------------------------------------------
+                if tc["mode"] == "offline":
+                    sd = datetime.strptime(tc["start_date"], "%Y-%m-%d").date()
+                    ed = datetime.strptime(tc["end_date"], "%Y-%m-%d").date()
+                    admin_host = tc["admin_host"]
+                    depth = tc["depth"]  # "shallow" eller "deep"
 
-                    # === SHALLOW: bara null-/enkel-parse, ingen fill_admin_hosts ===
-                    if depth_mode == "shallow":
-                        games = process_date_for_admin(
-                            date_s,
-                            host_code,
-                            test_dir,
-                            offline_only,
-                            debug,
-                        )
-                        # Ingen fill_admin_hosts här – exakt samma som -sh
+                    games_by_date: Dict[str, List[Game]] = {}
 
-                    # === DEEP: kör normal logik inkl fill_admin_hosts när admin_host = null ===
-                    elif depth_mode == "deep":
-                        games = process_date_for_admin(
-                            date_s,
-                            host_code,
-                            test_dir,
-                            offline_only,
-                            debug,
-                        )
+                    for d in daterange(sd, ed):
+                        date_s = d.strftime("%Y-%m-%d")
 
-                        # Om vi kör deep med admin_host = "null" ska vi fylla admin_host
-                        if host_code == "null":
-                            fill_admin_hosts_for_date(
-                                date_s,
-                                games,
-                                test_dir,
-                                offline_only,
-                                debug,
+                        # Läser HTML för given admin_host (oftast "null")
+                        html = read_local_html(date_s, admin_host, str(base_html_dir))
+                        if html is None:
+                            raise FileNotFoundError(
+                                f"[TEST] Missing offline HTML file for {date_s} admin_host={admin_host}"
                             )
-                        # Om host_code != "null" är process_date_for_admin redan deep nog
-                    else:
-                        raise ValueError(f"[TEST] Unknown depth_mode '{depth_mode}' in case {tc['name']}")
 
-                    games_by_date[date_s] = games
+                        games = parse_games_from_html(html, date_s)
 
-                # Skriv temporär output med normal sorteringslogik
-                sort_and_write(games_by_date, str(tmp_out))
-                print(f"[TEST] Wrote tmp output → {tmp_out}")
+                        # shallow → admin_host tom, inga iterationer
+                        if depth == "deep" and admin_host == "null":
+                            # deep-mode → fyll admin_host med hjälp av lokala
+                            offline_fill_admin_hosts_for_date(date_s, games, base_html_dir)
 
-                # Läs expected
-                expected_path = expected_dir / tc["expected"]
-                if not expected_path.exists():
-                    print(f"[TEST] MISSING expected file: {expected_path}")
+                        games_by_date[date_s] = games
+
+                    tmp_out = tmp_dir / f"{tc['name']}_output.txt"
+                    with tmp_out.open("w", encoding="utf-8") as f_out:
+                        for d in sorted(games_by_date.keys()):
+                            for g in games_by_date[d]:
+                                f_out.write(g.to_line() + "\n")
+
+                # -----------------------------------------------------------
+                # B) offline-update: uppdatera befintliga matcher utifrån
+                #    ny null-HTML i tests/html/new/
+                # -----------------------------------------------------------
+                elif tc["mode"] == "offline-update":
+                    sd = datetime.strptime(tc["start_date"], "%Y-%m-%d").date()
+                    ed = datetime.strptime(tc["end_date"], "%Y-%m-%d").date()
+                    if sd != ed:
+                        raise ValueError("[TEST] offline-update stöder just nu bara ett enda datum per testfall")
+
+                    date_s = sd.strftime("%Y-%m-%d")
+
+                    new_html_dir = base_html_dir / "new"
+                    html = read_local_html(date_s, "null", str(new_html_dir))
+                    if html is None:
+                        raise FileNotFoundError(
+                            f"[TEST] Missing NEW offline HTML file for {date_s} admin_host=null in {new_html_dir}"
+                        )
+
+                    new_games = parse_games_from_html(html, date_s)
+
+                    before_path = Path("tests/input") / tc["before_file"]
+                    if not before_path.exists():
+                        raise FileNotFoundError(f"[TEST] Before-file missing: {before_path}")
+
+                    before_lines = before_path.read_text(encoding="utf-8").splitlines()
+
+                    @dataclass
+                    class BeforeKey:
+                        date: str
+                        time: str
+                        series_name: str
+                        home_team: str
+                        away_team: str
+                        arena: str
+
+                    def key_from_line(line: str) -> BeforeKey:
+                        cols = [c.strip() for c in line.split(";")]
+                        date = cols[0] if len(cols) > 0 else ""
+                        time = cols[1] if len(cols) > 1 else ""
+                        series_name = cols[2] if len(cols) > 2 else ""
+                        home_team = cols[5] if len(cols) > 5 else ""
+                        away_team = cols[6] if len(cols) > 6 else ""
+                        arena = cols[9] if len(cols) > 9 else ""
+                        return BeforeKey(date, time, series_name, home_team, away_team, arena)
+
+                    def update_match(bk: BeforeKey, g: Game) -> bool:
+                        if bk.date != g.date:
+                            return False
+                        if bk.series_name != g.series_name:
+                            return False
+                        if f"{bk.home_team} - {bk.away_team}" != f"{g.home_team} - {g.away_team}":
+                            return False
+                        time_ok = (bk.time == g.time) or (not bk.time) or (not g.time)
+                        arena_ok = (bk.arena == g.arena) or (not bk.arena) or (not g.arena)
+                        both_missing = (not bk.time or not g.time) and (not bk.arena or not g.arena)
+                        return time_ok and arena_ok and not both_missing
+
+                    updated_lines: List[str] = []
+
+                    for line in before_lines:
+                        raw = line.rstrip("\r\n")
+                        if not raw.strip():
+                            updated_lines.append(raw)
+                            continue
+
+                        bk = key_from_line(raw)
+                        match_game = None
+                        for g in new_games:
+                            if update_match(bk, g):
+                                match_game = g
+                                break
+
+                        if match_game is None:
+                            # A) Silent ignore – lämna raden helt orörd
+                            updated_lines.append(raw)
+                        else:
+                            cols = raw.split(";")
+                            # säkerställ minst 9 kolumner (result + result_link)
+                            while len(cols) <= 8:
+                                cols.append("")
+                            cols[7] = match_game.result
+                            cols[8] = match_game.result_link
+                            updated_lines.append(";".join(cols))
+
+                    tmp_out = tmp_dir / f"{tc['name']}_output.txt"
+                    tmp_out.write_text("\n".join(updated_lines), encoding="utf-8")
+
+                else:
+                    print(f"[TEST] Unknown mode on case {tc['name']}, skipping.")
                     all_passed = False
                     continue
 
-                expected_text = expected_path.read_text(encoding="utf-8").strip()
-                actual_text = tmp_out.read_text(encoding="utf-8").strip()
+                print(f"[TEST] Wrote tmp output → {tmp_out}")
 
-                if expected_text == actual_text:
+                expected_path = Path("tests/expected") / tc["expected"]
+                if not expected_path.exists():
+                    print(f"[TEST] Expected file missing: {expected_path}")
+                    all_passed = False
+                    continue
+
+                expected_sorted = sorted_text(expected_path)
+                actual_sorted = sorted_text(tmp_out)
+
+                if expected_sorted == actual_sorted:
                     print(f"[TEST] PASS ✓ {tc['name']}")
                 else:
                     print(f"[TEST] FAIL ✗ {tc['name']}")
                     all_passed = False
-
                     diff = difflib.unified_diff(
-                        expected_text.splitlines(),
-                        actual_text.splitlines(),
-                        fromfile="expected",
-                        tofile="actual",
+                        expected_sorted.splitlines(),
+                        actual_sorted.splitlines(),
+                        fromfile="expected(sorted)",
+                        tofile="actual(sorted)",
                         lineterm=""
                     )
-                    print("\n".join(diff))
+                    for line in diff:
+                        print(line)
 
             except Exception as e:
                 print(f"[TEST] ERROR in test case {tc['name']}: {e}")
                 all_passed = False
 
-        print("\n=======================================")
+        print("\n[TEST] ===============================")
         if all_passed:
             print("[TEST] ALL TESTS PASSED ✓")
             return 0
