@@ -3,7 +3,8 @@ name: update_shallow
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/55 * * * *"    # Kör var 5:e minut
+    - cron: "*/5 * * * *"      # Normalt shallow-flöde: var 5:e minut
+    - cron: "45 23 * * *"      # En gång per kväll kl 23:45: kör steg 3 (post-match update)
 
 permissions:
   contents: write
@@ -21,6 +22,7 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
 
+
     #######################################################################
     # 2) Set up Python
     #######################################################################
@@ -35,7 +37,22 @@ jobs:
 
 
     #######################################################################
-    # 3) Gatekeeper – avgör om vi ska göra shallow eller ej
+    # 3) Detect if this run is the nightly pass (23:45)
+    #######################################################################
+    - name: Detect nightly run
+      id: nightly
+      run: |
+        NOW=$(date +'%H:%M')
+        if [[ "$NOW" == "23:45" ]]; then
+          echo "NIGHTLY_RUN=true" >> $GITHUB_ENV
+        else
+          echo "NIGHTLY_RUN=false" >> $GITHUB_ENV
+        fi
+        echo "NIGHTLY_RUN=$NIGHTLY_RUN"
+    
+
+    #######################################################################
+    # 4) Gatekeeper – avgör om shallow ska köras
     #######################################################################
     - name: Run shallow gatekeeper
       id: gatekeeper
@@ -43,12 +60,24 @@ jobs:
         echo "Running shallow_update_gatekeeper.py..."
         python3 scripts/shallow_update_gatekeeper.py > gatekeeper.out
         cat gatekeeper.out
+
         RUN_SHALLOW=$(grep RUN_SHALLOW gatekeeper.out | awk -F '=' '{print $2}')
         echo "RUN_SHALLOW=$RUN_SHALLOW" >> $GITHUB_OUTPUT
 
 
     #######################################################################
-    # 4) Fetch GameLinks for LIVE-series
+    # STOPPA NORMALT SHALLOW-FLÖDE om RUN_SHALLOW != true
+    # MEN låt nightly-run fortsätta oavsett
+    #######################################################################
+    - name: Stop early (normal shallow only)
+      if: steps.gatekeeper.outputs.RUN_SHALLOW != 'true' && env.NIGHTLY_RUN == 'false'
+      run: |
+        echo "Shallow update NOT allowed at this time window."
+        exit 0
+
+
+    #######################################################################
+    # 5) Fetch GameLinks for LIVE-series
     #######################################################################
     - name: Fetch live GameLinks
       if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
@@ -58,7 +87,7 @@ jobs:
 
 
     #######################################################################
-    # 5) Update LIGHT-series results (ingen Event-polling)
+    # 6) Update LIGHT-series (ingen Event-polling)
     #######################################################################
     - name: Update Light-series results
       if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
@@ -70,7 +99,7 @@ jobs:
 
 
     #######################################################################
-    # 6) Poll NORMAL-series (Event + Stats)
+    # 7) Poll NORMAL Live-series (Event + Stats)
     #######################################################################
     - name: Poll events for NORMAL Live-series
       if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
@@ -80,20 +109,42 @@ jobs:
 
 
     #######################################################################
-    # 7) Merge all updates into games.csv
+    # 8) NIGHTLY POST-MATCH UPDATE (Steg 3)
+    # Körs exakt EN gång per dag (23:45). Detta är fallback-läget.
+    #######################################################################
+    - name: Nightly post-match update (GamesByDate final-score update)
+      if: env.NIGHTLY_RUN == 'true'
+      run: |
+        TODAY=$(date +'%Y-%m-%d')
+        echo "Nightly update: running getGames.py in UPDATE mode for $TODAY"
+
+        python3 scripts/getGames.py \
+          -sd "$TODAY" \
+          -ed "$TODAY" \
+          -ah null \
+          -sh \
+          -uf data/games.csv \
+          -f data/games_update_tmp.csv
+
+        echo "Merging nightly update into games.csv"
+        python3 scripts/UpdateGames.py
+
+
+    #######################################################################
+    # 9) Merge all updates into games.csv (normal shallow mode)
     #######################################################################
     - name: Merge game updates
-      if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
+      if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true' && env.NIGHTLY_RUN == 'false'
       run: |
         echo "Merging updates via UpdateGames.py"
         python3 scripts/UpdateGames.py
 
 
     #######################################################################
-    # 8) Commit changes (om något har ändrats)
+    # 10) Commit changes (om något ändrats)
     #######################################################################
     - name: Commit changes
-      if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
+      if: env.NIGHTLY_RUN == 'true' || steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
       run: |
         git config --local user.email "actions@github.com"
         git config --local user.name  "GitHub Actions"
