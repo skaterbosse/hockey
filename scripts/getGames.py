@@ -8,6 +8,22 @@ Supports:
  - Shallow mode (-sh) to skip admin_host iterations when -ah null is used
  - Robust error handling: skip failing pages but abort after 3 consecutive errors
  - Förstärkt loggning till ./logs/
+
+Alt A-kolumnformat:
+- ALLTID 13 kolumner:
+  1:  date
+  2:  time
+  3:  series_name
+  4:  series_link
+  5:  admin_host (namn, tomt i null-shallow)
+  6:  home_team
+  7:  away_team
+  8:  result
+  9:  result_link
+  10: arena
+  11: iteration_fetched (tom i shallow)
+  12: iterations_total (tom i shallow)
+  13: shallow_flag (ALLTID '1' i våra tester)
 """
 
 from __future__ import annotations
@@ -23,7 +39,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import html as ihtml
 import difflib
-import subprocess
 
 BASE_URL = "https://stats.swehockey.se"
 
@@ -92,7 +107,7 @@ ADMIN_FETCH_ORDER: List[Tuple[str, str]] = [
 ]
 
 # === Enkel fil-loggning ===
-LOG_FH = None  # typ: Optional[object]
+LOG_FH = None  # type: Optional[object]
 
 
 def init_logger(start_date: str, end_date: str, admin_host: str, shallow: bool, out_file: str):
@@ -152,14 +167,32 @@ class Game:
     arena: str
     iteration_fetched: Optional[int] = None
     iterations_total: Optional[int] = None
+    shallow_flag: int = 1  # Alltid '1' i våra tester
 
     def to_line(self) -> str:
+        """
+        Alt A: alltid 13 kolumner.
+        - iteration_fetched: tom i shallow
+        - iterations_total: tom i shallow
+        - shallow_flag: '1'
+        """
         itf = "" if self.iteration_fetched is None else str(self.iteration_fetched)
         itt = "" if self.iterations_total is None else str(self.iterations_total)
+        flag = "" if self.shallow_flag is None else str(self.shallow_flag)
         return ";".join([
-            self.date, self.time, self.series_name, self.series_link, self.admin_host,
-            self.home_team, self.away_team, self.result, self.result_link, self.arena,
-            itf, itt
+            self.date,
+            self.time,
+            self.series_name,
+            self.series_link,
+            self.admin_host,
+            self.home_team,
+            self.away_team,
+            self.result,
+            self.result_link,
+            self.arena,
+            itf,
+            itt,
+            flag,
         ])
 
 
@@ -217,7 +250,8 @@ def fetch_online_html(date: str, admin_host: str) -> str:
     Hämtar HTML från stats.swehockey.se/GamesByDate/{date}/ByTime/{admin_host}
     med upp till 3 försök vid temporära fel.
     """
-    import ssl, certifi
+    import ssl
+    import certifi
     ctx = ssl.create_default_context(cafile=certifi.where())
     url = f"{BASE_URL}/GamesByDate/{date}/ByTime/{admin_host}"
     headers = {"User-Agent": "Mozilla/5.0 (getGames.py)"}
@@ -318,6 +352,7 @@ def game_match(master: Game, candidate: Game) -> bool:
     both_missing = (not master.time or not candidate.time) and (not master.arena or not candidate.arena)
     return time_ok and arena_ok and not both_missing
 
+
 def load_html(date: str, admin_host: str, test_dir: Optional[str], offline_only: bool, debug: bool) -> Optional[str]:
     """
     Returnerar:
@@ -347,6 +382,7 @@ def load_html(date: str, admin_host: str, test_dir: Optional[str], offline_only:
     # Online fetch
     return fetch_online_html(date, admin_host)
 
+
 def process_date_for_admin(date: str, admin_host: str, test_dir: Optional[str], offline_only: bool, debug: bool) -> List[Game]:
     log(f"➡️  Bearbetar datum {date} (admin_host={admin_host})")
     html = load_html(date, admin_host, test_dir, offline_only, debug)
@@ -362,15 +398,18 @@ def process_date_for_admin(date: str, admin_host: str, test_dir: Optional[str], 
         for g in games:
             g.iteration_fetched = None
             g.iterations_total = None
+            g.shallow_flag = 1
     else:
         host_name = ADMIN_HOSTS.get(admin_host, "")
         for g in games:
             g.admin_host = host_name
             g.iteration_fetched = 1
             g.iterations_total = 1
+            g.shallow_flag = 1
 
     log(f"📊 Parsed {len(games)} matcher för {date} (admin_host={admin_host})")
     return games
+
 
 def fill_admin_hosts_for_date(date: str, games: List[Game], test_dir: Optional[str], offline_only: bool, debug: bool) -> None:
     if not games:
@@ -405,6 +444,7 @@ def fill_admin_hosts_for_date(date: str, games: List[Game], test_dir: Optional[s
                 if game_match(games[i], hg):
                     games[i].admin_host = host_name
                     games[i].iteration_fetched = iteration
+                    games[i].shallow_flag = 1
                     matched += 1
                     remaining_idx.remove(i)
                     break
@@ -414,9 +454,12 @@ def fill_admin_hosts_for_date(date: str, games: List[Game], test_dir: Optional[s
     # Efter alla iterationer
     for g in games:
         g.iterations_total = iteration
+        if g.shallow_flag is None:
+            g.shallow_flag = 1
 
     if remaining_idx:
         log(f"⚠️ {len(remaining_idx)} matcher saknar fortfarande admin_host efter {iteration} iterationer")
+
 
 def offline_fill_admin_hosts_for_date(date: str, games: List[Game], base_html_dir: Path) -> None:
     """
@@ -451,12 +494,16 @@ def offline_fill_admin_hosts_for_date(date: str, games: List[Game], base_html_di
             if matched_i is not None:
                 games[matched_i].admin_host = host_name
                 games[matched_i].iteration_fetched = iteration
+                games[matched_i].shallow_flag = 1
                 remaining_idx.remove(matched_i)
                 matches_this_host += 1
 
     # Sätt iterations_total till antal iterationer vi faktiskt gjorde
     for g in games:
         g.iterations_total = iteration
+        if g.shallow_flag is None:
+            g.shallow_flag = 1
+
 
 def sort_and_write(games_by_date: Dict[str, List[Game]], out_path: str) -> None:
     dates_sorted = sorted(games_by_date.keys())
@@ -477,13 +524,6 @@ def main(argv: List[str]) -> int:
     # -----------------------------------------------------------
     # TEST MODE (-tf test_cases.txt)
     # -----------------------------------------------------------
-    # ============================================================
-    # OFFLINE TEST MODE (PRE-COMMIT COMPATIBLE)
-    # ============================================================
-    ###########################################################################
-    # OFFLINE TEST-RUNNER
-    ###########################################################################
-        # Test-läge (offline test runner) – ingen loggning här
     if args.test_file:
         test_file = args.test_file
         base_html_dir = Path(args.test_dir or "tests/html")
@@ -556,9 +596,13 @@ def main(argv: List[str]) -> int:
 
         all_passed = True
 
-        # ==== Kör alla testfall ====
+                # ==== Kör alla testfall ====
+        results = []  # <-- för sammanfattning
+
         for tc in test_cases:
             print(f"\n[TEST] === CASE {tc['id']} : {tc['name']} ({tc['mode']}) ===")
+            case_result = {"id": tc["id"], "name": tc["name"], "mode": tc["mode"], "status": "ERROR"}
+
             try:
                 # -----------------------------------------------------------
                 # A) offline shallow/deep (null eller specifik admin_host)
@@ -567,14 +611,13 @@ def main(argv: List[str]) -> int:
                     sd = datetime.strptime(tc["start_date"], "%Y-%m-%d").date()
                     ed = datetime.strptime(tc["end_date"], "%Y-%m-%d").date()
                     admin_host = tc["admin_host"]
-                    depth = tc["depth"]  # "shallow" eller "deep"
+                    depth = tc["depth"]
 
                     games_by_date: Dict[str, List[Game]] = {}
 
                     for d in daterange(sd, ed):
                         date_s = d.strftime("%Y-%m-%d")
 
-                        # Läser HTML för given admin_host (oftast "null")
                         html = read_local_html(date_s, admin_host, str(base_html_dir))
                         if html is None:
                             raise FileNotFoundError(
@@ -583,9 +626,7 @@ def main(argv: List[str]) -> int:
 
                         games = parse_games_from_html(html, date_s)
 
-                        # shallow → admin_host tom, inga iterationer
                         if depth == "deep" and admin_host == "null":
-                            # deep-mode → fyll admin_host med hjälp av lokala
                             offline_fill_admin_hosts_for_date(date_s, games, base_html_dir)
 
                         games_by_date[date_s] = games
@@ -597,14 +638,13 @@ def main(argv: List[str]) -> int:
                                 f_out.write(g.to_line() + "\n")
 
                 # -----------------------------------------------------------
-                # B) offline-update: uppdatera befintliga matcher utifrån
-                #    ny null-HTML i tests/html/new/
+                # B) offline-update
                 # -----------------------------------------------------------
                 elif tc["mode"] == "offline-update":
                     sd = datetime.strptime(tc["start_date"], "%Y-%m-%d").date()
                     ed = datetime.strptime(tc["end_date"], "%Y-%m-%d").date()
                     if sd != ed:
-                        raise ValueError("[TEST] offline-update stöder just nu bara ett enda datum per testfall")
+                        raise ValueError("[TEST] offline-update supports only one date")
 
                     date_s = sd.strftime("%Y-%m-%d")
 
@@ -634,13 +674,14 @@ def main(argv: List[str]) -> int:
 
                     def key_from_line(line: str) -> BeforeKey:
                         cols = [c.strip() for c in line.split(";")]
-                        date = cols[0] if len(cols) > 0 else ""
-                        time = cols[1] if len(cols) > 1 else ""
-                        series_name = cols[2] if len(cols) > 2 else ""
-                        home_team = cols[5] if len(cols) > 5 else ""
-                        away_team = cols[6] if len(cols) > 6 else ""
-                        arena = cols[9] if len(cols) > 9 else ""
-                        return BeforeKey(date, time, series_name, home_team, away_team, arena)
+                        return BeforeKey(
+                            cols[0] if len(cols) > 0 else "",
+                            cols[1] if len(cols) > 1 else "",
+                            cols[2] if len(cols) > 2 else "",
+                            cols[5] if len(cols) > 5 else "",
+                            cols[6] if len(cols) > 6 else "",
+                            cols[9] if len(cols) > 9 else "",
+                        )
 
                     def update_match(bk: BeforeKey, g: Game) -> bool:
                         if bk.date != g.date:
@@ -656,25 +697,23 @@ def main(argv: List[str]) -> int:
 
                     updated_lines: List[str] = []
 
-                    for line in before_lines:
-                        raw = line.rstrip("\r\n")
+                    for raw in before_lines:
                         if not raw.strip():
                             updated_lines.append(raw)
                             continue
 
                         bk = key_from_line(raw)
                         match_game = None
+
                         for g in new_games:
                             if update_match(bk, g):
                                 match_game = g
                                 break
 
                         if match_game is None:
-                            # A) Silent ignore – lämna raden helt orörd
                             updated_lines.append(raw)
                         else:
                             cols = raw.split(";")
-                            # säkerställ minst 9 kolumner (result + result_link)
                             while len(cols) <= 8:
                                 cols.append("")
                             cols[7] = match_game.result
@@ -684,16 +723,14 @@ def main(argv: List[str]) -> int:
                     tmp_out = tmp_dir / f"{tc['name']}_output.txt"
                     tmp_out.write_text("\n".join(updated_lines), encoding="utf-8")
 
-                else:
-                    print(f"[TEST] Unknown mode on case {tc['name']}, skipping.")
-                    all_passed = False
-                    continue
-
                 print(f"[TEST] Wrote tmp output → {tmp_out}")
 
+                # === Compare sorted output ===
                 expected_path = Path("tests/expected") / tc["expected"]
                 if not expected_path.exists():
                     print(f"[TEST] Expected file missing: {expected_path}")
+                    case_result["status"] = "FAIL"
+                    results.append(case_result)
                     all_passed = False
                     continue
 
@@ -702,8 +739,10 @@ def main(argv: List[str]) -> int:
 
                 if expected_sorted == actual_sorted:
                     print(f"[TEST] PASS ✓ {tc['name']}")
+                    case_result["status"] = "PASS"
                 else:
                     print(f"[TEST] FAIL ✗ {tc['name']}")
+                    case_result["status"] = "FAIL"
                     all_passed = False
                     diff = difflib.unified_diff(
                         expected_sorted.splitlines(),
@@ -717,16 +756,45 @@ def main(argv: List[str]) -> int:
 
             except Exception as e:
                 print(f"[TEST] ERROR in test case {tc['name']}: {e}")
+                case_result["status"] = "ERROR"
                 all_passed = False
 
+            results.append(case_result)
+
+        # ============================================================
+        # NEW SUMMARY SECTION
+        # ============================================================
         print("\n[TEST] ===============================")
-        if all_passed:
+        print("[TEST] SUMMARY OF ALL TEST CASES")
+        print("================================")
+
+        passes = 0
+        fails = 0
+        errors = 0
+
+        for r in results:
+            st = r["status"]
+            if st == "PASS": passes += 1
+            elif st == "FAIL": fails += 1
+            else: errors += 1
+
+            print(f"  • {r['id']:>3}  {r['name']:<40}  →  {st}")
+
+        print("--------------------------------")
+        print(f"TOTAL: {len(results)} tests")
+        print(f"PASS : {passes}")
+        print(f"FAIL : {fails}")
+        print(f"ERROR: {errors}")
+        print("--------------------------------")
+
+        if fails == 0 and errors == 0:
             print("[TEST] ALL TESTS PASSED ✓")
             return 0
         else:
             print("[TEST] SOME TESTS FAILED ✗")
             return 1
 
+    # ===== Normal körning (ej -tf) =====
     start_date = datetime.strptime(args.start_date, "%Y-%m-%d").date()
     end_date = datetime.strptime(args.end_date, "%Y-%m-%d").date()
     admin_host = args.admin_host if args.admin_host is not None else "null"
