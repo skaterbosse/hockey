@@ -1,63 +1,102 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TEST_FILE_DEFAULT="tests/test_cases.txt"
-TEST_FILE="$TEST_FILE_DEFAULT"
-TMP_FILTERED=""
+FILTER=""
+if [[ $# -gt 0 ]]; then
+    FILTER="$1"
+fi
 
-# Om du anger argument → filtrera på case-id eller namn
-if [ "$#" -gt 0 ]; then
-  TMP_FILTERED="tests/test_cases.filtered.$$"
-  > "$TMP_FILTERED"
+TEST_FILE="tests/test_cases.txt"
 
-  # Bygg ett awk-skript som matchar på kolumn 1 (id) eller kolumn 2 (namn)
-  awk -F';' -v ARGS="$*" '
-    BEGIN {
-      n = split(ARGS, a, " ");
-      for (i = 1; i <= n; i++) wanted[a[i]] = 1;
-    }
-    {
-      id = $1;
-      name = $2;
-      for (w in wanted) {
-        if (id == w || name == w) {
-          print $0;
-          break;
-        }
-      }
-    }
-  ' "$TEST_FILE_DEFAULT" > "$TMP_FILTERED"
-
-  TEST_FILE="$TMP_FILTERED"
+# Skapa temporär filtrerad fil om filter används
+if [[ -n "$FILTER" ]]; then
+    TMP_FILTERED="tests/test_cases.filtered.$$"
+    grep "^$FILTER;" "$TEST_FILE" > "$TMP_FILTERED" || true
+    TEST_FILE="$TMP_FILTERED"
 fi
 
 echo "==================================================================="
 echo " getGames.py offline test runner"
 echo " Date      : $(date '+%Y-%m-%d %H:%M:%S')"
 echo " Test file : $TEST_FILE"
-if [ "$TEST_FILE" != "$TEST_FILE_DEFAULT" ]; then
-  echo " Filter    : $*"
-fi
+echo " Filter    : ${FILTER:-<none>}"
 echo "==================================================================="
 
-# Kör Python-test-runnern i getGames.py
-set +e
-python3 scripts/getGames.py -tf "$TEST_FILE" -td "tests/html"
-RC=$?
-set -e
+# Vi ersätter associative arrays med parallella listor
+IDS=()
+NAMES=()
+RESULTS=()
 
-echo "-------------------------------------------------------------------"
-if [ "$RC" -eq 0 ]; then
-  echo "SUMMARY : ALL TESTS PASSED ✓"
+PASS_COUNT=0
+FAIL_COUNT=0
+ERROR_COUNT=0
+TOTAL=0
+
+# Kör varje test case
+while IFS=';' read -r id name mode sd ed admin_host opts expected; do
+    [[ -z "$id" ]] && continue
+
+    TOTAL=$((TOTAL+1))
+    IDS+=("$id")
+    NAMES+=("$name")
+
+    echo ""
+    echo "[TEST] === CASE $id : $name ($mode) ==="
+
+    CMD="python3 scripts/getGames.py -tf $TEST_FILE"
+
+    set +e
+    OUTPUT=$($CMD 2>&1)
+    EXIT_CODE=$?
+    set -e
+
+    echo "$OUTPUT"
+
+    if [[ $EXIT_CODE -eq 0 ]]; then
+        RESULTS+=("PASS")
+        PASS_COUNT=$((PASS_COUNT+1))
+    elif grep -q "FAIL" <<< "$OUTPUT"; then
+        RESULTS+=("FAIL")
+        FAIL_COUNT=$((FAIL_COUNT+1))
+    else
+        RESULTS+=("ERROR")
+        ERROR_COUNT=$((ERROR_COUNT+1))
+    fi
+
+done < "$TEST_FILE"
+
+echo ""
+echo "[TEST] ================================================================"
+echo "[TEST] SUMMARY OF ALL TEST CASES"
+printf "%-4s %-40s %-10s\n" "ID" "NAME" "RESULT"
+echo "-----------------------------------------------------------------------"
+
+# Skriv summering
+for i in "${!IDS[@]}"; do
+    printf "%-4s %-40s %-10s\n" "${IDS[$i]}" "${NAMES[$i]}" "${RESULTS[$i]}"
+done
+
+echo "-----------------------------------------------------------------------"
+echo "TOTAL: $TOTAL tests"
+echo "PASS : $PASS_COUNT"
+echo "FAIL : $FAIL_COUNT"
+echo "ERROR: $ERROR_COUNT"
+echo "-----------------------------------------------------------------------"
+
+if [[ $FAIL_COUNT -eq 0 && $ERROR_COUNT -eq 0 ]]; then
+    echo "[TEST] ALL TESTS PASSED ✓"
+    EXIT=0
 else
-  echo "SUMMARY : SOME TESTS FAILED ✗ (exit code $RC)"
-fi
-echo "-------------------------------------------------------------------"
-
-# Städning
-if [ -n "$TMP_FILTERED" ] && [ -f "$TMP_FILTERED" ]; then
-  rm -f "$TMP_FILTERED"
+    echo "[TEST] SOME TESTS FAILED ✗"
+    EXIT=1
 fi
 
-exit "$RC"
+echo "[TEST] ================================================================"
+
+# Städa
+if [[ -n "${TMP_FILTERED:-}" ]]; then
+    rm -f "$TMP_FILTERED"
+fi
+
+exit $EXIT
 
