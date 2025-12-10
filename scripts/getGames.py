@@ -208,6 +208,8 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     p.add_argument("-ton", dest="test_online", action="store_true", help="Also run online tests if all offline PASS")
     p.add_argument("-td", dest="test_dir", help="Test directory with offline HTML files")
     p.add_argument("-sh", dest="shallow", action="store_true", help="Shallow mode: with -ah null, skip host iterations")
+    p.add_argument("-cid", dest="case_id", help="Test case ID (used by test-runner)", default=None)
+
     args = p.parse_args(argv)
 
     if args.test_file:
@@ -531,6 +533,9 @@ def main(argv: List[str]) -> int:
         tmp_dir.mkdir(parents=True, exist_ok=True)
 
         print(f"[TEST] Running test cases from: {test_file}")
+        
+        # Optional: limit execution to a single test case ID (from -cid)
+        only_cid = args.case_id
 
         test_cases = []
 
@@ -600,6 +605,8 @@ def main(argv: List[str]) -> int:
         results = []  # <-- för sammanfattning
 
         for tc in test_cases:
+            if only_cid and tc["id"] != only_cid:
+                continue
             print(f"\n[TEST] === CASE {tc['id']} : {tc['name']} ({tc['mode']}) ===")
             case_result = {"id": tc["id"], "name": tc["name"], "mode": tc["mode"], "status": "ERROR"}
 
