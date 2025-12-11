@@ -1,20 +1,46 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-FILTER=""
-if [[ $# -gt 0 ]]; then
-    FILTER="$1"
-fi
+#
+# --- Argumenthantering ---
+#
 
 TEST_FILE="tests/test_cases.txt"
+FILTER=""
 
-# Skapa temporär filtrerad fil om filter används
+# Om inga argument → kör standardfil utan filter
+if [[ $# -gt 0 ]]; then
+    # Om första argumentet är -tf
+    if [[ "$1" == "-tf" ]]; then
+        if [[ $# -lt 2 ]]; then
+            echo "ERROR: -tf requires a filename"
+            exit 1
+        fi
+        TEST_FILE="$2"
+        shift 2
+    fi
+
+    # Om det nu finns ytterligare argument → det är filter-ID
+    if [[ $# -gt 0 ]]; then
+        FILTER="$1"
+    fi
+fi
+
+
+#
+# --- Filtrering ---
+#
+TMP_FILTERED=""
 if [[ -n "$FILTER" ]]; then
     TMP_FILTERED="tests/test_cases.filtered.$$"
-    grep "^$FILTER;" "$TEST_FILE" > "$TMP_FILTERED" || true
+    grep "^${FILTER};" "$TEST_FILE" > "$TMP_FILTERED" || true
     TEST_FILE="$TMP_FILTERED"
 fi
 
+
+#
+# --- Header ---
+#
 echo "==================================================================="
 echo " getGames.py offline test runner"
 echo " Date      : $(date '+%Y-%m-%d %H:%M:%S')"
@@ -22,7 +48,10 @@ echo " Test file : $TEST_FILE"
 echo " Filter    : ${FILTER:-<none>}"
 echo "==================================================================="
 
-# Vi ersätter associative arrays med parallella listor
+
+#
+# --- Testkontainers ---
+#
 IDS=()
 NAMES=()
 RESULTS=()
@@ -32,9 +61,17 @@ FAIL_COUNT=0
 ERROR_COUNT=0
 TOTAL=0
 
-# Kör varje test case
+
+#
+# --- Kör testfallen rad för rad ---
+#
+
+# Läs testfilen radvis (skip kommentarer och tomma rader automatiskt)
 while IFS=';' read -r id name mode sd ed admin_host opts expected; do
-    [[ -z "$id" ]] && continue
+    # Hoppa över rader som saknar ID (tom rad / kommentar)
+    if [[ -z "${id// }" ]]; then
+        continue
+    fi
 
     TOTAL=$((TOTAL+1))
     IDS+=("$id")
@@ -65,13 +102,17 @@ while IFS=';' read -r id name mode sd ed admin_host opts expected; do
 
 done < "$TEST_FILE"
 
+
+#
+# --- Summering ---
+#
+
 echo ""
 echo "[TEST] ================================================================"
 echo "[TEST] SUMMARY OF ALL TEST CASES"
 printf "%-4s %-40s %-10s\n" "ID" "NAME" "RESULT"
 echo "-----------------------------------------------------------------------"
 
-# Skriv summering
 for i in "${!IDS[@]}"; do
     printf "%-4s %-40s %-10s\n" "${IDS[$i]}" "${NAMES[$i]}" "${RESULTS[$i]}"
 done
@@ -93,8 +134,11 @@ fi
 
 echo "[TEST] ================================================================"
 
-# Städa
-if [[ -n "${TMP_FILTERED:-}" ]]; then
+
+#
+# --- Städa ---
+#
+if [[ -n "${TMP_FILTERED}" ]]; then
     rm -f "$TMP_FILTERED"
 fi
 
