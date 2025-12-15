@@ -57,12 +57,7 @@ jobs:
     - name: Run shallow gatekeeper
       id: gatekeeper
       run: |
-        echo "Running shallow_update_gatekeeper.py..."
-        python3 scripts/shallow_update_gatekeeper.py > gatekeeper.out
-        cat gatekeeper.out
-
-        RUN_SHALLOW=$(grep RUN_SHALLOW gatekeeper.out | awk -F '=' '{print $2}')
-        echo "RUN_SHALLOW=$RUN_SHALLOW" >> $GITHUB_OUTPUT
+        python3 scripts/shallow_update_gatekeeper.py
 
 
     #######################################################################
