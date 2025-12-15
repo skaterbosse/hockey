@@ -89,6 +89,7 @@ jobs:
         run: |
           echo "Running updateLightSeriesResults.py"
           python3 scripts/updateLightSeriesResults.py \
+            -i data/games.csv \
             --date "${{ steps.dates.outputs.TODAY }}" \
             -dbg
 
