@@ -87,7 +87,6 @@ while IFS=';' read -r id name mode series_id version rest1 rest2 rest3; do
         -o "$TMP_OUT" \
         --html-file "$HTML_PATH" \
         --series-id "$series_id" \
-        -dbg \
         2>&1 | tee "tests/tmp/${name}_run.log"
     EXIT_CODE=$?
     set -e

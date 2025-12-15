@@ -4,7 +4,7 @@ shallow_update_gatekeeper.py
 Läser data/games.csv (;-separerad) och avgör om en shallow-uppdatering ska köras NU.
 
 Villkor (svensk tid, Europe/Stockholm):
-1)  matchstart - 1h45m  ≤  nu  ≤  matchstart
+1)  matchstart - 0h30m  ≤  nu  ≤  matchstart
 2)  matchstart ≤  nu  ≤  matchstart + 3h15m
 
 Skriver RUN_SHALLOW=true/false till GITHUB_OUTPUT (för GitHub Actions).
@@ -64,7 +64,7 @@ def main():
                 continue  # Endast dagens matcher styr shallow
 
             start = dt_local
-            pre_window = start - timedelta(hours=1, minutes=45)
+            pre_window = start - timedelta(hours=0, minutes=30)
             post_window = start + timedelta(hours=3, minutes=15)
 
             if pre_window <= now_se <= post_window:
