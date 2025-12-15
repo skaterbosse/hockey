@@ -3,7 +3,7 @@ name: update_shallow
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *"      # Normalt shallow-flöde: var 15:e minut
+    - cron: "30 19 * * *"      # Normalt shallow-flöde: var 15:e minut, temporary once 19:30
     - cron: "45 23 * * *"      # En gång per kväll kl 23:45: kör steg 3 (post-match update)
 
 permissions:
@@ -89,8 +89,7 @@ jobs:
       run: |
         echo "Running updateLightSeriesResults.py"
         python3 scripts/updateLightSeriesResults.py \
-          -i data/games.csv \
-          --date "$(date +'%Y-%m-%d')"
+          -i data/games.csv 
 
 
     #######################################################################
