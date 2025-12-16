@@ -71,11 +71,14 @@ jobs:
           python3 scripts/UpdateGames.py
 
       ####################################################################
-      # 3. Uppdatera series.csv utifrån dagens matcher
+      # 3. Uppdatera series.csv utifrån dagens matcher 
+      #    OCH 
+      #    Skapa "data/series_live.csv" som innehåller dagens serier
       ####################################################################
 
       - name: Update Series File
         run: |
+          rm data/series_live.csv
           echo "Running updateSeriesFile.py for TODAY"
           python3 scripts/updateSeriesFile.py \
             --date "${{ steps.dates.outputs.TODAY }}" \
@@ -85,13 +88,13 @@ jobs:
       # 4. Uppdatera LIGHT-seriernas resultat
       ####################################################################
 
-      - name: Update Light-series results
-        run: |
-          echo "Running updateLightSeriesResults.py"
-          python3 scripts/updateLightSeriesResults.py \
-            -i data/games.csv \
-            --date "${{ steps.dates.outputs.TODAY }}" \
-            -dbg
+      # - name: Update Light-series results
+      #   run: |
+      #     echo "Running updateLightSeriesResults.py"
+      #     python3 scripts/updateLightSeriesResults.py \
+      #       -i data/games.csv \
+      #       --date "${{ steps.dates.outputs.TODAY }}" \
+      #       -dbg
 
       ####################################################################
       # 5. Commit & push ändringar
