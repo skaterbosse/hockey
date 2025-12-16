@@ -35,6 +35,7 @@ import requests
 
 BASE_URL = "https://stats.swehockey.se"
 SERIES_FILE = "data/series.csv"
+SERIES_LIVE_FILE = "data/series_live.csv"
 GAMES_FILE = "data/games.csv"
 
 
@@ -163,6 +164,28 @@ def write_series_file(series_map: Dict[str, dict], dbg: bool = False) -> None:
     debug_print(dbg, f"Written {len(series_map)} series rows to {SERIES_FILE}")
 
 
+def write_series_live_file(series_live_map: Dict[str, dict], dbg: bool = False) -> None:
+    """Skriver en ny series_live.csv file med dagens serier"""
+    os.makedirs(os.path.dirname(SERIES_LIVE_FILE), exist_ok=True)
+
+    # Se till att vi alltid har samma header
+    fieldnames = ["SerieLink", "SerieName", "Live", "DoneToday"]
+
+    with open(SERIES_LIVE_FILE, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, delimiter=";", fieldnames=fieldnames)
+        writer.writeheader()
+        for link, row in series_live_map.items():
+            out_row = {
+                "SerieLink": row.get("SerieLink", link),
+                "SerieName": row.get("SerieName", ""),
+                "Live": row.get("Live", "No"),
+                "DoneToday": row.get("DoneToday", "No"),
+            }
+            writer.writerow(out_row)
+
+    debug_print(dbg, f"Written {len(series_live_map)} series rows to {SERIES_LIVE_FILE}")
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -208,11 +231,13 @@ def main(argv=None):
 
     # Läs befintlig series.csv
     series_map = load_existing_series(dbg=dbg)
+    series_live_map = {}
 
     # Lägg till nya serier som saknas
     for full_link, name in todays_series.items():
         if full_link in series_map:
             debug_print(dbg, f"Series already exists: {full_link}")
+            series_live_map[full_link] = series_map[full_link]
             continue
 
         debug_print(dbg, f"New series detected: {name} ({full_link})")
@@ -229,11 +254,21 @@ def main(argv=None):
             "SerieLink": full_link,
             "SerieName": name,
             "Live": live_flag,
-            "DoneToday": "No",
+            "DoneToday": "No",  
+        }
+
+        series_live_map[full_link] = {
+            "SerieLink": full_link,
+            "SerieName": name,
+            "Live": live_flag,
+            "DoneToday": "No",  
         }
 
     # Skriv tillbaka series.csv
     write_series_file(series_map, dbg=dbg)
+
+    #Skapa Live fil med dagens serier , "data/series_live.csv"
+    write_series_live_file(series_live_map,dbg=dbg)
     return 0
 
 
