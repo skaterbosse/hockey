@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import html as ihtml
+import json
 import re
 import sys
 import time
@@ -258,6 +259,26 @@ def _extract_period_or_ot_status(plain: str) -> Optional[str]:
 
     return None
 
+def emit_games_json(live_games: List[LiveGame]) -> None:
+    """
+    Emit minimal JSON for wrapper scripts.
+
+    Format:
+    [
+      {"gameLink": "/Game/Events/1087719", "status": "Final Score"},
+      ...
+    ]
+    """
+    out = []
+    for g in live_games:
+        if not g.game_link:
+            continue
+        out.append({
+            "gameLink": g.game_link,
+            "status": g.status_summary
+        })
+
+    print(json.dumps(out, ensure_ascii=False))
 
 def extract_live_info_for_match(html_text: str,
                                 home_team: str,
@@ -463,7 +484,10 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     p.add_argument("--live-url", help="Live URL (e.g. https://stats.swehockey.se/ScheduleAndResults/Live/19863).")
     p.add_argument("--series-id", help="Series id (used to derive URL if needed and filter games rows).")
     p.add_argument("--hash-file", help="Optional file to write live hash+timestamp to.")
+    p.add_argument("--emit-json", action="store_true",
+                   help="Emit JSON summary of updated games to stdout (for wrapper scripts)")
     p.add_argument("-dbg", "--debug", action="store_true", help="Debug logging to stderr")
+
     args = p.parse_args(argv)
 
     if not args.html_file and not args.live_url and not args.series_id:
@@ -473,7 +497,6 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
         args.live_url = f"https://stats.swehockey.se/ScheduleAndResults/Live/{args.series_id}"
 
     return args
-
 
 def main(argv: List[str]) -> int:
     args = parse_args(argv)
@@ -496,6 +519,9 @@ def main(argv: List[str]) -> int:
     if (args.series_id or args.hash_file) and live_games_for_hash:
         h = compute_live_hash(live_games_for_hash)
         write_hash_file(h, args.hash_file, series_id=args.series_id, debug=debug)
+
+    if args.emit_json:
+        emit_games_json(live_games_for_hash)
 
     return 0
 
