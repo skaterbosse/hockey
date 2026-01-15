@@ -75,6 +75,19 @@ class LiveGame:
     standing_parts: str = ""
     game_link: str = ""
 
+@dataclass
+class LiveGameStatus:
+    home_team: str
+    away_team: str
+    game_link: Optional[str]
+    status: Optional[str]
+    has_gamelink: bool
+    has_final_score: bool
+
+def _is_final_score_status(status: Optional[str]) -> bool:
+    if not status:
+        return False
+    return status.strip() == "Final Score"
 
 def fetch_live_html(url: str, debug: bool = False) -> str:
     headers = {"User-Agent": "Mozilla/5.0 (updateLightSeriesResults.py)"}
@@ -85,6 +98,64 @@ def fetch_live_html(url: str, debug: bool = False) -> str:
         data = resp.read()
     return data.decode("utf-8", errors="replace")
 
+def build_live_series_status(games_rows: List[List[str]],
+                             series_id: str) -> List[LiveGameStatus]:
+    statuses: List[LiveGameStatus] = []
+
+    for cols in games_rows:
+        if len(cols) < 19:
+            continue
+
+        link_to_series = cols[COL_LINK_TO_SERIES]
+        if series_id not in link_to_series:
+            continue
+
+        home = cols[COL_HOME_TEAM].strip()
+        away = cols[COL_AWAY_TEAM].strip()
+
+        game_link = cols[COL_RESULT_LINK].strip() or None
+
+        status_field = cols[COL_STATUS].strip()
+        summary = None
+        if status_field:
+            summary = status_field.split("|", 1)[0].strip() or None
+
+        statuses.append(
+            LiveGameStatus(
+                home_team=home,
+                away_team=away,
+                game_link=game_link,
+                status=summary,
+                has_gamelink=bool(game_link),
+                has_final_score=_is_final_score_status(summary),
+            )
+        )
+
+    return statuses
+
+def write_series_status_json(series_id: str,
+                             statuses: List[LiveGameStatus],
+                             output_path: str) -> None:
+    payload = {
+        "series_id": series_id,
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "games": [
+            {
+                "home": s.home_team,
+                "away": s.away_team,
+                "game_link": s.game_link,
+                "status": s.status,
+                "has_gamelink": s.has_gamelink,
+                "has_final_score": s.has_final_score,
+            }
+            for s in statuses
+        ],
+    }
+
+    Path(output_path).write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False),
+        encoding="utf-8"
+    )
 
 def load_live_html(html_file: Optional[str],
                    live_url: Optional[str],
@@ -484,8 +555,8 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     p.add_argument("--live-url", help="Live URL (e.g. https://stats.swehockey.se/ScheduleAndResults/Live/19863).")
     p.add_argument("--series-id", help="Series id (used to derive URL if needed and filter games rows).")
     p.add_argument("--hash-file", help="Optional file to write live hash+timestamp to.")
-    p.add_argument("--emit-json", action="store_true",
-                   help="Emit JSON summary of updated games to stdout (for wrapper scripts)")
+    p.add_argument("--emit-json", action="store_true", help="Emit JSON summary of updated games to stdout (for wrapper scripts)")
+    p.add_argument("--json-status-out", help="Write JSON status for the series to this file")
     p.add_argument("-dbg", "--debug", action="store_true", help="Debug logging to stderr")
 
     args = p.parse_args(argv)
@@ -523,6 +594,14 @@ def main(argv: List[str]) -> int:
     if args.emit_json:
         emit_games_json(live_games_for_hash)
 
+    if args.series_id and args.json_status_out:
+        statuses = build_live_series_status(rows, args.series_id)
+        write_series_status_json(
+            series_id=args.series_id,
+            statuses=statuses,
+            output_path=args.json_status_out,
+        )
+ 
     return 0
 
 

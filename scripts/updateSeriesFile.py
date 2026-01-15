@@ -43,6 +43,14 @@ def debug_print(dbg: bool, *args):
     if dbg:
         print("[updateSeriesFile]", *args)
 
+def extract_series_id(series_link: str) -> str:
+    """
+    Ex:
+      https://stats.swehockey.se/ScheduleAndResults/Overview/19863
+      -> 19863
+    """
+    m = re.search(r"/(\d+)$", series_link)
+    return m.group(1) if m else ""
 
 def read_games_for_date(target_date: str, dbg: bool = False) -> List[dict]:
     """Läser alla matcher i games.csv för ett visst datum."""
@@ -59,7 +67,6 @@ def read_games_for_date(target_date: str, dbg: bool = False) -> List[dict]:
 
     debug_print(dbg, f"Found {len(games)} games for {target_date} in {GAMES_FILE}")
     return games
-
 
 def load_existing_series(dbg: bool = False) -> Dict[str, dict]:
     """Läser befintlig series.csv som dict {SerieLink: row}."""
@@ -79,7 +86,6 @@ def load_existing_series(dbg: bool = False) -> Dict[str, dict]:
     debug_print(dbg, f"Loaded {len(series_map)} existing series from {SERIES_FILE}")
     return series_map
 
-
 def ensure_absolute_url(link: str) -> str:
     """Säkerställ att en serienlänk är absolut."""
     if link.startswith("http://") or link.startswith("https://"):
@@ -88,7 +94,6 @@ def ensure_absolute_url(link: str) -> str:
         return BASE_URL + link
     # Om det är något annat konstigt, försök ändå
     return BASE_URL.rstrip("/") + "/" + link.lstrip("/")
-
 
 def fetch_html(url: str, dbg: bool = False) -> str:
     try:
@@ -99,7 +104,6 @@ def fetch_html(url: str, dbg: bool = False) -> str:
     except Exception as e:
         debug_print(dbg, f"ERROR fetching {url}: {e}")
         return ""
-
 
 def detect_live_type(overview_html: str, serie_link: str, dbg: bool = False) -> str:
     """
@@ -141,7 +145,6 @@ def detect_live_type(overview_html: str, serie_link: str, dbg: bool = False) -> 
     debug_print(dbg, f"Live page has NO gamelinks → Live=YesLight (LIGHT) for {serie_link}")
     return "YesLight"
 
-
 def write_series_file(series_map: Dict[str, dict], dbg: bool = False) -> None:
     """Skriver tillbaka series.csv med givna rader."""
     os.makedirs(os.path.dirname(SERIES_FILE), exist_ok=True)
@@ -164,7 +167,7 @@ def write_series_file(series_map: Dict[str, dict], dbg: bool = False) -> None:
     debug_print(dbg, f"Written {len(series_map)} series rows to {SERIES_FILE}")
 
 
-def write_series_live_file(series_live_map: Dict[str, dict], dbg: bool = False) -> None:
+
     """Skriver en ny series_live.csv file med dagens serier"""
     os.makedirs(os.path.dirname(SERIES_LIVE_FILE), exist_ok=True)
 
@@ -185,6 +188,17 @@ def write_series_live_file(series_live_map: Dict[str, dict], dbg: bool = False) 
 
     debug_print(dbg, f"Written {len(series_live_map)} series rows to {SERIES_LIVE_FILE}")
 
+def write_series_live_file(series_ids: List[str], dbg: bool = False) -> None:
+    os.makedirs(os.path.dirname(SERIES_LIVE_FILE), exist_ok=True)
+
+    with open(SERIES_LIVE_FILE, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f, delimiter=";")
+        writer.writerow(["series_id", "last_polled", "done_for_today"])
+
+        for sid in sorted(series_ids):
+            writer.writerow([sid, "", "No"])
+
+    debug_print(dbg, f"Written {len(series_ids)} rows to {SERIES_LIVE_FILE}")
 
 def main(argv=None):
     if argv is None:
@@ -231,46 +245,17 @@ def main(argv=None):
 
     # Läs befintlig series.csv
     series_map = load_existing_series(dbg=dbg)
-    series_live_map = {}
 
-    # Lägg till nya serier som saknas
-    for full_link, name in todays_series.items():
-        if full_link in series_map:
-            debug_print(dbg, f"Series already exists: {full_link}")
-            series_live_map[full_link] = series_map[full_link]
-            continue
+    series_ids = []
 
-        debug_print(dbg, f"New series detected: {name} ({full_link})")
+    for full_link in todays_series.keys():
+        sid = extract_series_id(full_link)
+        if sid:
+            series_ids.append(sid)
 
-        overview_url = full_link
-        overview_html = fetch_html(overview_url, dbg=dbg)
-        if not overview_html:
-            debug_print(dbg, f"Could not fetch overview for {full_link}, default Live=No")
-            live_flag = "No"
-        else:
-            live_flag = detect_live_type(overview_html, full_link, dbg=dbg)
+    write_series_live_file(series_ids, dbg=dbg)
 
-        series_map[full_link] = {
-            "SerieLink": full_link,
-            "SerieName": name,
-            "Live": live_flag,
-            "DoneToday": "No",  
-        }
-
-        series_live_map[full_link] = {
-            "SerieLink": full_link,
-            "SerieName": name,
-            "Live": live_flag,
-            "DoneToday": "No",  
-        }
-
-    # Skriv tillbaka series.csv
-    write_series_file(series_map, dbg=dbg)
-
-    #Skapa Live fil med dagens serier , "data/series_live.csv"
-    write_series_live_file(series_live_map,dbg=dbg)
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())
