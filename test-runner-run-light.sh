@@ -19,7 +19,6 @@ set -euo pipefail
 ROOT_DIR="$(pwd)"
 RUN_SCRIPT="$ROOT_DIR/scripts/runLightSeriesUpdates.py"
 TEST_ROOT="$ROOT_DIR/tests/run_light"
-HASH_COMPARE="$TEST_ROOT/hash_compare.py"
 
 echo "==================================================================="
 echo " runLightSeriesUpdates.py test runner"
@@ -29,14 +28,23 @@ echo "==================================================================="
 
 FAIL=0
 PASS=0
+ERRORS=0
+TOTAL=0
+
+# For pretty summary
+RESULTS=()  # entries: "ID|NAME|RESULT"
 
 echo "[DBG] Scanning: $TEST_ROOT/TC*"
 
 ###############################################################################
 # Iterate over all test case directories
 ###############################################################################
+ID=0
 for TC_DIR in "$TEST_ROOT"/TC*; do
     [[ -d "$TC_DIR" ]] || continue
+
+    ID=$((ID + 1))
+    TOTAL=$((TOTAL + 1))
 
     TC_NAME="$(basename "$TC_DIR")"
 
@@ -56,6 +64,7 @@ for TC_DIR in "$TEST_ROOT"/TC*; do
     if [[ ! -d "$PRISTINE" ]]; then
         echo "[TEST] FAIL ✗ missing pristine/"
         FAIL=$((FAIL + 1))
+        RESULTS+=("${ID}|${TC_NAME}|FAIL")
         continue
     fi
 
@@ -63,6 +72,7 @@ for TC_DIR in "$TEST_ROOT"/TC*; do
         if [[ ! -f "$PRISTINE/$f" ]]; then
             echo "[TEST] FAIL ✗ missing pristine/$f"
             FAIL=$((FAIL + 1))
+            RESULTS+=("${ID}|${TC_NAME}|FAIL")
             continue 2
         fi
     done
@@ -110,8 +120,9 @@ for TC_DIR in "$TEST_ROOT"/TC*; do
     set -e
 
     if [[ $RC -ne 0 ]]; then
-        echo "[TEST] FAIL ✗ script exited with code $RC"
-        FAIL=$((FAIL + 1))
+        echo "[TEST] ERROR ✗ script exited with code $RC"
+        ERRORS=$((ERRORS + 1))
+        RESULTS+=("${ID}|${TC_NAME}|ERROR")
         continue
     fi
 
@@ -122,26 +133,32 @@ for TC_DIR in "$TEST_ROOT"/TC*; do
         if ! diff -u "$TC_DIR/expected/series_live.csv" "$SERIES_LIVE"; then
             echo "[TEST] FAIL ✗ series_live.csv differs"
             FAIL=$((FAIL + 1))
+            RESULTS+=("${ID}|${TC_NAME}|FAIL")
             continue
         fi
     fi
 
-    # Hash compare (normalized: ignore timestamp in hash files)
+    # Hash compare (timestamp-agnostic) via tests/run_light/hash_compare.py
     if [[ -d "$TC_DIR/expected/hashes" ]]; then
-        if [[ ! -f "$HASH_COMPARE" ]]; then
-            echo "[TEST] FAIL ✗ missing hash compare helper: $HASH_COMPARE"
-            FAIL=$((FAIL + 1))
-            continue
-        fi
-
         set +e
-        python3 "$HASH_COMPARE" "$TC_DIR"
-        RC_HASH=$?
+        python3 - <<PY
+import sys
+from pathlib import Path
+
+# Se till att vi kan importera tests/run_light/hash_compare.py
+sys.path.insert(0, str(Path("$TEST_ROOT").resolve()))
+from hash_compare import assert_hash_dir_matches
+
+ok = assert_hash_dir_matches("$TC_DIR")
+sys.exit(0 if ok else 1)
+PY
+        HRC=$?
         set -e
 
-        if [[ $RC_HASH -ne 0 ]]; then
-            echo "[TEST] FAIL ✗ hash directory differs (normalized compare)"
+        if [[ $HRC -ne 0 ]]; then
+            echo "[TEST] FAIL ✗ hash directory differs (timestamp-agnostic compare)"
             FAIL=$((FAIL + 1))
+            RESULTS+=("${ID}|${TC_NAME}|FAIL")
             continue
         fi
     fi
@@ -150,26 +167,38 @@ for TC_DIR in "$TEST_ROOT"/TC*; do
         if ! diff -u "$TC_DIR/expected/games.csv" "$GAMES_FILE"; then
             echo "[TEST] FAIL ✗ games.csv differs"
             FAIL=$((FAIL + 1))
+            RESULTS+=("${ID}|${TC_NAME}|FAIL")
             continue
         fi
     fi
 
     echo "[TEST] PASS ✓ $TC_NAME"
     PASS=$((PASS + 1))
+    RESULTS+=("${ID}|${TC_NAME}|PASS")
 done
 
 ###############################################################################
-# Summary
+# Summary (table format like other runners)
 ###############################################################################
 echo
-echo "==================================================================="
-echo "[TEST] SUMMARY"
+echo "[TEST] ================================================================"
+echo "[TEST] SUMMARY OF ALL RUN-LIGHT TEST CASES"
+printf "%-4s %-40s %-10s\n" "ID" "NAME" "RESULT"
+echo "-----------------------------------------------------------------------"
+
+for entry in "${RESULTS[@]}"; do
+    IFS="|" read -r rid rname rres <<< "$entry"
+    printf "%-4s %-40s %-10s\n" "$rid" "$rname" "$rres"
+done
+
+echo "-----------------------------------------------------------------------"
+echo "TOTAL: $TOTAL tests"
 echo "PASS : $PASS"
 echo "FAIL : $FAIL"
-echo "TOTAL: $((PASS + FAIL))"
-echo "==================================================================="
+echo "ERROR: $ERRORS"
+echo "-----------------------------------------------------------------------"
 
-if [[ $FAIL -ne 0 ]]; then
+if [[ $FAIL -ne 0 || $ERRORS -ne 0 ]]; then
     echo "[TEST] SOME TESTS FAILED ✗"
     exit 1
 fi
