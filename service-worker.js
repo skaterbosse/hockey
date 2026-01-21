@@ -42,6 +42,13 @@ self.addEventListener("activate", e => {
 });
 
 self.addEventListener("fetch", e => {
+  const url = new URL(e.request.url);
+
+  if (url.pathname.startsWith('/data/')) {
+    // 🚫 Ingen cache – alltid nätet
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );

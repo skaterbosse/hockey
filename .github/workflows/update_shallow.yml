@@ -3,8 +3,9 @@ name: update_shallow
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 19 * * *"      # Normalt shallow-flöde (din kommentar)
-    - cron: "45 23 * * *"      # En gång per kväll kl 23:45: kör steg 3 (post-match update)
+    - cron: "30 19 * * *"      # Tillfälling statiskt shallow-flöde (kommer ersättas senare med uppdatering var n:e minut mellan 08:00 och 23:00)
+    - cron: "30 20 * * *"      # Tillfälling statiskt shallow-flöde
+    - cron: "45 23 * * *"      # En gång per kväll kl 23:45: kör steg 3 (post-match update, permanent uppdatering)
 
 permissions:
   contents: write
