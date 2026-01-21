@@ -283,6 +283,150 @@ def load_series_live(path: str) -> Dict[str, dict]:
 
     return series
 
+def _extract_series_id_from_row(row: dict) -> Optional[str]:
+    """
+    Försöker plocka ut series_id från en rad i series.csv.
+
+    Stödjer olika format:
+      - series_id
+      - SerieLink (URL där sista segmentet är id)
+      - link_to_series (URL där sista segmentet är id)
+    """
+    sid = (row.get("series_id") or "").strip()
+    if sid:
+        return sid
+
+    link = (row.get("SerieLink") or row.get("link_to_series") or "").strip()
+    if link:
+        parts = link.rstrip("/").split("/")
+        if parts:
+            sid2 = parts[-1].strip()
+            if sid2:
+                return sid2
+
+    return None
+
+def load_series_catalog(series_csv_path: str, *, debug: bool = False) -> List[dict]:
+    """
+    Läser data/series.csv (eller motsvarande) och returnerar rader (dict).
+
+    Viktigt: om filen inte finns returneras [] (bootstrap blir no-op).
+    """
+    if not os.path.exists(series_csv_path):
+        if debug:
+            print(f"[DBG] No series catalog found at {series_csv_path} → bootstrap skipped")
+        return []
+
+    rows: List[dict] = []
+    with open(series_csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f, delimiter=";")
+        for row in reader:
+            if row:
+                rows.append(row)
+
+    if debug:
+        print(f"[DBG] Loaded {len(rows)} series rows from {series_csv_path}")
+
+    return rows
+
+def bootstrap_series_live(
+    series_live_path: str,
+    *,
+    series_csv_path: Optional[str] = None,
+    debug: bool = False,
+) -> bool:
+    """
+    Bootstrappar series_live.csv om den:
+      - saknas, eller
+      - endast innehåller header (0 serier), eller
+      - saknar en eller flera serier som borde finnas.
+
+    Källan är series.csv och vi tar ENDAST Live=YesLight.
+
+    Returnerar True om series_live.csv skrevs/ändrades, annars False.
+
+    Viktigt för tester:
+      - Om series.csv saknas i testkataloger ska detta vara en NO-OP.
+      - Vi skriver deterministiskt med '\n' och sorterad ordning.
+    """
+    # Bestäm default series.csv om ej angivet
+    if series_csv_path is None:
+        base_dir = os.path.dirname(series_live_path) or "."
+        series_csv_path = os.path.join(base_dir, "series.csv")
+
+    # Om series.csv saknas: gör inget (tester ska inte påverkas)
+    catalog = load_series_catalog(series_csv_path, debug=debug)
+    if not catalog:
+        return False
+
+    # Läs befintlig series_live om den finns
+    existing_map: Dict[str, dict] = {}
+    if os.path.exists(series_live_path):
+        try:
+            existing_map = load_series_live(series_live_path)
+        except Exception:
+            # Om filen är trasig: behandla som tom (vi bygger om)
+            existing_map = {}
+
+    # Plocka "YesLight"-serier från catalog
+    want_ids: List[str] = []
+    for row in catalog:
+        live = (row.get("Live") or "").strip()
+        if live != "YesLight":
+            continue
+        sid = _extract_series_id_from_row(row)
+        if sid:
+            want_ids.append(sid)
+
+    want_ids = sorted(set(want_ids))
+
+    if not want_ids:
+        if debug:
+            print("[DBG] No YesLight series found in series.csv → bootstrap skipped")
+        return False
+
+    # Lägg till saknade serier (utan att röra befintliga timestamps)
+    changed = False
+    for sid in want_ids:
+        if sid not in existing_map:
+            existing_map[sid] = {
+                "series_id": sid,
+                "last_polled": None,
+                "done_for_today": False,
+            }
+            changed = True
+
+    # Om filen saknas eller bara header: changed ska bli True (om vi lade till något)
+    # Men om den saknar rader och vi faktiskt har want_ids, då lägger vi till => True.
+    if not changed:
+        # Ingenting att göra
+        return False
+
+    # Skriv deterministiskt (och undvik CRLF/variation)
+    # Om du redan har write_series_live_if_changed så kan du använda den.
+    try:
+        write_series_live_if_changed(series_live_path, existing_map)
+    except NameError:
+        # Fallback om write_series_live_if_changed inte finns i din version
+        import io
+        buf = io.StringIO()
+        w = csv.writer(buf, delimiter=";", lineterminator="\n")
+        w.writerow(["series_id", "last_polled", "done_for_today"])
+        for sid in sorted(existing_map.keys()):
+            s = existing_map[sid]
+            w.writerow([
+                s["series_id"],
+                s["last_polled"].isoformat() if s.get("last_polled") else "",
+                "Yes" if s.get("done_for_today") else "No",
+            ])
+        with open(series_live_path, "w", encoding="utf-8", newline="") as f:
+            f.write(buf.getvalue())
+
+    if debug:
+        print(f"[DBG] Bootstrapped series_live.csv with {len(want_ids)} YesLight series (added new ones)")
+
+    return True
+
 def write_series_live_if_changed(path: str, series_map: Dict[str, dict]) -> bool:
     """
     Skriver series_live.csv endast om den nya serialiseringen skiljer sig från filens nuvarande innehåll.
@@ -506,6 +650,14 @@ def main(argv):
 
     if debug:
         print(f"[DBG] Loaded {len(games_rows)} games from {args.games_file}")
+
+    # ✅ Bootstrap series_live.csv om den är tom/header-only eller saknar YesLight-serier
+    bootstrap_series_live(
+        args.series_live_file,
+        # series_csv_path=None betyder: leta i samma katalog som series_live.csv efter "series.csv"
+        series_csv_path=None,
+        debug=debug,
+    )
 
     run_light_updates(date_str=now_dt.strftime("%Y-%m-%d"),
                       now=now_dt,

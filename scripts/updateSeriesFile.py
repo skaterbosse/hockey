@@ -28,6 +28,7 @@ import sys
 import os
 import re
 from datetime import datetime
+from datetime import date
 from typing import Dict, List
 
 import requests
@@ -198,7 +199,12 @@ def write_series_live_file(series_ids: List[str], dbg: bool = False) -> None:
         for sid in sorted(series_ids):
             writer.writerow([sid, "", "No"])
 
+    #Write a stamp file to be able to determine the date for which the SERIES_LIVE_FILE is valid
+    with open("data/series_live.date", "w", encoding="utf-8") as f:
+        f.write(date.today().strftime("%Y-%m-%d") + "\n")
+
     debug_print(dbg, f"Written {len(series_ids)} rows to {SERIES_LIVE_FILE}")
+
 
 def main(argv=None):
     if argv is None:

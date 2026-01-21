@@ -3,7 +3,7 @@ name: update_shallow
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 19 * * *"      # Normalt shallow-flöde: var 15:e minut, temporary once 19:30
+    - cron: "30 19 * * *"      # Normalt shallow-flöde (din kommentar)
     - cron: "45 23 * * *"      # En gång per kväll kl 23:45: kör steg 3 (post-match update)
 
 permissions:
@@ -49,7 +49,7 @@ jobs:
           echo "NIGHTLY_RUN=false" >> $GITHUB_ENV
         fi
         echo "NIGHTLY_RUN=$NIGHTLY_RUN"
-    
+
 
     #######################################################################
     # 4) Gatekeeper – avgör om shallow ska köras
@@ -70,6 +70,26 @@ jobs:
         echo "Shallow update NOT allowed at this time window."
         exit 0
 
+    #######################################################################
+    # STOPPA SHALLOW-FLÖDE om deep flödet inte skapat aktuell series_live data
+    #######################################################################
+    - name: Stop early when series_live is NOK  
+      run: |
+        TODAY=$(date +'%Y-%m-%d')
+
+        if [[ ! -f data/series_live.date ]]; then
+          echo "series_live.date missing → likely deep didn't run. Stopping shallow."
+          exit 0
+        fi
+
+        STAMP=$(cat data/series_live.date | tr -d '\r\n')
+
+        if [[ "$STAMP" != "$TODAY" ]]; then
+          echo "series_live is stale (stamp=$STAMP, today=$TODAY) → stopping shallow."
+          exit 0
+        fi
+
+        echo "series_live stamp OK ($STAMP)"
 
     #######################################################################
     # 5) Fetch GameLinks for LIVE-series
@@ -82,14 +102,31 @@ jobs:
 
 
     #######################################################################
-    # 6) Update LIGHT-series (ingen Event-polling)
+    # 6) Update LIGHT-series (wrapper polling engine)
     #######################################################################
-    - name: Update Light-series results
+    - name: Update Light-series (wrapper polling engine)
       if: steps.gatekeeper.outputs.RUN_SHALLOW == 'true'
       run: |
-        echo "Running updateLightSeriesResults.py"
-        python3 scripts/updateLightSeriesResults.py \
-          -i data/games.csv 
+        echo "Running runLightSeriesUpdates.py"
+
+        # state-katalog för hashar (persistas via commit)
+        mkdir -p data/hashes
+
+        # series_live.csv måste finnas (initiera från template vid behov)
+        if [[ ! -f data/series_live.csv ]]; then
+          if [[ -f data/series_live.template.csv ]]; then
+            echo "Initializing data/series_live.csv from template"
+            cp data/series_live.template.csv data/series_live.csv
+          else
+            echo "ERROR: data/series_live.csv missing and no data/series_live.template.csv found"
+            exit 1
+          fi
+        fi
+
+        python3 scripts/runLightSeriesUpdates.py \
+          --gf data/games.csv \
+          --slf data/series_live.csv \
+          --hash-dir data/hashes
 
 
     #######################################################################
@@ -143,9 +180,14 @@ jobs:
         git config --local user.email "actions@github.com"
         git config --local user.name  "GitHub Actions"
 
+        # OBS: vi inkluderar nu state för light-engine:
+        #  - data/series_live.csv
+        #  - data/hashes/*.hash
         git add data/games.csv \
                data/live_games.csv \
                data/series.csv \
+               data/series_live.csv \
+               data/hashes/ \
                events/
 
         if git diff --cached --quiet; then
