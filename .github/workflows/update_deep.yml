@@ -78,7 +78,7 @@ jobs:
 
       - name: Update Series File
         run: |
-          rm data/series_live.csv
+          rm -f data/series_live.csv
           echo "Running updateSeriesFile.py for TODAY"
           python3 scripts/updateSeriesFile.py \
             --date "${{ steps.dates.outputs.TODAY }}" \
