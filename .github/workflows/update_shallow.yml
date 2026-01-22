@@ -187,9 +187,10 @@ jobs:
         git add data/games.csv \
                data/live_games.csv \
                data/series.csv \
-               data/series_live.csv \
-               data/hashes/ \
-               events/
+               data/series_live.csv
+#               data/series_live.date
+#               data/hashes/ \
+#               events/
 
         if git diff --cached --quiet; then
           echo "No changes to commit."
