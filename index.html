@@ -851,6 +851,98 @@ function haversine(lat1,lon1,lat2,lon2){
 }
 </script>
 
+<script>
+/**
+ * Pollar games.meta.json och laddar games.csv endast om hash för currentDateISO ändrats.
+ * SUPERKONTROLLERAT: rör inte resten av appen.
+ */
+(function(){
+  const META_URL = 'data/games.meta.json';
+  const CSV_URL  = 'data/games.csv';
+  const POLL_MS  = 120000; // 2 minuter
+
+  // Senast använda hash per datum (så vi inte laddar i onödan)
+  const lastHashByDate = new Map();
+
+  function cacheBust(url){
+    const sep = url.includes('?') ? '&' : '?';
+    return url + sep + 't=' + Date.now();
+  }
+
+  async function fetchTextNoCache(url){
+    const res = await fetch(cacheBust(url), {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    if(!res.ok) throw new Error(`${url} -> HTTP ${res.status}`);
+    return res.text();
+  }
+
+  async function fetchJsonNoCache(url){
+    const res = await fetch(cacheBust(url), {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    if(!res.ok) throw new Error(`${url} -> HTTP ${res.status}`);
+    return res.json();
+  }
+
+  async function reloadGamesCsvAndRender(){
+    const csvTxt = await fetchTextNoCache(CSV_URL);
+    // använder din befintliga parseCSV + allGames
+    allGames = parseCSV(csvTxt);
+
+    // bygg om serie-trädet om funktionen finns (som i din nuvarande kod)
+    if(typeof buildSeriesTreeFromGames === "function"){
+      buildSeriesTreeFromGames(allGames);
+    }
+
+    // rendera om
+    if(typeof render === "function"){
+      render();
+    }
+  }
+
+  async function pollOnce(){
+    // Om användaren inte ens har ett datum ännu, avvakta.
+    if(!currentDateISO) return;
+
+    const meta = await fetchJsonNoCache(META_URL);
+    const day = currentDateISO;
+
+    // meta.by_date[day] kan saknas (om ert datumfönster inte inkluderar dagen)
+    const dayObj = meta && meta.by_date ? meta.by_date[day] : null;
+    const dayHash =
+      (dayObj && (dayObj.hash || dayObj.global || dayObj.series_view || dayObj.place_view)) || null;
+
+    // Om vi inte hittar hash för dagen: gör inget (superkontrollerat).
+    if(!dayHash) return;
+
+    const prev = lastHashByDate.get(day);
+    if(prev === undefined){
+      // första gången: spara men ladda inte om (för att undvika extra laddning)
+      lastHashByDate.set(day, dayHash);
+      return;
+    }
+
+    if(prev !== dayHash){
+      lastHashByDate.set(day, dayHash);
+      await reloadGamesCsvAndRender();
+    }
+  }
+
+  // Start: vi pollar första gången efter att sidan initierat data.
+  // Vi kör en mild start: vänta lite så att initiala fetchar hinner bli klara.
+  setTimeout(()=>{
+    pollOnce().catch(err=>console.warn("pollOnce:", err));
+    setInterval(()=>pollOnce().catch(err=>console.warn("pollOnce:", err)), POLL_MS);
+  }, 3000);
+
+  // Om användaren byter datum: se till att vi inte triggar reload bara pga datumbyte.
+  // (Vi lagrar hash för nya dagen när pollOnce körs.)
+})();
+</script>
+
 </body>
 </html>
 
