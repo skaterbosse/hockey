@@ -42,6 +42,7 @@ import json
 import re
 import sys
 import time
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -52,6 +53,21 @@ import urllib.request
 # ---------------------------------------------------------
 # Hjälpfunktioner
 # ---------------------------------------------------------
+DEBUG_TIMING = os.getenv("LS_TIMING") == "1"
+
+def _ts():
+    return time.perf_counter()
+
+def _dt_ms(t0):
+    return int((time.perf_counter() - t0) * 1000)
+
+def log(msg):
+    print(msg, flush=True)
+
+def dbg(msg):
+    if DEBUG_TIMING:
+        print(f"[TIMING] {msg}", flush=True)
+
 def normalize_ws(s: str) -> str:
     if not s:
         return ""

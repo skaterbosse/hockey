@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from typing import Optional, List
 import csv
 import shutil
+import time
 import os
 import subprocess
 from typing import Dict
@@ -17,6 +18,21 @@ DEFAULT_INACTIVITY_MINUTES = 45
 DEFAULT_START_POLLING_MINUTES = 30
 DEFAULT_MAX_MATCH_MINUTES = 210   # 3h30m
 NEVER_STARTED_GRACE_MINUTES = 60
+
+DEBUG_TIMING = os.getenv("LS_TIMING") == "1"
+
+def _ts():
+    return time.perf_counter()
+
+def _dt_ms(t0):
+    return int((time.perf_counter() - t0) * 1000)
+
+def log(msg):
+    print(msg, flush=True)
+
+def dbg(msg):
+    if DEBUG_TIMING:
+        print(f"[TIMING] {msg}", flush=True)
 
 def select_series_to_poll(series_rows, debug=False):
     """
@@ -562,7 +578,11 @@ def run_light_updates(
     series_map = load_series_live(series_live_path)
     any_series_live_change = False
 
+    dbg(f"Starting light update loop, {len(series_map)} series in series_live.csv")
+
     for series_id, series in series_map.items():
+        t_series = _ts()
+        dbg(f"Series {series_id} START")
         if series.get("done_for_today"):
             continue
 
@@ -598,6 +618,7 @@ def run_light_updates(
 
         # Kör update
         if not dry_run:
+            dbg(f"Series {series_id}: invoking updateLightSeriesResults.py")
             run_update_light_series(
                 series_id=series_id,
                 games_file=games_file,
@@ -605,6 +626,7 @@ def run_light_updates(
                 hash_dir=hash_dir,   # ✅ pass-through så TC3-hash kan uppdateras
                 debug=debug,
             )
+            dbg(f"Series {series_id}: updateLightSeriesResults.py DONE in {_dt_ms(t_series)} ms")
 
         # Ladda om games efter update
         games_rows = load_games(games_file)
@@ -615,6 +637,8 @@ def run_light_updates(
 
         if debug:
             print(f"[DBG] Series {series_id}: polled → last_polled={now.isoformat()}")
+
+        dbg(f"Series {series_id} END total {_dt_ms(t_series)} ms")
 
     if any_series_live_change:
         write_series_live_if_changed(series_live_path, series_map)
@@ -637,6 +661,7 @@ def parse_args(argv):
     return p.parse_args(argv)
 
 def main(argv):
+    t_start = _ts()
     args = parse_args(argv)
     debug = bool(args.debug)
 
@@ -674,6 +699,7 @@ def main(argv):
     if args.dry_run:
         print("Dry-run mode: no actions performed.")
 
+    dbg(f"TOTAL runtime { _dt_ms(t_start) } ms")
     return 0
 
 if __name__ == "__main__":
