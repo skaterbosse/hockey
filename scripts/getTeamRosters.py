@@ -3,6 +3,7 @@
 
 import argparse
 import datetime as _dt
+import platform
 import re
 import shlex
 import shutil
@@ -14,7 +15,6 @@ from typing import Dict, List
 
 DEFAULT_SEASON = "2026-2027"
 SEASON_RE = re.compile(r"\b20\d{2}-20\d{2}\b")
-HISTORY_RETENTION_DAYS = 31
 
 
 def debug(msg: str, enabled: bool) -> None:
@@ -40,12 +40,43 @@ def write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def build_shell_pipeline(url: str, season: str, output_file: Path, sed_mode: str) -> str:
+    if sed_mode == "mac":
+        sed_fix_1 = 'sed -E "s/<\\!\\-\\-.*\\-\\->\\(/;/"'
+        sed_fix_2 = 'sed -E "s/\\);/;/"'
+    else:
+        sed_fix_1 = 'sed -E "s/<\\!\\-\\-.*\\-\\->[(]/;/"'
+        sed_fix_2 = 'sed -E "s/[)];/;/"'
+
+    return f"""curl -L -s {shlex.quote(url)} | egrep -a {shlex.quote(season)} | sed 's/https/\\nhttps/g' | egrep -n -B 20000 '<!-- --> Staff' | egrep -A 20000 'Jersey Number' | egrep 'href=\\"/player/|<span title=\\"[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\\">[1-2][0-9][0-9][0-9]<' | sed -E "s/.*href=\\"\\/player\\//href=\\"\\/player\\//" | sed -E "s/<\\/a><\\/div>.*span title=\\"[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\\">([1-2][0-9][0-9][0-9])<.*/;BIRTYEAR\\1/" | sed -E "s/.*span title=\\"[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\\">([1-2][0-9][0-9][0-9])<.*/;_BIRTYEAR\\1/" | tr '\\n' ' ' | sed -E "s/href=\\"\\/player\\//\\nhref=\\"\\/player\\//g" | sed -E "s/<\\/a><span class=.*BIRTYEAR/;/" | sed -E "s/)<\\/a><a class=.*;BIRTYEAR/;/" | sed 's/);BIRTYEAR/;/' | sed -E "s/\\">/;/" | {sed_fix_1} | {sed_fix_2} | sed -E "s/^href=\\"/https:\\/\\/www\\.eliteprospects\\.com/" | sed -E "s/)<\\/a><a class=.*;/;/" > {shlex.quote(str(output_file))}"""
+
+
+def detect_sed_mode(dbg: bool) -> str:
+    system = platform.system().lower()
+    if system == "darwin":
+        debug("Plattform detekterad: macOS / BSD sed", dbg)
+        return "mac"
+    debug(f"Plattform detekterad: {platform.system()} / GNU sed-läge", dbg)
+    return "gnu"
+
+
 def run_shell_pipeline(url: str, season: str, output_file: Path, dbg: bool) -> None:
-    shell_cmd = f"""curl -L -s {shlex.quote(url)} | egrep -a {shlex.quote(season)} | sed 's/https/\\nhttps/g' | egrep -n -B 20000 '<!-- --> Staff' | egrep -A 20000 'Jersey Number' | egrep 'href=\\"/player/|<span title=\\"[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\\">[1-2][0-9][0-9][0-9]<' | sed -E "s/.*href=\\"\\/player\\//href=\\"\\/player\\//" | sed -E "s/<\\/a><\\/div>.*span title=\\"[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\\">([1-2][0-9][0-9][0-9])<.*/;BIRTYEAR\\1/" | sed -E "s/.*span title=\\"[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\\">([1-2][0-9][0-9][0-9])<.*/;_BIRTYEAR\\1/" | tr '\\n' ' ' | sed -E "s/href=\\"\\/player\\//\\nhref=\\"\\/player\\//g" | sed -E "s/<\\/a><span class=.*BIRTYEAR/;/" | sed -E "s/)<\\/a><a class=.*;BIRTYEAR/;/" | sed 's/);BIRTYEAR/;/' | sed -E "s/\\">/;/" | sed -E "s/<\\!\\-\\-.*\\-\\->\\(/;/" | sed -E "s/\\);/;/" | sed -E "s/^href=\\"/https:\\/\\/www\\.eliteprospects\\.com/" | sed -E "s/)<\\/a><a class=.*;/;/" > {shlex.quote(str(output_file))}"""
+    sed_mode = detect_sed_mode(dbg)
+    shell_cmd = build_shell_pipeline(url, season, output_file, sed_mode)
     debug(f"Kör pipeline för {url}", dbg)
-    res = subprocess.run(shell_cmd, shell=True, executable="/bin/bash", capture_output=True, text=True)
+    debug(f"Sed-läge: {sed_mode}", dbg)
+
+    res = subprocess.run(
+        shell_cmd,
+        shell=True,
+        executable="/bin/bash",
+        capture_output=True,
+        text=True,
+    )
     if res.returncode != 0:
-        raise RuntimeError(f"Pipeline misslyckades för {url}\nSTDERR:\n{res.stderr}\nSTDOUT:\n{res.stdout}")
+        raise RuntimeError(
+            f"Pipeline misslyckades för {url}\nSTDERR:\n{res.stderr}\nSTDOUT:\n{res.stdout}"
+        )
     if dbg and res.stderr:
         print(res.stderr, file=sys.stderr, end="")
 
@@ -56,9 +87,13 @@ def parse_teams_file(teams_file: Path, season: str, dbg: bool) -> List[Dict[str,
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
+
         parts = [p.strip() for p in line.split(";")]
         if len(parts) < 6:
-            raise ValueError(f"Fel format i {teams_file} rad {lineno}: förväntade minst 6 kolumner, fick {len(parts)}: {raw}")
+            raise ValueError(
+                f"Fel format i {teams_file} rad {lineno}: förväntade minst 6 kolumner, fick {len(parts)}: {raw}"
+            )
+
         team = {
             "url": replace_season(parts[0], season),
             "roster_filename": replace_season(parts[1], season),
@@ -68,8 +103,10 @@ def parse_teams_file(teams_file: Path, season: str, dbg: bool) -> List[Dict[str,
             "logo_filename": parts[5],
         }
         teams.append(team)
+
         debug(
-            f"Team rad {lineno}: {team['url']} -> {team['roster_filename']} ({team['series']} / {team['series_shortname']} / {team['team_name']} / {team['logo_filename']})",
+            f"Team rad {lineno}: {team['url']} -> {team['roster_filename']} "
+            f"({team['series']} / {team['series_shortname']} / {team['team_name']} / {team['logo_filename']})",
             dbg,
         )
     return teams
@@ -129,6 +166,7 @@ def make_young_summary_file(output_dir: Path, season: str, all_players_file: Pat
         birthyear = parts[-1].strip()
         if birthyear in young_years:
             counts[roster_name] = counts.get(roster_name, 0) + 1
+
     out = output_dir / f"lag_summering_2003_{season}.txt"
     rows = sorted(counts.items(), key=lambda x: (x[1], x[0]))
     text = "\n".join(f"{cnt:4d} {name}" for name, cnt in rows)
@@ -144,45 +182,26 @@ def save_diff(old_file: Path | None, new_file: Path, dbg: bool) -> Path:
         write_text(diff_file, f"Ingen tidigare fil att jämföra med för {new_file.name}\n")
         debug(f"Ingen diff möjlig för {new_file}, gammal fil saknas", dbg)
         return diff_file
-    res = subprocess.run(["diff", "-u", str(old_file), str(new_file)], capture_output=True, text=True)
+
+    res = subprocess.run(
+        ["diff", "-u", str(old_file), str(new_file)],
+        capture_output=True,
+        text=True,
+    )
+
     if res.returncode > 1:
         raise RuntimeError(f"diff misslyckades för {old_file} och {new_file}: {res.stderr}")
+
     write_text(diff_file, res.stdout if res.stdout else "Inga skillnader.\n")
     debug(f"Skapade diff-fil {diff_file}", dbg)
     return diff_file
 
 
-def save_history_snapshot(file_path: Path, output_dir: Path, season: str, prefix: str, dbg: bool) -> Path:
-    history_dir = output_dir / "history"
-    history_dir.mkdir(parents=True, exist_ok=True)
-    date_tag = _dt.datetime.now().strftime("%Y%m%d")
-    snapshot = history_dir / f"{prefix}_{season}_{date_tag}.txt"
-    shutil.copy2(file_path, snapshot)
-    debug(f"Historik-snapshot sparad: {snapshot}", dbg)
-    return snapshot
-
-
-def purge_old_history(output_dir: Path, season: str, dbg: bool) -> None:
-    history_dir = output_dir / "history"
-    if not history_dir.exists():
-        return
-    cutoff = _dt.datetime.now() - _dt.timedelta(days=HISTORY_RETENTION_DAYS)
-    pattern = re.compile(rf"^(alla_spelare|lag_summering)_{re.escape(season)}_(\d{{8}})\.txt$")
-    for path in history_dir.iterdir():
-        m = pattern.match(path.name)
-        if not m:
-            continue
-        try:
-            snap_dt = _dt.datetime.strptime(m.group(2), "%Y%m%d")
-        except ValueError:
-            continue
-        if snap_dt < cutoff:
-            path.unlink(missing_ok=True)
-            debug(f"Raderade gammal historikfil: {path}", dbg)
-
-
 def build_arg_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="getTeamRosters.py", description="Hämtar aktuella rosters från Eliteprospects och skapar roster-, summerings- och diff-filer.")
+    p = argparse.ArgumentParser(
+        prog="getTeamRosters.py",
+        description="Hämtar aktuella rosters från Eliteprospects och skapar roster-, summerings- och diff-filer.",
+    )
     p.add_argument("-tf", "--teams-file", required=True, help="Path till TEAMS FILE.")
     p.add_argument("-s", "--season", default=DEFAULT_SEASON, help=f"Säsong, default {DEFAULT_SEASON}.")
     p.add_argument("-od", "--output-directory", required=True, help="Katalog där genererade filer sparas.")
@@ -192,6 +211,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_arg_parser().parse_args()
+
     teams_file = Path(args.teams_file)
     output_dir = Path(args.output_directory)
     season = args.season
@@ -202,6 +222,7 @@ def main() -> int:
         return 2
 
     output_dir.mkdir(parents=True, exist_ok=True)
+
     teams = parse_teams_file(teams_file, season, dbg)
     if not teams:
         print("Inga lag hittades i TEAMS FILE.", file=sys.stderr)
@@ -214,6 +235,7 @@ def main() -> int:
     old_summary = backup_if_exists(summary_file, dbg)
 
     roster_filenames: List[str] = []
+
     for team in teams:
         url = team["url"]
         roster_filename = team["roster_filename"]
@@ -227,10 +249,6 @@ def main() -> int:
 
     diff_all = save_diff(old_all_players, new_all_players, dbg)
     diff_summary = save_diff(old_summary, new_summary, dbg)
-
-    save_history_snapshot(new_all_players, output_dir, season, "alla_spelare", dbg)
-    save_history_snapshot(new_summary, output_dir, season, "lag_summering", dbg)
-    purge_old_history(output_dir, season, dbg)
 
     print("Klar.")
     print(f"Rosterfiler skapade i: {output_dir}")
