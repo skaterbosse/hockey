@@ -1,0 +1,53 @@
+name: FetchAndPresentEpRosters
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 16 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-and-present:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Ensure output directories exist
+        run: |
+          mkdir -p ep_rosters/output
+          mkdir -p ep_rosters/output/history
+
+      - name: Run getTeamRosters
+        run: |
+          python3 ./scripts/getTeamRosters.py             -tf ./ep_rosters/lag_2026_2027.txt             -od ./ep_rosters/output             -s 2026-2027
+
+      - name: Run makeTeamCatalog
+        run: |
+          python3 ./scripts/makeTeamCatalog.py             -o ./SeriesAndTeams.html             -tf ./ep_rosters/lag_2026_2027.txt             -if ./ep_rosters/output             -s 2026-2027             -lp ./hockey/logos/             -lp_script ./hockey/logos
+
+      - name: Commit and push generated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add SeriesAndTeams.html
+          git add ep_rosters/output
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Update EP rosters and catalog"
+          git push
