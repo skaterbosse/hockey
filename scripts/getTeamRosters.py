@@ -41,14 +41,20 @@ def write_text(path: Path, text: str) -> None:
 
 
 def build_shell_pipeline(url: str, season: str, output_file: Path, sed_mode: str) -> str:
+    # macOS/BSD sed accepterar de gamla uttrycken; GNU sed kräver literala ')'
+    # skrivna som [)] i flera av leden.
     if sed_mode == "mac":
-        sed_fix_1 = 'sed -E "s/<\\!\\-\\-.*\\-\\->\\(/;/"'
-        sed_fix_2 = 'sed -E "s/\\);/;/"'
+        sed_fix_1 = 'sed -E "s/[)]<\\/a><a class=.*;BIRTYEAR/;/"'
+        sed_fix_2 = 'sed -E "s/<\\!\\-\\-.*\\-\\->\\(/;/"'
+        sed_fix_3 = 'sed -E "s/\\);/;/"'
+        sed_fix_4 = 'sed -E "s/[)]<\\/a><a class=.*;/;/"'
     else:
-        sed_fix_1 = 'sed -E "s/<\\!\\-\\-.*\\-\\->[(]/;/"'
-        sed_fix_2 = 'sed -E "s/[)];/;/"'
+        sed_fix_1 = 'sed -E "s/[)]<\\/a><a class=.*;BIRTYEAR/;/"'
+        sed_fix_2 = 'sed -E "s/<\\!\\-\\-.*\\-\\->[(]/;/"'
+        sed_fix_3 = 'sed -E "s/[)];/;/"'
+        sed_fix_4 = 'sed -E "s/[)]<\\/a><a class=.*;/;/"'
 
-    return f"""curl -L -s {shlex.quote(url)} | egrep -a {shlex.quote(season)} | sed 's/https/\\nhttps/g' | egrep -n -B 20000 '<!-- --> Staff' | egrep -A 20000 'Jersey Number' | egrep 'href=\\"/player/|<span title=\\"[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\\">[1-2][0-9][0-9][0-9]<' | sed -E "s/.*href=\\"\\/player\\//href=\\"\\/player\\//" | sed -E "s/<\\/a><\\/div>.*span title=\\"[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\\">([1-2][0-9][0-9][0-9])<.*/;BIRTYEAR\\1/" | sed -E "s/.*span title=\\"[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\\">([1-2][0-9][0-9][0-9])<.*/;_BIRTYEAR\\1/" | tr '\\n' ' ' | sed -E "s/href=\\"\\/player\\//\\nhref=\\"\\/player\\//g" | sed -E "s/<\\/a><span class=.*BIRTYEAR/;/" | sed -E "s/)<\\/a><a class=.*;BIRTYEAR/;/" | sed 's/);BIRTYEAR/;/' | sed -E "s/\\">/;/" | {sed_fix_1} | {sed_fix_2} | sed -E "s/^href=\\"/https:\\/\\/www\\.eliteprospects\\.com/" | sed -E "s/)<\\/a><a class=.*;/;/" > {shlex.quote(str(output_file))}"""
+    return f"""curl -L -s {shlex.quote(url)} | egrep -a {shlex.quote(season)} | sed 's/https/\\nhttps/g' | egrep -n -B 20000 '<!-- --> Staff' | egrep -A 20000 'Jersey Number' | egrep 'href=\\"/player/|<span title=\\"[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\\">[1-2][0-9][0-9][0-9]<' | sed -E "s/.*href=\\"\\/player\\//href=\\"\\/player\\//" | sed -E "s/<\\/a><\\/div>.*span title=\\"[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\\">([1-2][0-9][0-9][0-9])<.*/;BIRTYEAR\\1/" | sed -E "s/.*span title=\\"[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\\">([1-2][0-9][0-9][0-9])<.*/;_BIRTYEAR\\1/" | tr '\\n' ' ' | sed -E "s/href=\\"\\/player\\//\\nhref=\\"\\/player\\//g" | sed -E "s/<\\/a><span class=.*BIRTYEAR/;/" | {sed_fix_1} | sed 's/);BIRTYEAR/;/' | sed -E "s/\\">/;/" | {sed_fix_2} | {sed_fix_3} | sed -E "s/^href=\\"/https:\\/\\/www\\.eliteprospects\\.com/" | {sed_fix_4} > {shlex.quote(str(output_file))}"""
 
 
 def detect_sed_mode(dbg: bool) -> str:
