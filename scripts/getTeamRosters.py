@@ -75,7 +75,7 @@ def parse_offline_mapping(path: Path, season: str, dbg: bool) -> Dict[str, Path]
     return mapping
 
 
-def fetch_html(url: str, dbg: bool, dbg_raw_input: bool) -> str:
+def fetch_html(url: str, season: str, dbg: bool, dbg_raw_input: bool) -> str:
     debug(f"Hämtar HTML: {url}", dbg)
     headers = {
         "User-Agent": (
@@ -88,14 +88,27 @@ def fetch_html(url: str, dbg: bool, dbg_raw_input: bool) -> str:
     current_url = url
     max_redirects = 10
 
+    def _norm(u: str) -> str:
+        return u.rstrip("/")
+
     for redirect_count in range(max_redirects + 1):
         req = urllib.request.Request(current_url, headers=headers)
         try:
             with urllib.request.urlopen(req, timeout=60) as resp:
+                final_url = resp.geturl()
                 charset = resp.headers.get_content_charset() or "utf-8"
                 data = resp.read()
                 html_text = data.decode(charset, errors="replace")
-                debug(f"Hämtade {len(data)} bytes från {current_url}", dbg)
+                debug(f"Hämtade {len(data)} bytes från {final_url}", dbg)
+
+                if _norm(final_url) != _norm(url) and season not in _norm(final_url):
+                    debug(
+                        f"Svarade med annan URL än begärt: {url} -> {final_url}; "
+                        f"säsongen {season} saknas i slutlig URL, tolkar som tom roster",
+                        dbg,
+                    )
+                    return ""
+
                 if dbg_raw_input:
                     print("DEBUG_RAW_INPUT_START", file=sys.stderr)
                     print(html_text, file=sys.stderr, end="" if html_text.endswith("\n") else "\n")
@@ -239,7 +252,7 @@ def run_python_parser(
 ) -> None:
     debug(f"Källa URL: {url}", dbg)
     if offline_map is None:
-        html_text = fetch_html(url, dbg, dbg_raw_input)
+        html_text = fetch_html(url, season, dbg, dbg_raw_input)
     else:
         html_text = read_offline_html(url, offline_map, dbg, dbg_raw_input)
 
