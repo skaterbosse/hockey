@@ -3,7 +3,7 @@ name: FetchAndPresentEpRosters
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 16 * * *"
+    - cron: "0 03 * * *"
 
 permissions:
   contents: write
@@ -28,13 +28,30 @@ jobs:
           mkdir -p ep_rosters/output
           mkdir -p ep_rosters/output/history
 
+      - name: Debug raw EP page
+        run: |
+          mkdir -p ./debug
+          curl -L -s 'https://www.eliteprospects.com/team/18/huddinge-ik/2026-2027' > ./debug/huddinge_raw_github.html
+          echo "=== wc ==="
+          wc -c ./debug/huddinge_raw_github.html
+          echo "=== leo-matthiesen ==="
+          grep -n 'leo-matthiesen' ./debug/huddinge_raw_github.html | head -5 || true
+          echo "=== 2004 ==="
+          grep -n '05/22/2004' ./debug/huddinge_raw_github.html | head -5 || true
+
+      - name: Upload debug artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-ep-html
+          path: ./debug/huddinge_raw_github.html    
+
       - name: Run getTeamRosters
         run: |
-          python3 ./scripts/getTeamRosters.py             -tf ./ep_rosters/lag_2026_2027.txt             -od ./ep_rosters/output             -s 2026-2027
+          python3 ./scripts/getTeamRosters.py -dbg -tf ./ep_rosters/lag_2026_2027.txt -od ./ep_rosters/output -s 2026-2027
 
       - name: Run makeTeamCatalog
         run: |
-          python3 ./scripts/makeTeamCatalog.py             -o ./SeriesAndTeams.html             -tf ./ep_rosters/lag_2026_2027.txt             -if ./ep_rosters/output             -s 2026-2027             -lp ./logos/             -lp_script ./logos
+          python3 ./scripts/makeTeamCatalog.py -o ./SeriesAndTeams.html -tf ./ep_rosters/lag_2026_2027.txt -if ./ep_rosters/output             -s 2026-2027             -lp ./logos/             -lp_script ./logos
 
       - name: Commit and push generated files
         run: |
