@@ -24,10 +24,13 @@ h2.serie-title { background:#444; color:white; padding:0.4em 0.6em; border-radiu
 .legend .added { background: #eefbf0; color: #0a7a25; }
 .legend .removed { background: #fff1f1; color: #b00020; text-decoration: line-through; }
 #searchBox { width:100%; padding:0.5em; font-size:1em; }
-.note { margin: 0.4em 0 1em 0; font-size: 1.0em; color: #333; }
-.compare-block { display:none; }
-.compare-block.active { display:block; }
-.compare-switch { display:flex; gap:1.2em; flex-wrap:wrap; margin:0.5em 0 1em 0; }
+.compare-controls { display:flex; align-items:center; gap:1.25em; flex-wrap:wrap; margin: 0.5em 0 1em 0; }
+.compare-controls label { display:inline-flex; align-items:center; gap:0.35em; font-size:1.05em; }
+.overview-mode-block { display:none; }
+.overview-mode-block.active { display:block; }
+.hidden { display:none; }
+.toggle-all { display:inline-block; margin: 0.5em 0 1em 0; }
+.compare-note { color:#444; margin-bottom:0.75em; }
 </style>
 <script>
 function showPage(id) {
@@ -58,14 +61,24 @@ function renderSearchResults(query) {
     container.appendChild(div);
   });
 }
-function setCompareMode(mode) {
-  document.querySelectorAll(".compare-block").forEach(el => el.classList.remove("active"));
-  let block = document.getElementById("compare-" + mode);
-  if (block) { block.classList.add("active"); }
+function updateOverviewMode(mode) {
+  document.querySelectorAll(".overview-mode-block").forEach(el => el.classList.remove("active"));
+  var block = document.getElementById("overview-mode-" + mode);
+  if (block) block.classList.add("active");
 }
-function toggleShowAll(mode, checked) {
-  document.querySelectorAll(".changes-only.mode-" + mode).forEach(el => el.style.display = checked ? "none" : "block");
-  document.querySelectorAll(".changes-all.mode-" + mode).forEach(el => el.style.display = checked ? "block" : "none");
+function updateShowAll(mode, checked) {
+  document.querySelectorAll(".overview-team-players[data-mode='" + mode + "']").forEach(el => {
+    let a = el.querySelector(".players-all");
+    let c = el.querySelector(".players-changes-only");
+    if (!a || !c) return;
+    if (checked) {
+      a.classList.remove("hidden");
+      c.classList.add("hidden");
+    } else {
+      a.classList.add("hidden");
+      c.classList.remove("hidden");
+    }
+  });
 }
 window.addEventListener("DOMContentLoaded", () => {
   showPage("overview");
@@ -78,17 +91,18 @@ window.addEventListener("DOMContentLoaded", () => {
       return false;
     });
   });
-  document.querySelectorAll("input[name='compare-mode']").forEach(r => {
-    r.addEventListener("change", e => setCompareMode(e.target.value));
-  });
-  document.querySelectorAll(".show-all-toggle").forEach(cb => {
-    cb.addEventListener("change", e => toggleShowAll(e.target.getAttribute("data-mode"), e.target.checked));
-  });
-  setCompareMode("day");
   let searchBox = document.getElementById("searchBox");
   if (searchBox) {
     searchBox.addEventListener("input", (e) => renderSearchResults(e.target.value));
   }
+  document.querySelectorAll("input[name='compare-mode']").forEach(r => {
+    r.addEventListener("change", ev => updateOverviewMode(ev.target.value));
+  });
+  document.querySelectorAll(".show-all-toggle").forEach(c => {
+    c.addEventListener("change", ev => updateShowAll(ev.target.getAttribute("data-mode"), ev.target.checked));
+  });
+  let checked = document.querySelector("input[name='compare-mode']:checked");
+  updateOverviewMode(checked ? checked.value : "day");
 });
 </script>
 
@@ -108,19 +122,30 @@ window.addEventListener("DOMContentLoaded", () => {
 <a href='#search' data-target='search'>Sök Spelare</a>
 </nav>
 <section id='overview' class='active'>
-<div class='note'>Jämför senast sparade spelare och lag med:</div>
-<div class='compare-switch'>
-<label><input type='radio' name='compare-mode' value='day' checked> Näst senaste (en dag)</label>
-<label><input type='radio' name='compare-mode' value='week'> Cirka en vecka</label>
-<label><input type='radio' name='compare-mode' value='month'> Cirka en månad</label>
+<div class='compare-controls'>
+<span>Jämför senast sparade spelare och lag med:</span>
+<label><input type='radio' name='compare-mode' value='day' checked> ~ en dag</label>
+<label><input type='radio' name='compare-mode' value='week'> ~ en vecka</label>
+<label><input type='radio' name='compare-mode' value='month'> ~ en månad</label>
 </div>
-<div id='compare-day' class='compare-block active'>
-<h1>Spelarförändringar mellan 2026-03-17 16:33:33 och 2026-03-17 16:37:11</h1>
-<div class='note'><label><input type='checkbox' class='show-all-toggle' data-mode='day'> visa alla spelare</label></div>
-<h1>Antal Spelare 2026-03-17 16:37:11</h1>
+<input type='radio' name='compare-mode' id='compare-day' value='day' checked>
+
+<div class='overview-mode-block' id='overview-mode-day'>
+<h1>Spelarförändringar [2026-03-17 21:33:18 vs 2026-03-17 21:37:11]</h1>
 <div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
-<div class='note'>Nya spelare och Förlorade spelare jämförs med listning gjord 2026-03-17 16:33:33</div>
+<details open><summary><div class='overview-summary'><span class='overview-count'>4</span><span><img src='./logos/Kungälvs_IK.png' class='team-logo'></span><span>Kungälvs&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<h3>Forwards</h3>
+<div class='player player-added'><a href="https://www.eliteprospects.com/player/473496/alexander-olsen">Alexander Olsén</a> — F · 2003</div>
+</details>
+<h1>Antal Spelare 2026-03-17 21:37:11</h1>
+<div class='compare-note'>Jämförelsen använder snapshot från 2026-03-17 21:33:18</div>
+<div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
+<label class='toggle-all'><input type='checkbox' class='show-all-toggle' data-mode='day'> visa alla spelare</label>
 <details><summary><div class='overview-summary'><span class='overview-count'>13</span><span><img src='./logos/Tyringe_SoSS.png' class='team-logo'></span><span>Tyringe&nbsp;SoSS</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Målvakter</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/204336/adam-ingelfeldt">Adam Ingelfeldt</a> — G · 1997</div>
 <h3>Backar</h3>
@@ -137,8 +162,14 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player'><a href="https://www.eliteprospects.com/player/448931/elias-kumlin">Elias Kumlin</a> — RW · 2004</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/517522/isak-ivehed">Isak Ivehed</a> — F · 2003</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/555843/teodor-forssander">Teodor Forssander</a> — LW · 2004</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>10</span><span><img src='./logos/Huddinge_IK.png' class='team-logo'></span><span>Huddinge&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Målvakter</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/656513/leo-matthiesen">Leo Matthiesen</a> — G · 2004</div>
 <h3>Backar</h3>
@@ -152,8 +183,14 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player'><a href="https://www.eliteprospects.com/player/499333/gabriel-ahs">Gabriel Åhs</a> — RW · 2002</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/703020/hampus-nilsson">Hampus Nilsson</a> — F · 2005</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/604443/tobias-ahlen">Tobias Ahlén</a> — C/RW · 2003</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>10</span><span><img src='./logos/Västerviks_IK.png' class='team-logo'></span><span>Västerviks&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Målvakter</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/541471/sebastian-andersson">Sebastian Andersson</a> — G · 2002</div>
 <h3>Backar</h3>
@@ -167,8 +204,14 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player'><a href="https://www.eliteprospects.com/player/430102/knut-kohler">Knut Köhler</a> — C · 2002</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/104845/noah-wolf">Noah Wolf</a> — LW/RW · 2005</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/650765/wille-edstrom">Wille Edström</a> — RW · 2005</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>6</span><span><img src='./logos/Gislaveds_SK.png' class='team-logo'></span><span>Gislaved&nbsp;SK&nbsp;Hockey</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Backar</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/795647/holger-claar">Holger Claar</a> — D · 2006</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/957991/sanny-hoffren">Sanny Hoffrén</a> — D · 2007</div>
@@ -177,229 +220,791 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player'><a href="https://www.eliteprospects.com/player/646531/daniel-vilusic">Daniel Vilusic</a> — C · 2003</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/795648/oscar-lindqvist">Oscar Lindqvist</a> — RW · 2006</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/957990/walter-aqvist">Walter Åqvist</a> — LW · 2008</div>
+</div>
+</div>
+</details>
+<details><summary><div class='overview-summary'><span class='overview-count'>4</span><span><img src='./logos/Kungälvs_IK.png' class='team-logo'></span><span>Kungälvs&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+<h3>Forwards</h3>
+<div class='player player-added'><a href="https://www.eliteprospects.com/player/473496/alexander-olsen">Alexander Olsén</a> — F · 2003</div>
+</div>
+<div class='players-all hidden'>
+<h3>Forwards</h3>
+<div class='player player-added'><a href="https://www.eliteprospects.com/player/473496/alexander-olsen">Alexander Olsén</a> — F · 2003</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/344307/eric-osterman">Eric Österman</a> — RW · 2000</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/382455/hannes-asp">Hannes Asp</a> — LW · 2001</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/382449/melker-oberg">Melker Öberg</a> — C · 2001</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>4</span><span><img src='./logos/Surahammars_IF.png' class='team-logo'></span><span>Surahammars&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Backar</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/713555/max-joona">Max Joona</a> — D · 2006</div>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/718166/linus-rydell">Linus Rydell</a> — LW · 2006</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/477216/sebastian-ehrencrona">Sebastian Ehrencrona</a> — C · 2003</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/707353/wille-ekman-cederborg">Wille Ekman Cederborg</a> — RW · 2005</div>
-</details>
-<details><summary><div class='overview-summary'><span class='overview-count'>3</span><span><img src='./logos/Kungälvs_IK.png' class='team-logo'></span><span>Kungälvs&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
-<h3>Forwards</h3>
-<div class='player'><a href="https://www.eliteprospects.com/player/344307/eric-osterman">Eric Österman</a> — RW · 2000</div>
-<div class='player'><a href="https://www.eliteprospects.com/player/382455/hannes-asp">Hannes Asp</a> — LW · 2001</div>
-<div class='player'><a href="https://www.eliteprospects.com/player/382449/melker-oberg">Melker Öberg</a> — C · 2001</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>3</span><span><img src='./logos/Rönnängs_IK.png' class='team-logo'></span><span>Rönnängs&nbsp;IK</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/187893/oliver-erixon">Oliver Erixon</a> — C/RW · 1997</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/212515/tony-pappila">Tony Pappila</a> — RW · 1997</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/640959/walter-goransson">Walter Göransson</a> — F · 2005</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>3</span><span><img src='./logos/Örnsköldsvik_HF.png' class='team-logo'></span><span>Örnsköldsvik&nbsp;HF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/714951/elias-bostrom">Elias Boström</a> — F · 2005</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/669610/frans-westberg-gren">Frans Westberg Gren</a> — LW/C · 2005</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/717054/marcus-schill">Marcus Schill</a> — C · 2005</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>2</span><span><img src='./logos/Väsby_IK_HK.png' class='team-logo'></span><span>Väsby&nbsp;IK</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Målvakter</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/333324/victor-olsson">Victor Olsson</a> — G · 2000</div>
 <h3>Backar</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/34107/jacob-spangberg">Jacob Spångberg</a> — D · 1994</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Enköpings_SK_HK.png' class='team-logo'></span><span>Enköpings&nbsp;SK</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/474102/axel-knudsen">Axel Knudsen</a> — LW/RW · 2002</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Jonstorps_IF_IshF.png' class='team-logo'></span><span>Jonstorps&nbsp;IF</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/785356/petter-olsson">Petter Olsson</a> — C · 2006</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Kiruna_IF.png' class='team-logo'></span><span>Kiruna&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/342792/liam-nilsson">Liam Nilsson</a> — C/RW · 2000</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Tingsryds_AIF.png' class='team-logo'></span><span>Tingsryds&nbsp;AIF</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/778463/eric-nordmark">Eric Nordmark</a> — LW · 2005</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Wings_HC_Arlanda.png' class='team-logo'></span><span>Wings&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Backar</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/355322/viktor-pahlen">Viktor Pahlén</a> — D/F · 2000</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Alvesta_SK.png' class='team-logo'></span><span>Alvesta&nbsp;SK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bodens_HF.png' class='team-logo'></span><span>Boden&nbsp;HF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Borlänge_HF.png' class='team-logo'></span><span>Borlänge&nbsp;HF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Boro_Vetlanda_HC.png' class='team-logo'></span><span>Boro/Vetlanda&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Borås_HC.png' class='team-logo'></span><span>Borås&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Borås_HC.png' class='team-logo'></span><span>Borås&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bäcken_HC.png' class='team-logo'></span><span>Bäcken&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bäcken_HC.png' class='team-logo'></span><span>Bäcken&nbsp;HC&nbsp;U16</span><span class='overview-serie'>U16 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bäcken_HC.png' class='team-logo'></span><span>Bäcken&nbsp;HC&nbsp;U18</span><span class='overview-serie'>U18 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bäcken_HC.png' class='team-logo'></span><span>Bäcken&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Clemensnäs_HC.png' class='team-logo'></span><span>Clemensnäs&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Falu_IF.png' class='team-logo'></span><span>Falu&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Forshaga_IF.png' class='team-logo'></span><span>Forshaga&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Frölunda_HC.png' class='team-logo'></span><span>Frölunda&nbsp;HC</span><span class='overview-serie'>SHL</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Frölunda_HC.png' class='team-logo'></span><span>Frölunda&nbsp;HC&nbsp;U16</span><span class='overview-serie'>U16 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Frölunda_HC.png' class='team-logo'></span><span>Frölunda&nbsp;HC&nbsp;U18</span><span class='overview-serie'>U18 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Frölunda_HC.png' class='team-logo'></span><span>Frölunda&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Nationell Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Grums_IK.png' class='team-logo'></span><span>Grums&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Grästorps_IK.png' class='team-logo'></span><span>Grästorps&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Grästorps_IK.png' class='team-logo'></span><span>Grästorps&nbsp;IK&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Göteborgs_IK.png' class='team-logo'></span><span>Göteborgs&nbsp;IK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/HA74.png' class='team-logo'></span><span>HA74</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Halmstad_Hammers_HC.png' class='team-logo'></span><span>Halmstad&nbsp;Hammers&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Halmstad_Hammers_HC.png' class='team-logo'></span><span>Halmstad&nbsp;Hammers&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hammarby_IF.png' class='team-logo'></span><span>Hammarby&nbsp;IF</span><span class='overview-serie'>HockeyTvåan Östra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hanhals_IF.png' class='team-logo'></span><span>Hanhals&nbsp;IF</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hanhals_IF.png' class='team-logo'></span><span>Hanhals&nbsp;IF&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/HC_Dalen.png' class='team-logo'></span><span>HC&nbsp;Dalen</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/HC_Lidköping_Red_Roosters.png' class='team-logo'></span><span>HC&nbsp;Lidköping</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/HC_Vita_Hästen.png' class='team-logo'></span><span>HC&nbsp;Vita&nbsp;Hästen</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Helsingborg_HC_Ungdom.png' class='team-logo'></span><span>Helsingborgs&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hisingens_IK.png' class='team-logo'></span><span>Hisingens&nbsp;IK</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hovås_HC.png' class='team-logo'></span><span>Hovås&nbsp;HC</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hovås_HC.png' class='team-logo'></span><span>Hovås&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hudiksvalls_HC.png' class='team-logo'></span><span>Hudiksvalls&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Härryda_HC.png' class='team-logo'></span><span>Härryda&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IF_Mölndal_Hockey.png' class='team-logo'></span><span>IF&nbsp;Mölndal&nbsp;Hockey</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IF_Mölndal_Hockey.png' class='team-logo'></span><span>IF&nbsp;Mölndal&nbsp;Hockey&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IF_Sundsvall_Hockey.png' class='team-logo'></span><span>IF&nbsp;Sundsvall&nbsp;Hockey</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IF_Troja-Ljungby.png' class='team-logo'></span><span>IF&nbsp;Troja-Ljungby</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IK_Oskarshamn.png' class='team-logo'></span><span>IK&nbsp;Oskarshamn</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Järfälla_HC.png' class='team-logo'></span><span>Järfälla&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kalix_HC.png' class='team-logo'></span><span>Kalix&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kalmar_HC.png' class='team-logo'></span><span>Kalmar&nbsp;HC</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Karlskrona_HK.png' class='team-logo'></span><span>Karlskrona&nbsp;HK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/KRIF_Hockey.png' class='team-logo'></span><span>KRIF&nbsp;Hockey</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kristianstads_IK.png' class='team-logo'></span><span>Kristianstads&nbsp;IK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kungälvs_IK.png' class='team-logo'></span><span>Kungälvs&nbsp;IK&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kållered_SK.png' class='team-logo'></span><span>Kållereds&nbsp;SK&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Lerums_BK.png' class='team-logo'></span><span>Lerums&nbsp;BK</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Lerums_BK.png' class='team-logo'></span><span>Lerums&nbsp;BK&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Lindlövens_IF.png' class='team-logo'></span><span>Lindlövens&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/LN_70_HC.png' class='team-logo'></span><span>LN-70&nbsp;HC</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Mariestad_BoIS_HC.png' class='team-logo'></span><span>Mariestad&nbsp;BoIS&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Mariestad_BoIS_HC.png' class='team-logo'></span><span>Mariestad&nbsp;BoIS&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Mjölby_HC.png' class='team-logo'></span><span>Mjölby&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Motala_AIF_HK.png' class='team-logo'></span><span>Motala&nbsp;AIF</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Mörrums_GoIS_IK.png' class='team-logo'></span><span>Mörrums&nbsp;GoIS&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Nacka_HK.png' class='team-logo'></span><span>Nacka&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Östra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Nittorps_IK.png' class='team-logo'></span><span>Nittorps&nbsp;IK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Norrtälje_IK.png' class='team-logo'></span><span>Norrtälje&nbsp;IK</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Nybro_Vikings_IF.png' class='team-logo'></span><span>Nybro-Vikings&nbsp;HC</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Nyköpings_SK.png' class='team-logo'></span><span>Nyköpings&nbsp;SK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Olofströms_IK.png' class='team-logo'></span><span>Olofströms&nbsp;IK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Partille_HK.png' class='team-logo'></span><span>Partille&nbsp;HK</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Piteå_HC.png' class='team-logo'></span><span>Piteå&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Skövde_Hockey_Club.png' class='team-logo'></span><span>Skövde&nbsp;HC</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Sollentuna_HC.png' class='team-logo'></span><span>Sollentuna&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Stenungsund_HF.png' class='team-logo'></span><span>Stenungsund&nbsp;HF</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Strömsbro_IF.png' class='team-logo'></span><span>Strömsbro&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Sörhaga_Alingsås_HK.png' class='team-logo'></span><span>Sörhaga/Alingsås&nbsp;HK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Tranås_AIF.png' class='team-logo'></span><span>Tranås&nbsp;AIF</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Tyresö_Hanviken_Hockey.png' class='team-logo'></span><span>Tyresö&nbsp;Hanviken</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Töreboda_HF.png' class='team-logo'></span><span>Töreboda&nbsp;HF</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Ulricehamns_IF.png' class='team-logo'></span><span>Ulricehamns&nbsp;IF</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Vallentuna_Hockey.png' class='team-logo'></span><span>Vallentuna&nbsp;Hockey</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Vimmerby_HC.png' class='team-logo'></span><span>Vimmerby&nbsp;HC</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Visby-Roma_HK.png' class='team-logo'></span><span>Visby&nbsp;Roma</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Vänersborgs_HC.png' class='team-logo'></span><span>Vänersborgs&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Värnamo_GIK.png' class='team-logo'></span><span>Värnamo&nbsp;GIK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Åseda_IF.png' class='team-logo'></span><span>Åseda&nbsp;IF</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='day'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 </div>
-<div id='compare-week' class='compare-block'>
-<h1>Spelarförändringar mellan 2026-03-17 16:33:33 och 2026-03-17 16:37:11</h1>
-<div class='note'><label><input type='checkbox' class='show-all-toggle' data-mode='week'> visa alla spelare</label></div>
-<h1>Antal Spelare 2026-03-17 16:37:11</h1>
+<input type='radio' name='compare-mode' id='compare-week' value='week'>
+
+<div class='overview-mode-block' id='overview-mode-week'>
+<h1>Spelarförändringar [2026-03-17 21:33:18 vs 2026-03-17 21:37:11]</h1>
 <div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
-<div class='note'>Nya spelare och Förlorade spelare jämförs med listning gjord 2026-03-17 16:33:33</div>
+<details open><summary><div class='overview-summary'><span class='overview-count'>4</span><span><img src='./logos/Kungälvs_IK.png' class='team-logo'></span><span>Kungälvs&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<h3>Forwards</h3>
+<div class='player player-added'><a href="https://www.eliteprospects.com/player/473496/alexander-olsen">Alexander Olsén</a> — F · 2003</div>
+</details>
+<h1>Antal Spelare 2026-03-17 21:37:11</h1>
+<div class='compare-note'>Jämförelsen använder snapshot från 2026-03-17 21:33:18</div>
+<div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
+<label class='toggle-all'><input type='checkbox' class='show-all-toggle' data-mode='week'> visa alla spelare</label>
 <details><summary><div class='overview-summary'><span class='overview-count'>13</span><span><img src='./logos/Tyringe_SoSS.png' class='team-logo'></span><span>Tyringe&nbsp;SoSS</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Målvakter</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/204336/adam-ingelfeldt">Adam Ingelfeldt</a> — G · 1997</div>
 <h3>Backar</h3>
@@ -416,8 +1021,14 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player'><a href="https://www.eliteprospects.com/player/448931/elias-kumlin">Elias Kumlin</a> — RW · 2004</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/517522/isak-ivehed">Isak Ivehed</a> — F · 2003</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/555843/teodor-forssander">Teodor Forssander</a> — LW · 2004</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>10</span><span><img src='./logos/Huddinge_IK.png' class='team-logo'></span><span>Huddinge&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Målvakter</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/656513/leo-matthiesen">Leo Matthiesen</a> — G · 2004</div>
 <h3>Backar</h3>
@@ -431,8 +1042,14 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player'><a href="https://www.eliteprospects.com/player/499333/gabriel-ahs">Gabriel Åhs</a> — RW · 2002</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/703020/hampus-nilsson">Hampus Nilsson</a> — F · 2005</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/604443/tobias-ahlen">Tobias Ahlén</a> — C/RW · 2003</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>10</span><span><img src='./logos/Västerviks_IK.png' class='team-logo'></span><span>Västerviks&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Målvakter</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/541471/sebastian-andersson">Sebastian Andersson</a> — G · 2002</div>
 <h3>Backar</h3>
@@ -446,8 +1063,14 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player'><a href="https://www.eliteprospects.com/player/430102/knut-kohler">Knut Köhler</a> — C · 2002</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/104845/noah-wolf">Noah Wolf</a> — LW/RW · 2005</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/650765/wille-edstrom">Wille Edström</a> — RW · 2005</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>6</span><span><img src='./logos/Gislaveds_SK.png' class='team-logo'></span><span>Gislaved&nbsp;SK&nbsp;Hockey</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Backar</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/795647/holger-claar">Holger Claar</a> — D · 2006</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/957991/sanny-hoffren">Sanny Hoffrén</a> — D · 2007</div>
@@ -456,229 +1079,791 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player'><a href="https://www.eliteprospects.com/player/646531/daniel-vilusic">Daniel Vilusic</a> — C · 2003</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/795648/oscar-lindqvist">Oscar Lindqvist</a> — RW · 2006</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/957990/walter-aqvist">Walter Åqvist</a> — LW · 2008</div>
+</div>
+</div>
+</details>
+<details><summary><div class='overview-summary'><span class='overview-count'>4</span><span><img src='./logos/Kungälvs_IK.png' class='team-logo'></span><span>Kungälvs&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+<h3>Forwards</h3>
+<div class='player player-added'><a href="https://www.eliteprospects.com/player/473496/alexander-olsen">Alexander Olsén</a> — F · 2003</div>
+</div>
+<div class='players-all hidden'>
+<h3>Forwards</h3>
+<div class='player player-added'><a href="https://www.eliteprospects.com/player/473496/alexander-olsen">Alexander Olsén</a> — F · 2003</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/344307/eric-osterman">Eric Österman</a> — RW · 2000</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/382455/hannes-asp">Hannes Asp</a> — LW · 2001</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/382449/melker-oberg">Melker Öberg</a> — C · 2001</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>4</span><span><img src='./logos/Surahammars_IF.png' class='team-logo'></span><span>Surahammars&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Backar</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/713555/max-joona">Max Joona</a> — D · 2006</div>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/718166/linus-rydell">Linus Rydell</a> — LW · 2006</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/477216/sebastian-ehrencrona">Sebastian Ehrencrona</a> — C · 2003</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/707353/wille-ekman-cederborg">Wille Ekman Cederborg</a> — RW · 2005</div>
-</details>
-<details><summary><div class='overview-summary'><span class='overview-count'>3</span><span><img src='./logos/Kungälvs_IK.png' class='team-logo'></span><span>Kungälvs&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
-<h3>Forwards</h3>
-<div class='player'><a href="https://www.eliteprospects.com/player/344307/eric-osterman">Eric Österman</a> — RW · 2000</div>
-<div class='player'><a href="https://www.eliteprospects.com/player/382455/hannes-asp">Hannes Asp</a> — LW · 2001</div>
-<div class='player'><a href="https://www.eliteprospects.com/player/382449/melker-oberg">Melker Öberg</a> — C · 2001</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>3</span><span><img src='./logos/Rönnängs_IK.png' class='team-logo'></span><span>Rönnängs&nbsp;IK</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/187893/oliver-erixon">Oliver Erixon</a> — C/RW · 1997</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/212515/tony-pappila">Tony Pappila</a> — RW · 1997</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/640959/walter-goransson">Walter Göransson</a> — F · 2005</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>3</span><span><img src='./logos/Örnsköldsvik_HF.png' class='team-logo'></span><span>Örnsköldsvik&nbsp;HF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/714951/elias-bostrom">Elias Boström</a> — F · 2005</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/669610/frans-westberg-gren">Frans Westberg Gren</a> — LW/C · 2005</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/717054/marcus-schill">Marcus Schill</a> — C · 2005</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>2</span><span><img src='./logos/Väsby_IK_HK.png' class='team-logo'></span><span>Väsby&nbsp;IK</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Målvakter</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/333324/victor-olsson">Victor Olsson</a> — G · 2000</div>
 <h3>Backar</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/34107/jacob-spangberg">Jacob Spångberg</a> — D · 1994</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Enköpings_SK_HK.png' class='team-logo'></span><span>Enköpings&nbsp;SK</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/474102/axel-knudsen">Axel Knudsen</a> — LW/RW · 2002</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Jonstorps_IF_IshF.png' class='team-logo'></span><span>Jonstorps&nbsp;IF</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/785356/petter-olsson">Petter Olsson</a> — C · 2006</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Kiruna_IF.png' class='team-logo'></span><span>Kiruna&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/342792/liam-nilsson">Liam Nilsson</a> — C/RW · 2000</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Tingsryds_AIF.png' class='team-logo'></span><span>Tingsryds&nbsp;AIF</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/778463/eric-nordmark">Eric Nordmark</a> — LW · 2005</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Wings_HC_Arlanda.png' class='team-logo'></span><span>Wings&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Backar</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/355322/viktor-pahlen">Viktor Pahlén</a> — D/F · 2000</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Alvesta_SK.png' class='team-logo'></span><span>Alvesta&nbsp;SK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bodens_HF.png' class='team-logo'></span><span>Boden&nbsp;HF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Borlänge_HF.png' class='team-logo'></span><span>Borlänge&nbsp;HF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Boro_Vetlanda_HC.png' class='team-logo'></span><span>Boro/Vetlanda&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Borås_HC.png' class='team-logo'></span><span>Borås&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Borås_HC.png' class='team-logo'></span><span>Borås&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bäcken_HC.png' class='team-logo'></span><span>Bäcken&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bäcken_HC.png' class='team-logo'></span><span>Bäcken&nbsp;HC&nbsp;U16</span><span class='overview-serie'>U16 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bäcken_HC.png' class='team-logo'></span><span>Bäcken&nbsp;HC&nbsp;U18</span><span class='overview-serie'>U18 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bäcken_HC.png' class='team-logo'></span><span>Bäcken&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Clemensnäs_HC.png' class='team-logo'></span><span>Clemensnäs&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Falu_IF.png' class='team-logo'></span><span>Falu&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Forshaga_IF.png' class='team-logo'></span><span>Forshaga&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Frölunda_HC.png' class='team-logo'></span><span>Frölunda&nbsp;HC</span><span class='overview-serie'>SHL</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Frölunda_HC.png' class='team-logo'></span><span>Frölunda&nbsp;HC&nbsp;U16</span><span class='overview-serie'>U16 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Frölunda_HC.png' class='team-logo'></span><span>Frölunda&nbsp;HC&nbsp;U18</span><span class='overview-serie'>U18 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Frölunda_HC.png' class='team-logo'></span><span>Frölunda&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Nationell Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Grums_IK.png' class='team-logo'></span><span>Grums&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Grästorps_IK.png' class='team-logo'></span><span>Grästorps&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Grästorps_IK.png' class='team-logo'></span><span>Grästorps&nbsp;IK&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Göteborgs_IK.png' class='team-logo'></span><span>Göteborgs&nbsp;IK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/HA74.png' class='team-logo'></span><span>HA74</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Halmstad_Hammers_HC.png' class='team-logo'></span><span>Halmstad&nbsp;Hammers&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Halmstad_Hammers_HC.png' class='team-logo'></span><span>Halmstad&nbsp;Hammers&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hammarby_IF.png' class='team-logo'></span><span>Hammarby&nbsp;IF</span><span class='overview-serie'>HockeyTvåan Östra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hanhals_IF.png' class='team-logo'></span><span>Hanhals&nbsp;IF</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hanhals_IF.png' class='team-logo'></span><span>Hanhals&nbsp;IF&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/HC_Dalen.png' class='team-logo'></span><span>HC&nbsp;Dalen</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/HC_Lidköping_Red_Roosters.png' class='team-logo'></span><span>HC&nbsp;Lidköping</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/HC_Vita_Hästen.png' class='team-logo'></span><span>HC&nbsp;Vita&nbsp;Hästen</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Helsingborg_HC_Ungdom.png' class='team-logo'></span><span>Helsingborgs&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hisingens_IK.png' class='team-logo'></span><span>Hisingens&nbsp;IK</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hovås_HC.png' class='team-logo'></span><span>Hovås&nbsp;HC</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hovås_HC.png' class='team-logo'></span><span>Hovås&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hudiksvalls_HC.png' class='team-logo'></span><span>Hudiksvalls&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Härryda_HC.png' class='team-logo'></span><span>Härryda&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IF_Mölndal_Hockey.png' class='team-logo'></span><span>IF&nbsp;Mölndal&nbsp;Hockey</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IF_Mölndal_Hockey.png' class='team-logo'></span><span>IF&nbsp;Mölndal&nbsp;Hockey&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IF_Sundsvall_Hockey.png' class='team-logo'></span><span>IF&nbsp;Sundsvall&nbsp;Hockey</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IF_Troja-Ljungby.png' class='team-logo'></span><span>IF&nbsp;Troja-Ljungby</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IK_Oskarshamn.png' class='team-logo'></span><span>IK&nbsp;Oskarshamn</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Järfälla_HC.png' class='team-logo'></span><span>Järfälla&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kalix_HC.png' class='team-logo'></span><span>Kalix&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kalmar_HC.png' class='team-logo'></span><span>Kalmar&nbsp;HC</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Karlskrona_HK.png' class='team-logo'></span><span>Karlskrona&nbsp;HK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/KRIF_Hockey.png' class='team-logo'></span><span>KRIF&nbsp;Hockey</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kristianstads_IK.png' class='team-logo'></span><span>Kristianstads&nbsp;IK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kungälvs_IK.png' class='team-logo'></span><span>Kungälvs&nbsp;IK&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kållered_SK.png' class='team-logo'></span><span>Kållereds&nbsp;SK&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Lerums_BK.png' class='team-logo'></span><span>Lerums&nbsp;BK</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Lerums_BK.png' class='team-logo'></span><span>Lerums&nbsp;BK&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Lindlövens_IF.png' class='team-logo'></span><span>Lindlövens&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/LN_70_HC.png' class='team-logo'></span><span>LN-70&nbsp;HC</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Mariestad_BoIS_HC.png' class='team-logo'></span><span>Mariestad&nbsp;BoIS&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Mariestad_BoIS_HC.png' class='team-logo'></span><span>Mariestad&nbsp;BoIS&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Mjölby_HC.png' class='team-logo'></span><span>Mjölby&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Motala_AIF_HK.png' class='team-logo'></span><span>Motala&nbsp;AIF</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Mörrums_GoIS_IK.png' class='team-logo'></span><span>Mörrums&nbsp;GoIS&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Nacka_HK.png' class='team-logo'></span><span>Nacka&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Östra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Nittorps_IK.png' class='team-logo'></span><span>Nittorps&nbsp;IK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Norrtälje_IK.png' class='team-logo'></span><span>Norrtälje&nbsp;IK</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Nybro_Vikings_IF.png' class='team-logo'></span><span>Nybro-Vikings&nbsp;HC</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Nyköpings_SK.png' class='team-logo'></span><span>Nyköpings&nbsp;SK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Olofströms_IK.png' class='team-logo'></span><span>Olofströms&nbsp;IK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Partille_HK.png' class='team-logo'></span><span>Partille&nbsp;HK</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Piteå_HC.png' class='team-logo'></span><span>Piteå&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Skövde_Hockey_Club.png' class='team-logo'></span><span>Skövde&nbsp;HC</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Sollentuna_HC.png' class='team-logo'></span><span>Sollentuna&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Stenungsund_HF.png' class='team-logo'></span><span>Stenungsund&nbsp;HF</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Strömsbro_IF.png' class='team-logo'></span><span>Strömsbro&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Sörhaga_Alingsås_HK.png' class='team-logo'></span><span>Sörhaga/Alingsås&nbsp;HK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Tranås_AIF.png' class='team-logo'></span><span>Tranås&nbsp;AIF</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Tyresö_Hanviken_Hockey.png' class='team-logo'></span><span>Tyresö&nbsp;Hanviken</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Töreboda_HF.png' class='team-logo'></span><span>Töreboda&nbsp;HF</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Ulricehamns_IF.png' class='team-logo'></span><span>Ulricehamns&nbsp;IF</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Vallentuna_Hockey.png' class='team-logo'></span><span>Vallentuna&nbsp;Hockey</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Vimmerby_HC.png' class='team-logo'></span><span>Vimmerby&nbsp;HC</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Visby-Roma_HK.png' class='team-logo'></span><span>Visby&nbsp;Roma</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Vänersborgs_HC.png' class='team-logo'></span><span>Vänersborgs&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Värnamo_GIK.png' class='team-logo'></span><span>Värnamo&nbsp;GIK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Åseda_IF.png' class='team-logo'></span><span>Åseda&nbsp;IF</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='week'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 </div>
-<div id='compare-month' class='compare-block'>
-<h1>Spelarförändringar mellan 2026-03-17 16:33:33 och 2026-03-17 16:37:11</h1>
-<div class='note'><label><input type='checkbox' class='show-all-toggle' data-mode='month'> visa alla spelare</label></div>
-<h1>Antal Spelare 2026-03-17 16:37:11</h1>
+<input type='radio' name='compare-mode' id='compare-month' value='month'>
+
+<div class='overview-mode-block' id='overview-mode-month'>
+<h1>Spelarförändringar [2026-03-17 21:33:18 vs 2026-03-17 21:37:11]</h1>
 <div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
-<div class='note'>Nya spelare och Förlorade spelare jämförs med listning gjord 2026-03-17 16:33:33</div>
+<details open><summary><div class='overview-summary'><span class='overview-count'>4</span><span><img src='./logos/Kungälvs_IK.png' class='team-logo'></span><span>Kungälvs&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<h3>Forwards</h3>
+<div class='player player-added'><a href="https://www.eliteprospects.com/player/473496/alexander-olsen">Alexander Olsén</a> — F · 2003</div>
+</details>
+<h1>Antal Spelare 2026-03-17 21:37:11</h1>
+<div class='compare-note'>Jämförelsen använder snapshot från 2026-03-17 21:33:18</div>
+<div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
+<label class='toggle-all'><input type='checkbox' class='show-all-toggle' data-mode='month'> visa alla spelare</label>
 <details><summary><div class='overview-summary'><span class='overview-count'>13</span><span><img src='./logos/Tyringe_SoSS.png' class='team-logo'></span><span>Tyringe&nbsp;SoSS</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Målvakter</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/204336/adam-ingelfeldt">Adam Ingelfeldt</a> — G · 1997</div>
 <h3>Backar</h3>
@@ -695,8 +1880,14 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player'><a href="https://www.eliteprospects.com/player/448931/elias-kumlin">Elias Kumlin</a> — RW · 2004</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/517522/isak-ivehed">Isak Ivehed</a> — F · 2003</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/555843/teodor-forssander">Teodor Forssander</a> — LW · 2004</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>10</span><span><img src='./logos/Huddinge_IK.png' class='team-logo'></span><span>Huddinge&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Målvakter</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/656513/leo-matthiesen">Leo Matthiesen</a> — G · 2004</div>
 <h3>Backar</h3>
@@ -710,8 +1901,14 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player'><a href="https://www.eliteprospects.com/player/499333/gabriel-ahs">Gabriel Åhs</a> — RW · 2002</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/703020/hampus-nilsson">Hampus Nilsson</a> — F · 2005</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/604443/tobias-ahlen">Tobias Ahlén</a> — C/RW · 2003</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>10</span><span><img src='./logos/Västerviks_IK.png' class='team-logo'></span><span>Västerviks&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Målvakter</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/541471/sebastian-andersson">Sebastian Andersson</a> — G · 2002</div>
 <h3>Backar</h3>
@@ -725,8 +1922,14 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player'><a href="https://www.eliteprospects.com/player/430102/knut-kohler">Knut Köhler</a> — C · 2002</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/104845/noah-wolf">Noah Wolf</a> — LW/RW · 2005</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/650765/wille-edstrom">Wille Edström</a> — RW · 2005</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>6</span><span><img src='./logos/Gislaveds_SK.png' class='team-logo'></span><span>Gislaved&nbsp;SK&nbsp;Hockey</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Backar</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/795647/holger-claar">Holger Claar</a> — D · 2006</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/957991/sanny-hoffren">Sanny Hoffrén</a> — D · 2007</div>
@@ -735,220 +1938,771 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player'><a href="https://www.eliteprospects.com/player/646531/daniel-vilusic">Daniel Vilusic</a> — C · 2003</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/795648/oscar-lindqvist">Oscar Lindqvist</a> — RW · 2006</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/957990/walter-aqvist">Walter Åqvist</a> — LW · 2008</div>
+</div>
+</div>
+</details>
+<details><summary><div class='overview-summary'><span class='overview-count'>4</span><span><img src='./logos/Kungälvs_IK.png' class='team-logo'></span><span>Kungälvs&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+<h3>Forwards</h3>
+<div class='player player-added'><a href="https://www.eliteprospects.com/player/473496/alexander-olsen">Alexander Olsén</a> — F · 2003</div>
+</div>
+<div class='players-all hidden'>
+<h3>Forwards</h3>
+<div class='player player-added'><a href="https://www.eliteprospects.com/player/473496/alexander-olsen">Alexander Olsén</a> — F · 2003</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/344307/eric-osterman">Eric Österman</a> — RW · 2000</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/382455/hannes-asp">Hannes Asp</a> — LW · 2001</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/382449/melker-oberg">Melker Öberg</a> — C · 2001</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>4</span><span><img src='./logos/Surahammars_IF.png' class='team-logo'></span><span>Surahammars&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Backar</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/713555/max-joona">Max Joona</a> — D · 2006</div>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/718166/linus-rydell">Linus Rydell</a> — LW · 2006</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/477216/sebastian-ehrencrona">Sebastian Ehrencrona</a> — C · 2003</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/707353/wille-ekman-cederborg">Wille Ekman Cederborg</a> — RW · 2005</div>
-</details>
-<details><summary><div class='overview-summary'><span class='overview-count'>3</span><span><img src='./logos/Kungälvs_IK.png' class='team-logo'></span><span>Kungälvs&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
-<h3>Forwards</h3>
-<div class='player'><a href="https://www.eliteprospects.com/player/344307/eric-osterman">Eric Österman</a> — RW · 2000</div>
-<div class='player'><a href="https://www.eliteprospects.com/player/382455/hannes-asp">Hannes Asp</a> — LW · 2001</div>
-<div class='player'><a href="https://www.eliteprospects.com/player/382449/melker-oberg">Melker Öberg</a> — C · 2001</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>3</span><span><img src='./logos/Rönnängs_IK.png' class='team-logo'></span><span>Rönnängs&nbsp;IK</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/187893/oliver-erixon">Oliver Erixon</a> — C/RW · 1997</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/212515/tony-pappila">Tony Pappila</a> — RW · 1997</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/640959/walter-goransson">Walter Göransson</a> — F · 2005</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>3</span><span><img src='./logos/Örnsköldsvik_HF.png' class='team-logo'></span><span>Örnsköldsvik&nbsp;HF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/714951/elias-bostrom">Elias Boström</a> — F · 2005</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/669610/frans-westberg-gren">Frans Westberg Gren</a> — LW/C · 2005</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/717054/marcus-schill">Marcus Schill</a> — C · 2005</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>2</span><span><img src='./logos/Väsby_IK_HK.png' class='team-logo'></span><span>Väsby&nbsp;IK</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Målvakter</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/333324/victor-olsson">Victor Olsson</a> — G · 2000</div>
 <h3>Backar</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/34107/jacob-spangberg">Jacob Spångberg</a> — D · 1994</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Enköpings_SK_HK.png' class='team-logo'></span><span>Enköpings&nbsp;SK</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/474102/axel-knudsen">Axel Knudsen</a> — LW/RW · 2002</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Jonstorps_IF_IshF.png' class='team-logo'></span><span>Jonstorps&nbsp;IF</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/785356/petter-olsson">Petter Olsson</a> — C · 2006</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Kiruna_IF.png' class='team-logo'></span><span>Kiruna&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/342792/liam-nilsson">Liam Nilsson</a> — C/RW · 2000</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Tingsryds_AIF.png' class='team-logo'></span><span>Tingsryds&nbsp;AIF</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Forwards</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/778463/eric-nordmark">Eric Nordmark</a> — LW · 2005</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Wings_HC_Arlanda.png' class='team-logo'></span><span>Wings&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
 <h3>Backar</h3>
 <div class='player'><a href="https://www.eliteprospects.com/player/355322/viktor-pahlen">Viktor Pahlén</a> — D/F · 2000</div>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Alvesta_SK.png' class='team-logo'></span><span>Alvesta&nbsp;SK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bodens_HF.png' class='team-logo'></span><span>Boden&nbsp;HF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Borlänge_HF.png' class='team-logo'></span><span>Borlänge&nbsp;HF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Boro_Vetlanda_HC.png' class='team-logo'></span><span>Boro/Vetlanda&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Borås_HC.png' class='team-logo'></span><span>Borås&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Borås_HC.png' class='team-logo'></span><span>Borås&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bäcken_HC.png' class='team-logo'></span><span>Bäcken&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bäcken_HC.png' class='team-logo'></span><span>Bäcken&nbsp;HC&nbsp;U16</span><span class='overview-serie'>U16 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bäcken_HC.png' class='team-logo'></span><span>Bäcken&nbsp;HC&nbsp;U18</span><span class='overview-serie'>U18 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Bäcken_HC.png' class='team-logo'></span><span>Bäcken&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Clemensnäs_HC.png' class='team-logo'></span><span>Clemensnäs&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Falu_IF.png' class='team-logo'></span><span>Falu&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Forshaga_IF.png' class='team-logo'></span><span>Forshaga&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Frölunda_HC.png' class='team-logo'></span><span>Frölunda&nbsp;HC</span><span class='overview-serie'>SHL</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Frölunda_HC.png' class='team-logo'></span><span>Frölunda&nbsp;HC&nbsp;U16</span><span class='overview-serie'>U16 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Frölunda_HC.png' class='team-logo'></span><span>Frölunda&nbsp;HC&nbsp;U18</span><span class='overview-serie'>U18 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Frölunda_HC.png' class='team-logo'></span><span>Frölunda&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Nationell Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Grums_IK.png' class='team-logo'></span><span>Grums&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Grästorps_IK.png' class='team-logo'></span><span>Grästorps&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Grästorps_IK.png' class='team-logo'></span><span>Grästorps&nbsp;IK&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Göteborgs_IK.png' class='team-logo'></span><span>Göteborgs&nbsp;IK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/HA74.png' class='team-logo'></span><span>HA74</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Halmstad_Hammers_HC.png' class='team-logo'></span><span>Halmstad&nbsp;Hammers&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Halmstad_Hammers_HC.png' class='team-logo'></span><span>Halmstad&nbsp;Hammers&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hammarby_IF.png' class='team-logo'></span><span>Hammarby&nbsp;IF</span><span class='overview-serie'>HockeyTvåan Östra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hanhals_IF.png' class='team-logo'></span><span>Hanhals&nbsp;IF</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hanhals_IF.png' class='team-logo'></span><span>Hanhals&nbsp;IF&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/HC_Dalen.png' class='team-logo'></span><span>HC&nbsp;Dalen</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/HC_Lidköping_Red_Roosters.png' class='team-logo'></span><span>HC&nbsp;Lidköping</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/HC_Vita_Hästen.png' class='team-logo'></span><span>HC&nbsp;Vita&nbsp;Hästen</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Helsingborg_HC_Ungdom.png' class='team-logo'></span><span>Helsingborgs&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hisingens_IK.png' class='team-logo'></span><span>Hisingens&nbsp;IK</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hovås_HC.png' class='team-logo'></span><span>Hovås&nbsp;HC</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hovås_HC.png' class='team-logo'></span><span>Hovås&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Hudiksvalls_HC.png' class='team-logo'></span><span>Hudiksvalls&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Härryda_HC.png' class='team-logo'></span><span>Härryda&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IF_Mölndal_Hockey.png' class='team-logo'></span><span>IF&nbsp;Mölndal&nbsp;Hockey</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IF_Mölndal_Hockey.png' class='team-logo'></span><span>IF&nbsp;Mölndal&nbsp;Hockey&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IF_Sundsvall_Hockey.png' class='team-logo'></span><span>IF&nbsp;Sundsvall&nbsp;Hockey</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IF_Troja-Ljungby.png' class='team-logo'></span><span>IF&nbsp;Troja-Ljungby</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/IK_Oskarshamn.png' class='team-logo'></span><span>IK&nbsp;Oskarshamn</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Järfälla_HC.png' class='team-logo'></span><span>Järfälla&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kalix_HC.png' class='team-logo'></span><span>Kalix&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kalmar_HC.png' class='team-logo'></span><span>Kalmar&nbsp;HC</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Karlskrona_HK.png' class='team-logo'></span><span>Karlskrona&nbsp;HK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/KRIF_Hockey.png' class='team-logo'></span><span>KRIF&nbsp;Hockey</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kristianstads_IK.png' class='team-logo'></span><span>Kristianstads&nbsp;IK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kungälvs_IK.png' class='team-logo'></span><span>Kungälvs&nbsp;IK&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Kållered_SK.png' class='team-logo'></span><span>Kållereds&nbsp;SK&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Lerums_BK.png' class='team-logo'></span><span>Lerums&nbsp;BK</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Lerums_BK.png' class='team-logo'></span><span>Lerums&nbsp;BK&nbsp;U20</span><span class='overview-serie'>U20 Division 1 Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Lindlövens_IF.png' class='team-logo'></span><span>Lindlövens&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/LN_70_HC.png' class='team-logo'></span><span>LN-70&nbsp;HC</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Mariestad_BoIS_HC.png' class='team-logo'></span><span>Mariestad&nbsp;BoIS&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Mariestad_BoIS_HC.png' class='team-logo'></span><span>Mariestad&nbsp;BoIS&nbsp;HC&nbsp;U20</span><span class='overview-serie'>U20 Region Syd</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Mjölby_HC.png' class='team-logo'></span><span>Mjölby&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Motala_AIF_HK.png' class='team-logo'></span><span>Motala&nbsp;AIF</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Mörrums_GoIS_IK.png' class='team-logo'></span><span>Mörrums&nbsp;GoIS&nbsp;IK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Nacka_HK.png' class='team-logo'></span><span>Nacka&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Östra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Nittorps_IK.png' class='team-logo'></span><span>Nittorps&nbsp;IK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Norrtälje_IK.png' class='team-logo'></span><span>Norrtälje&nbsp;IK</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Nybro_Vikings_IF.png' class='team-logo'></span><span>Nybro-Vikings&nbsp;HC</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Nyköpings_SK.png' class='team-logo'></span><span>Nyköpings&nbsp;SK</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Olofströms_IK.png' class='team-logo'></span><span>Olofströms&nbsp;IK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Partille_HK.png' class='team-logo'></span><span>Partille&nbsp;HK</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Piteå_HC.png' class='team-logo'></span><span>Piteå&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Skövde_Hockey_Club.png' class='team-logo'></span><span>Skövde&nbsp;HC</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Sollentuna_HC.png' class='team-logo'></span><span>Sollentuna&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Stenungsund_HF.png' class='team-logo'></span><span>Stenungsund&nbsp;HF</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Strömsbro_IF.png' class='team-logo'></span><span>Strömsbro&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Sörhaga_Alingsås_HK.png' class='team-logo'></span><span>Sörhaga/Alingsås&nbsp;HK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Tranås_AIF.png' class='team-logo'></span><span>Tranås&nbsp;AIF</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Tyresö_Hanviken_Hockey.png' class='team-logo'></span><span>Tyresö&nbsp;Hanviken</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Töreboda_HF.png' class='team-logo'></span><span>Töreboda&nbsp;HF</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Ulricehamns_IF.png' class='team-logo'></span><span>Ulricehamns&nbsp;IF</span><span class='overview-serie'>HockeyTrean Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Vallentuna_Hockey.png' class='team-logo'></span><span>Vallentuna&nbsp;Hockey</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Vimmerby_HC.png' class='team-logo'></span><span>Vimmerby&nbsp;HC</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Visby-Roma_HK.png' class='team-logo'></span><span>Visby&nbsp;Roma</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Vänersborgs_HC.png' class='team-logo'></span><span>Vänersborgs&nbsp;HC</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Värnamo_GIK.png' class='team-logo'></span><span>Värnamo&nbsp;GIK</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 <details><summary><div class='overview-summary'><span class='overview-count'>0</span><span><img src='./logos/Åseda_IF.png' class='team-logo'></span><span>Åseda&nbsp;IF</span><span class='overview-serie'>HockeyTvåan Södra</span></div></summary>
+<div class='overview-team-players' data-mode='month'>
+<div class='players-changes-only'>
+</div>
+<div class='players-all hidden'>
+</div>
+</div>
 </details>
 </div>
 </section>
@@ -1008,6 +2762,7 @@ window.addEventListener("DOMContentLoaded", () => {
 </details>
 <details><summary><img src='./logos/Kungälvs_IK.png' class='team-logo'>Kungälvs&nbsp;IK</summary>
 <h3>Forwards</h3>
+<div class='player'><a href="https://www.eliteprospects.com/player/473496/alexander-olsen">Alexander Olsén</a> — F · 2003</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/344307/eric-osterman">Eric Österman</a> — RW · 2000</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/382455/hannes-asp">Hannes Asp</a> — LW · 2001</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/382449/melker-oberg">Melker Öberg</a> — C · 2001</div>
@@ -1267,6 +3022,7 @@ window.addEventListener("DOMContentLoaded", () => {
 <section id='all-players'>
 <h1>Alla spelare</h1>
 <div class='player'><a href="https://www.eliteprospects.com/player/204336/adam-ingelfeldt">Adam Ingelfeldt</a> — G · 1997 · HockeyEttan Södra · Tyringe SoSS</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/473496/alexander-olsen">Alexander Olsén</a> — F · 2003 · HockeyEttan Södra · Kungälvs IK</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/500053/algot-blomdahl-arnoldsson">Algot Blomdahl Arnoldsson</a> — C/W · 2004 · HockeyEttan Södra · Tyringe SoSS</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/683119/anton-macdonald">Anton MacDonald</a> — D · 2005 · HockeyEttan Södra · Tyringe SoSS</div>
 <div class='player'><a href="https://www.eliteprospects.com/player/474102/axel-knudsen">Axel Knudsen</a> — LW/RW · 2002 · HockeyEttan Norra · Enköpings SK</div>
@@ -1332,6 +3088,6 @@ window.addEventListener("DOMContentLoaded", () => {
 <div id='searchResults'></div>
 </section>
 <script>
-let allPlayers = [{"link": "https://www.eliteprospects.com/player/204336/adam-ingelfeldt", "name": "Adam Ingelfeldt", "position": "G", "birthyear": "1997", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/500053/algot-blomdahl-arnoldsson", "name": "Algot Blomdahl Arnoldsson", "position": "C/W", "birthyear": "2004", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/683119/anton-macdonald", "name": "Anton MacDonald", "position": "D", "birthyear": "2005", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/474102/axel-knudsen", "name": "Axel Knudsen", "position": "LW/RW", "birthyear": "2002", "team": "Enköpings SK", "serie": "HockeyEttan Norra", "team_file": "enkopings-sk_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/295060/carl-wassenius", "name": "Carl Wassenius", "position": "C/RW", "birthyear": "1999", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/649219/charlie-kronnas", "name": "Charlie Kronnäs", "position": "D", "birthyear": "2004", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/344718/daniel-liiv", "name": "Daniel Liiv", "position": "F", "birthyear": "2000", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/646531/daniel-vilusic", "name": "Daniel Vilusic", "position": "C", "birthyear": "2003", "team": "Gislaved SK Hockey", "serie": "HockeyTvåan Södra", "team_file": "gislaved-sk-hockey_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/708514/edvin-stavlind", "name": "Edvin Stavlind", "position": "LW", "birthyear": "2005", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/714951/elias-bostrom", "name": "Elias Boström", "position": "F", "birthyear": "2005", "team": "Örnsköldsvik HF", "serie": "HockeyEttan Norra", "team_file": "ornskoldsvik-hf_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/448931/elias-kumlin", "name": "Elias Kumlin", "position": "RW", "birthyear": "2004", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/649774/emil-torvfelt", "name": "Emil Torvfelt", "position": "C", "birthyear": "2005", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/381840/eric-eljas", "name": "Eric Eljas", "position": "C/LW", "birthyear": "2001", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/778463/eric-nordmark", "name": "Eric Nordmark", "position": "LW", "birthyear": "2005", "team": "Tingsryds AIF", "serie": "HockeyEttan Södra", "team_file": "tingsryds-aif_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/344307/eric-osterman", "name": "Eric Österman", "position": "RW", "birthyear": "2000", "team": "Kungälvs IK", "serie": "HockeyEttan Södra", "team_file": "kungalvs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/588617/erik-burwall", "name": "Erik Burwall", "position": "D", "birthyear": "2004", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/669610/frans-westberg-gren", "name": "Frans Westberg Gren", "position": "LW/C", "birthyear": "2005", "team": "Örnsköldsvik HF", "serie": "HockeyEttan Norra", "team_file": "ornskoldsvik-hf_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/499333/gabriel-ahs", "name": "Gabriel Åhs", "position": "RW", "birthyear": "2002", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/703020/hampus-nilsson", "name": "Hampus Nilsson", "position": "F", "birthyear": "2005", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/382455/hannes-asp", "name": "Hannes Asp", "position": "LW", "birthyear": "2001", "team": "Kungälvs IK", "serie": "HockeyEttan Södra", "team_file": "kungalvs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/795647/holger-claar", "name": "Holger Claar", "position": "D", "birthyear": "2006", "team": "Gislaved SK Hockey", "serie": "HockeyTvåan Södra", "team_file": "gislaved-sk-hockey_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/672603/hugo-dengg", "name": "Hugo Dengg", "position": "D", "birthyear": "2005", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/517522/isak-ivehed", "name": "Isak Ivehed", "position": "F", "birthyear": "2003", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/570800/jack-sirkka", "name": "Jack Sirkka", "position": "RW/LW", "birthyear": "2003", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/34107/jacob-spangberg", "name": "Jacob Spångberg", "position": "D", "birthyear": "1994", "team": "Väsby IK", "serie": "HockeyEttan Norra", "team_file": "vasby-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/155128/jacob-tenemyr", "name": "Jacob Tenemyr", "position": "LW", "birthyear": "1995", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/648160/joel-carlsson", "name": "Joel Carlsson", "position": "D", "birthyear": "2003", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/103128/johan-hoglund", "name": "Johan Höglund", "position": "D", "birthyear": "1996", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/430102/knut-kohler", "name": "Knut Köhler", "position": "C", "birthyear": "2002", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/656513/leo-matthiesen", "name": "Leo Matthiesen", "position": "G", "birthyear": "2004", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/342792/liam-nilsson", "name": "Liam Nilsson", "position": "C/RW", "birthyear": "2000", "team": "Kiruna IF", "serie": "HockeyEttan Norra", "team_file": "kiruna-if_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/564480/liam-thorbjornsson", "name": "Liam Thorbjörnsson", "position": "D", "birthyear": "2004", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/718166/linus-rydell", "name": "Linus Rydell", "position": "LW", "birthyear": "2006", "team": "Surahammars IF", "serie": "HockeyEttan Norra", "team_file": "surahammars-if_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/509847/lukas-dahlbeck", "name": "Lukas Dahlbeck", "position": "D", "birthyear": "2003", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/717054/marcus-schill", "name": "Marcus Schill", "position": "C", "birthyear": "2005", "team": "Örnsköldsvik HF", "serie": "HockeyEttan Norra", "team_file": "ornskoldsvik-hf_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/713555/max-joona", "name": "Max Joona", "position": "D", "birthyear": "2006", "team": "Surahammars IF", "serie": "HockeyEttan Norra", "team_file": "surahammars-if_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/509952/max-kroon", "name": "Max Kroon", "position": "D", "birthyear": "2003", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/382449/melker-oberg", "name": "Melker Öberg", "position": "C", "birthyear": "2001", "team": "Kungälvs IK", "serie": "HockeyEttan Södra", "team_file": "kungalvs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/546800/nils-strandberg-saren", "name": "Nils Strandberg Sarén", "position": "D", "birthyear": "2002", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/104845/noah-wolf", "name": "Noah Wolf", "position": "LW/RW", "birthyear": "2005", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/708500/oliver-collins-floren", "name": "Oliver Collins Florén", "position": "D", "birthyear": "2005", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/187893/oliver-erixon", "name": "Oliver Erixon", "position": "C/RW", "birthyear": "1997", "team": "Rönnängs IK", "serie": "HockeyTrean Södra", "team_file": "ronnangs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/795648/oscar-lindqvist", "name": "Oscar Lindqvist", "position": "RW", "birthyear": "2006", "team": "Gislaved SK Hockey", "serie": "HockeyTvåan Södra", "team_file": "gislaved-sk-hockey_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/514090/oskar-tangerby", "name": "Oskar Tängerby", "position": "D", "birthyear": "2004", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/785356/petter-olsson", "name": "Petter Olsson", "position": "C", "birthyear": "2006", "team": "Jonstorps IF", "serie": "HockeyTvåan Södra", "team_file": "jonstorps-if_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/957991/sanny-hoffren", "name": "Sanny Hoffrén", "position": "D", "birthyear": "2007", "team": "Gislaved SK Hockey", "serie": "HockeyTvåan Södra", "team_file": "gislaved-sk-hockey_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/541471/sebastian-andersson", "name": "Sebastian Andersson", "position": "G", "birthyear": "2002", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/477216/sebastian-ehrencrona", "name": "Sebastian Ehrencrona", "position": "C", "birthyear": "2003", "team": "Surahammars IF", "serie": "HockeyEttan Norra", "team_file": "surahammars-if_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/398926/simon-sundqvist", "name": "Simon Sundqvist", "position": "D/C", "birthyear": "2001", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/555843/teodor-forssander", "name": "Teodor Forssander", "position": "LW", "birthyear": "2004", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/604443/tobias-ahlen", "name": "Tobias Ahlén", "position": "C/RW", "birthyear": "2003", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/212515/tony-pappila", "name": "Tony Pappila", "position": "RW", "birthyear": "1997", "team": "Rönnängs IK", "serie": "HockeyTrean Södra", "team_file": "ronnangs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/333324/victor-olsson", "name": "Victor Olsson", "position": "G", "birthyear": "2000", "team": "Väsby IK", "serie": "HockeyEttan Norra", "team_file": "vasby-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/355322/viktor-pahlen", "name": "Viktor Pahlén", "position": "D/F", "birthyear": "2000", "team": "Wings HC", "serie": "HockeyEttan Norra", "team_file": "wings-hc_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/640959/walter-goransson", "name": "Walter Göransson", "position": "F", "birthyear": "2005", "team": "Rönnängs IK", "serie": "HockeyTrean Södra", "team_file": "ronnangs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/957990/walter-aqvist", "name": "Walter Åqvist", "position": "LW", "birthyear": "2008", "team": "Gislaved SK Hockey", "serie": "HockeyTvåan Södra", "team_file": "gislaved-sk-hockey_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/650765/wille-edstrom", "name": "Wille Edström", "position": "RW", "birthyear": "2005", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/707353/wille-ekman-cederborg", "name": "Wille Ekman Cederborg", "position": "RW", "birthyear": "2005", "team": "Surahammars IF", "serie": "HockeyEttan Norra", "team_file": "surahammars-if_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/957985/wilmer-bjelke", "name": "Wilmer Bjelke", "position": "D", "birthyear": "2008", "team": "Gislaved SK Hockey", "serie": "HockeyTvåan Södra", "team_file": "gislaved-sk-hockey_2026-2027.txt"}];
+let allPlayers = [{"link": "https://www.eliteprospects.com/player/204336/adam-ingelfeldt", "name": "Adam Ingelfeldt", "position": "G", "birthyear": "1997", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/473496/alexander-olsen", "name": "Alexander Olsén", "position": "F", "birthyear": "2003", "team": "Kungälvs IK", "serie": "HockeyEttan Södra", "team_file": "kungalvs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/500053/algot-blomdahl-arnoldsson", "name": "Algot Blomdahl Arnoldsson", "position": "C/W", "birthyear": "2004", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/683119/anton-macdonald", "name": "Anton MacDonald", "position": "D", "birthyear": "2005", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/474102/axel-knudsen", "name": "Axel Knudsen", "position": "LW/RW", "birthyear": "2002", "team": "Enköpings SK", "serie": "HockeyEttan Norra", "team_file": "enkopings-sk_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/295060/carl-wassenius", "name": "Carl Wassenius", "position": "C/RW", "birthyear": "1999", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/649219/charlie-kronnas", "name": "Charlie Kronnäs", "position": "D", "birthyear": "2004", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/344718/daniel-liiv", "name": "Daniel Liiv", "position": "F", "birthyear": "2000", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/646531/daniel-vilusic", "name": "Daniel Vilusic", "position": "C", "birthyear": "2003", "team": "Gislaved SK Hockey", "serie": "HockeyTvåan Södra", "team_file": "gislaved-sk-hockey_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/708514/edvin-stavlind", "name": "Edvin Stavlind", "position": "LW", "birthyear": "2005", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/714951/elias-bostrom", "name": "Elias Boström", "position": "F", "birthyear": "2005", "team": "Örnsköldsvik HF", "serie": "HockeyEttan Norra", "team_file": "ornskoldsvik-hf_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/448931/elias-kumlin", "name": "Elias Kumlin", "position": "RW", "birthyear": "2004", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/649774/emil-torvfelt", "name": "Emil Torvfelt", "position": "C", "birthyear": "2005", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/381840/eric-eljas", "name": "Eric Eljas", "position": "C/LW", "birthyear": "2001", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/778463/eric-nordmark", "name": "Eric Nordmark", "position": "LW", "birthyear": "2005", "team": "Tingsryds AIF", "serie": "HockeyEttan Södra", "team_file": "tingsryds-aif_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/344307/eric-osterman", "name": "Eric Österman", "position": "RW", "birthyear": "2000", "team": "Kungälvs IK", "serie": "HockeyEttan Södra", "team_file": "kungalvs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/588617/erik-burwall", "name": "Erik Burwall", "position": "D", "birthyear": "2004", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/669610/frans-westberg-gren", "name": "Frans Westberg Gren", "position": "LW/C", "birthyear": "2005", "team": "Örnsköldsvik HF", "serie": "HockeyEttan Norra", "team_file": "ornskoldsvik-hf_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/499333/gabriel-ahs", "name": "Gabriel Åhs", "position": "RW", "birthyear": "2002", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/703020/hampus-nilsson", "name": "Hampus Nilsson", "position": "F", "birthyear": "2005", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/382455/hannes-asp", "name": "Hannes Asp", "position": "LW", "birthyear": "2001", "team": "Kungälvs IK", "serie": "HockeyEttan Södra", "team_file": "kungalvs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/795647/holger-claar", "name": "Holger Claar", "position": "D", "birthyear": "2006", "team": "Gislaved SK Hockey", "serie": "HockeyTvåan Södra", "team_file": "gislaved-sk-hockey_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/672603/hugo-dengg", "name": "Hugo Dengg", "position": "D", "birthyear": "2005", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/517522/isak-ivehed", "name": "Isak Ivehed", "position": "F", "birthyear": "2003", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/570800/jack-sirkka", "name": "Jack Sirkka", "position": "RW/LW", "birthyear": "2003", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/34107/jacob-spangberg", "name": "Jacob Spångberg", "position": "D", "birthyear": "1994", "team": "Väsby IK", "serie": "HockeyEttan Norra", "team_file": "vasby-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/155128/jacob-tenemyr", "name": "Jacob Tenemyr", "position": "LW", "birthyear": "1995", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/648160/joel-carlsson", "name": "Joel Carlsson", "position": "D", "birthyear": "2003", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/103128/johan-hoglund", "name": "Johan Höglund", "position": "D", "birthyear": "1996", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/430102/knut-kohler", "name": "Knut Köhler", "position": "C", "birthyear": "2002", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/656513/leo-matthiesen", "name": "Leo Matthiesen", "position": "G", "birthyear": "2004", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/342792/liam-nilsson", "name": "Liam Nilsson", "position": "C/RW", "birthyear": "2000", "team": "Kiruna IF", "serie": "HockeyEttan Norra", "team_file": "kiruna-if_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/564480/liam-thorbjornsson", "name": "Liam Thorbjörnsson", "position": "D", "birthyear": "2004", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/718166/linus-rydell", "name": "Linus Rydell", "position": "LW", "birthyear": "2006", "team": "Surahammars IF", "serie": "HockeyEttan Norra", "team_file": "surahammars-if_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/509847/lukas-dahlbeck", "name": "Lukas Dahlbeck", "position": "D", "birthyear": "2003", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/717054/marcus-schill", "name": "Marcus Schill", "position": "C", "birthyear": "2005", "team": "Örnsköldsvik HF", "serie": "HockeyEttan Norra", "team_file": "ornskoldsvik-hf_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/713555/max-joona", "name": "Max Joona", "position": "D", "birthyear": "2006", "team": "Surahammars IF", "serie": "HockeyEttan Norra", "team_file": "surahammars-if_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/509952/max-kroon", "name": "Max Kroon", "position": "D", "birthyear": "2003", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/382449/melker-oberg", "name": "Melker Öberg", "position": "C", "birthyear": "2001", "team": "Kungälvs IK", "serie": "HockeyEttan Södra", "team_file": "kungalvs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/546800/nils-strandberg-saren", "name": "Nils Strandberg Sarén", "position": "D", "birthyear": "2002", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/104845/noah-wolf", "name": "Noah Wolf", "position": "LW/RW", "birthyear": "2005", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/708500/oliver-collins-floren", "name": "Oliver Collins Florén", "position": "D", "birthyear": "2005", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/187893/oliver-erixon", "name": "Oliver Erixon", "position": "C/RW", "birthyear": "1997", "team": "Rönnängs IK", "serie": "HockeyTrean Södra", "team_file": "ronnangs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/795648/oscar-lindqvist", "name": "Oscar Lindqvist", "position": "RW", "birthyear": "2006", "team": "Gislaved SK Hockey", "serie": "HockeyTvåan Södra", "team_file": "gislaved-sk-hockey_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/514090/oskar-tangerby", "name": "Oskar Tängerby", "position": "D", "birthyear": "2004", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/785356/petter-olsson", "name": "Petter Olsson", "position": "C", "birthyear": "2006", "team": "Jonstorps IF", "serie": "HockeyTvåan Södra", "team_file": "jonstorps-if_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/957991/sanny-hoffren", "name": "Sanny Hoffrén", "position": "D", "birthyear": "2007", "team": "Gislaved SK Hockey", "serie": "HockeyTvåan Södra", "team_file": "gislaved-sk-hockey_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/541471/sebastian-andersson", "name": "Sebastian Andersson", "position": "G", "birthyear": "2002", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/477216/sebastian-ehrencrona", "name": "Sebastian Ehrencrona", "position": "C", "birthyear": "2003", "team": "Surahammars IF", "serie": "HockeyEttan Norra", "team_file": "surahammars-if_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/398926/simon-sundqvist", "name": "Simon Sundqvist", "position": "D/C", "birthyear": "2001", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/555843/teodor-forssander", "name": "Teodor Forssander", "position": "LW", "birthyear": "2004", "team": "Tyringe SoSS", "serie": "HockeyEttan Södra", "team_file": "tyringe-soss_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/604443/tobias-ahlen", "name": "Tobias Ahlén", "position": "C/RW", "birthyear": "2003", "team": "Huddinge IK", "serie": "HockeyEttan Södra", "team_file": "huddinge-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/212515/tony-pappila", "name": "Tony Pappila", "position": "RW", "birthyear": "1997", "team": "Rönnängs IK", "serie": "HockeyTrean Södra", "team_file": "ronnangs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/333324/victor-olsson", "name": "Victor Olsson", "position": "G", "birthyear": "2000", "team": "Väsby IK", "serie": "HockeyEttan Norra", "team_file": "vasby-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/355322/viktor-pahlen", "name": "Viktor Pahlén", "position": "D/F", "birthyear": "2000", "team": "Wings HC", "serie": "HockeyEttan Norra", "team_file": "wings-hc_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/640959/walter-goransson", "name": "Walter Göransson", "position": "F", "birthyear": "2005", "team": "Rönnängs IK", "serie": "HockeyTrean Södra", "team_file": "ronnangs-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/957990/walter-aqvist", "name": "Walter Åqvist", "position": "LW", "birthyear": "2008", "team": "Gislaved SK Hockey", "serie": "HockeyTvåan Södra", "team_file": "gislaved-sk-hockey_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/650765/wille-edstrom", "name": "Wille Edström", "position": "RW", "birthyear": "2005", "team": "Västerviks IK", "serie": "HockeyEttan Södra", "team_file": "vasterviks-ik_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/707353/wille-ekman-cederborg", "name": "Wille Ekman Cederborg", "position": "RW", "birthyear": "2005", "team": "Surahammars IF", "serie": "HockeyEttan Norra", "team_file": "surahammars-if_2026-2027.txt"}, {"link": "https://www.eliteprospects.com/player/957985/wilmer-bjelke", "name": "Wilmer Bjelke", "position": "D", "birthyear": "2008", "team": "Gislaved SK Hockey", "serie": "HockeyTvåan Södra", "team_file": "gislaved-sk-hockey_2026-2027.txt"}];
 </script>
 </body></html>
