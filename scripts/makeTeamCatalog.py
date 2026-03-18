@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 DEFAULT_SEASON = "2026-2027"
 DEFAULT_INPUT_FOLDER = "./output"
 TAB_ORDER = ["overview", "SHL", "HA", "HES", "HEN", "H2", "H3", "U20", "U18", "U16", "all-players", "search"]
-COMPARE_MODES = [("day", "~ en dag", 1), ("week", "~ en vecka", 7), ("month", "~ en månad", 30)]
+COMPARE_MODES = [("day", "~1 dag", 1), ("three", "~3 dag", 3), ("week", "~1 vecka", 7), ("fourweek", "~4 vecka", 28)]
 
 
 def debug(msg: str, enabled: bool) -> None:
@@ -33,14 +33,8 @@ def season_to_title(season: str) -> str:
     return season.replace("-", "/")
 
 
-def format_ts(path: Optional[Path]) -> Optional[str]:
-    if path is None or not path.exists():
-        return None
-    return datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
-
-
-def html_ts(ts: Optional[str]) -> str:
-    return html.escape(ts) if ts else "okänd tid"
+def format_dt_minute(dt: Optional[datetime]) -> str:
+    return dt.strftime("%Y-%m-%d %H:%M") if dt else "okänd tid"
 
 
 def tab_group_from_shortname(shortname: str) -> Optional[str]:
@@ -66,12 +60,6 @@ def tab_group_from_shortname(shortname: str) -> Optional[str]:
     return None
 
 
-def tab_sort_key(team: Dict[str, Any]) -> Tuple[int, str, str]:
-    tab = tab_group_from_shortname(team["series_shortname"]) or "ZZZ"
-    idx = TAB_ORDER.index(tab) if tab in TAB_ORDER else 999
-    return (idx, team["series_name"].lower(), team["team_name"].lower())
-
-
 def categorize_position(pos: str) -> str:
     p = (pos or "").upper()
     if p == "G":
@@ -95,7 +83,6 @@ def parse_player_line(line: str) -> Optional[Dict[str, str]]:
 
 def parse_teams_file(teamsfile: Path, season: str, dbg: bool) -> List[Dict[str, str]]:
     teams: List[Dict[str, str]] = []
-    debug(f"Läser teams file: {teamsfile}", dbg)
     with teamsfile.open("r", encoding="utf-8") as f:
         for lineno, raw in enumerate(f, start=1):
             line = raw.strip()
@@ -107,23 +94,21 @@ def parse_teams_file(teamsfile: Path, season: str, dbg: bool) -> List[Dict[str, 
                 continue
             url, roster_file, series_name, series_shortname, team_name, logo_file = parts[:6]
             roster_file = re.sub(r"\b20\d{2}-20\d{2}\b", season, roster_file)
-            team = {
-                "url": url,
-                "roster_file": roster_file,
-                "series_name": series_name,
-                "series_shortname": series_shortname,
-                "team_name": team_name,
-                "logo_file": logo_file,
-            }
-            teams.append(team)
-            debug(f"Team rad {lineno}: roster={roster_file} serie={series_name} short={series_shortname} team={team_name} logo={logo_file}", dbg)
-    debug(f"Antal team inlästa: {len(teams)}", dbg)
+            teams.append(
+                {
+                    "url": url,
+                    "roster_file": roster_file,
+                    "series_name": series_name,
+                    "series_shortname": series_shortname,
+                    "team_name": team_name,
+                    "logo_file": logo_file,
+                }
+            )
     return teams
 
 
 def read_roster_file(roster_path: Path, team_meta: Dict[str, str], dbg: bool) -> Dict[str, Any]:
     players: List[Dict[str, str]] = []
-    debug(f"Läser rosterfil: {roster_path}", dbg)
     if not roster_path.exists():
         print(f"ERROR: Rosterfil saknas: {roster_path}", file=sys.stderr)
     else:
@@ -203,6 +188,24 @@ def parse_all_players_file(path: Path) -> Dict[str, List[Dict[str, str]]]:
     return result
 
 
+def map_to_signature_dict(state_map: Dict[str, List[Dict[str, str]]]) -> Dict[Tuple[str, str, str, str, str], Dict[str, str]]:
+    out: Dict[Tuple[str, str, str, str, str], Dict[str, str]] = {}
+    for team_file, players in state_map.items():
+        for p in players:
+            sig = (team_file, p["link"], p["name"], p["position"], p["birthyear"])
+            out[sig] = dict(p)
+    return out
+
+
+def signature_dict_to_map(sig_dict: Dict[Tuple[str, str, str, str, str], Dict[str, str]]) -> Dict[str, List[Dict[str, str]]]:
+    out: Dict[str, List[Dict[str, str]]] = {}
+    for p in sig_dict.values():
+        out.setdefault(p["team_file"], []).append(dict(p))
+    for team_file in out:
+        out[team_file].sort(key=lambda p: p["name"].lower())
+    return out
+
+
 def build_diff_from_snapshots(
     current_map: Dict[str, List[Dict[str, str]]],
     compare_map: Dict[str, List[Dict[str, str]]],
@@ -220,11 +223,7 @@ def build_diff_from_snapshots(
     return result
 
 
-def build_overview_players(
-    team: Dict[str, Any],
-    diff_map: Dict[str, Dict[str, List[Dict[str, str]]]],
-    changes_only: bool = False,
-) -> List[Dict[str, str]]:
+def build_overview_players(team: Dict[str, Any], diff_map: Dict[str, Dict[str, List[Dict[str, str]]]], changes_only: bool = False) -> List[Dict[str, str]]:
     current_players: List[Dict[str, str]] = []
     diff_entry = diff_map.get(team["roster_file"], {"added": [], "removed": []})
     added_set = {player_signature(p) for p in diff_entry.get("added", [])}
@@ -293,12 +292,9 @@ def render_team_players(players: List[Dict[str, str]], overview_mode: bool = Fal
 
 
 def build_tab_series(teams: List[Dict[str, Any]]) -> Dict[str, List[Tuple[str, List[Dict[str, Any]]]]]:
-    grouped: Dict[str, List[Tuple[str, List[Dict[str, Any]]]]] = {
-        "SHL": [], "HA": [], "HES": [], "HEN": [], "H2": [], "H3": [], "U20": [], "U18": [], "U16": []
-    }
+    grouped: Dict[str, List[Tuple[str, List[Dict[str, Any]]]]] = {k: [] for k in ["SHL", "HA", "HES", "HEN", "H2", "H3", "U20", "U18", "U16"]}
     series_order: Dict[str, List[str]] = {k: [] for k in grouped}
     series_map: Dict[str, Dict[str, List[Dict[str, Any]]]] = {k: {} for k in grouped}
-
     for team in teams:
         tab = tab_group_from_shortname(team["series_shortname"])
         if not tab:
@@ -308,43 +304,86 @@ def build_tab_series(teams: List[Dict[str, Any]]) -> Dict[str, List[Tuple[str, L
             series_map[tab][series_name] = []
             series_order[tab].append(series_name)
         series_map[tab][series_name].append(team)
-
     for tab in grouped:
         grouped[tab] = []
         for name in series_order[tab]:
-            teams_sorted = sorted(series_map[tab][name], key=lambda t: t["team_name"].lower())
-            grouped[tab].append((name, teams_sorted))
+            grouped[tab].append((name, sorted(series_map[tab][name], key=lambda t: t["team_name"].lower())))
     return grouped
 
 
-def list_history_files(history_dir: Path, prefix: str, season: str) -> List[Path]:
-    files = sorted(history_dir.glob(f"{prefix}_{season}_*.txt"))
-    dated: List[Tuple[str, Path]] = []
-    for f in files:
-        m = re.search(r"_(\d{8})\.txt$", f.name)
-        if m:
-            dated.append((m.group(1), f))
-    return [p for _, p in sorted(dated)]
+def parse_diff_timestamp_from_header(header_line: str) -> Optional[datetime]:
+    m = re.search(r"\t(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})", header_line)
+    return datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S") if m else None
 
 
-def choose_compare_history_file(current_path: Path, history_files: List[Path], target_days: int) -> Optional[Path]:
-    if not current_path.exists() or not history_files:
+def parse_all_players_diff_file(diff_path: Path) -> Dict[str, Any]:
+    added: List[Dict[str, str]] = []
+    removed: List[Dict[str, str]] = []
+    old_ts: Optional[datetime] = None
+    new_ts: Optional[datetime] = None
+    with diff_path.open("r", encoding="utf-8", errors="replace") as f:
+        for raw in f:
+            line = raw.rstrip("\n")
+            if line.startswith("--- "):
+                old_ts = parse_diff_timestamp_from_header(line)
+                continue
+            if line.startswith("+++ "):
+                new_ts = parse_diff_timestamp_from_header(line)
+                continue
+            if not line or line.startswith("@@") or line.startswith("Inga skillnader"):
+                continue
+            if line[0] not in "+-":
+                continue
+            parts = [p.strip() for p in line[1:].split(";")]
+            if len(parts) < 5:
+                continue
+            item = {"team_file": parts[0], "link": parts[1], "name": parts[2], "position": parts[3], "birthyear": parts[4]}
+            if line[0] == "+":
+                added.append(item)
+            else:
+                removed.append(item)
+    return {"path": diff_path, "old_ts": old_ts, "new_ts": new_ts, "added": added, "removed": removed}
+
+
+def list_all_players_diffs(input_dir: Path, season: str, dbg: bool) -> List[Dict[str, Any]]:
+    items = []
+    for p in sorted(input_dir.glob(f"alla_spelare_{season}_diff_*.txt")):
+        item = parse_all_players_diff_file(p)
+        if item["new_ts"] is not None:
+            items.append(item)
+            debug(f"Diff {p.name}: old={item['old_ts']} new={item['new_ts']} +{len(item['added'])} -{len(item['removed'])}", dbg)
+    items.sort(key=lambda x: x["new_ts"])
+    return items
+
+
+def reconstruct_run_states_from_diffs(current_map: Dict[str, List[Dict[str, str]]], diff_items: List[Dict[str, Any]], dbg: bool) -> List[Dict[str, Any]]:
+    if not diff_items:
+        return []
+    states: List[Dict[str, Any]] = []
+    sig_dict = map_to_signature_dict(current_map)
+    states.append({"ts": diff_items[-1]["new_ts"], "map": signature_dict_to_map(sig_dict)})
+    for i in range(len(diff_items) - 1, 0, -1):
+        diff_item = diff_items[i]
+        for p in diff_item["added"]:
+            sig_dict.pop((p["team_file"], p["link"], p["name"], p["position"], p["birthyear"]), None)
+        for p in diff_item["removed"]:
+            sig_dict[(p["team_file"], p["link"], p["name"], p["position"], p["birthyear"])] = dict(p)
+        states.append({"ts": diff_items[i - 1]["new_ts"], "map": signature_dict_to_map(sig_dict)})
+        debug(f"Rekonstruerad state för {diff_items[i - 1]['new_ts']}", dbg)
+    states.sort(key=lambda x: x["ts"])
+    return states
+
+
+def choose_compare_state(current_ts: datetime, states: List[Dict[str, Any]], target_days: int) -> Optional[Dict[str, Any]]:
+    older = [s for s in states if s["ts"] < current_ts]
+    if not older:
         return None
-    current_dt = datetime.fromtimestamp(current_path.stat().st_mtime)
-    candidates: List[Tuple[float, datetime, Path]] = []
-    older: List[Tuple[datetime, Path]] = []
-    for p in history_files:
-        if not p.exists():
-            continue
-        dt = datetime.fromtimestamp(p.stat().st_mtime)
-        if dt < current_dt:
-            older.append((dt, p))
-            delta_days = abs((current_dt - dt).total_seconds() / 86400.0 - target_days)
-            candidates.append((delta_days, dt, p))
-    if candidates:
-        candidates.sort(key=lambda x: (x[0], x[1]))
-        return candidates[0][2]
-    return None
+    scored = []
+    for s in older:
+        delta_days = abs((current_ts - s["ts"]).total_seconds() / 86400.0 - target_days)
+        scored.append((delta_days, s["ts"], s))
+    scored.sort(key=lambda x: (x[0], x[1]))
+    return scored[0][2]
 
 
 def team_has_changes(team: Dict[str, Any], diff_map: Dict[str, Dict[str, List[Dict[str, str]]]]) -> bool:
@@ -352,94 +391,54 @@ def team_has_changes(team: Dict[str, Any], diff_map: Dict[str, Dict[str, List[Di
     return bool(entry.get("added") or entry.get("removed"))
 
 
-def build_overview_mode_block(
-    mode_id: str,
-    mode_label: str,
-    teams: List[Dict[str, Any]],
-    grouped_tabs: Dict[str, List[Tuple[str, List[Dict[str, Any]]]]],
-    overview_counts: Dict[str, int],
-    diff_map: Dict[str, Dict[str, List[Dict[str, str]]]],
-    compare_ts: Optional[str],
-    current_ts: Optional[str],
-    logo_path_html: str,
-    checked: bool,
-) -> List[str]:
+def build_overview_mode_block(mode_id: str, teams: List[Dict[str, Any]], grouped_tabs: Dict[str, List[Tuple[str, List[Dict[str, Any]]]]], overview_counts: Dict[str, int], diff_map: Dict[str, Dict[str, List[Dict[str, str]]]], compare_ts: Optional[datetime], current_ts: Optional[datetime], logo_path_html: str) -> List[str]:
     html_parts: List[str] = []
-    checked_attr = " checked" if checked else ""
-    html_parts.append(f"<input type='radio' name='compare-mode' id='compare-{mode_id}' value='{mode_id}'{checked_attr}>")
-    html_parts.append("")
-    overview_teams = sorted(
-        teams,
-        key=lambda t: (-(overview_counts.get(t["roster_file"], t["player_count"])), t["team_name"].lower()),
-    )
-
     html_parts.append(f"<div class='overview-mode-block' id='overview-mode-{mode_id}'>")
-    html_parts.append(f"<h1>Spelarförändringar [{html_ts(compare_ts)} vs {html_ts(current_ts)}]</h1>")
+    html_parts.append(f"<h1>Spelarförändringar [{html.escape(format_dt_minute(compare_ts))} - {html.escape(format_dt_minute(current_ts))}]</h1>")
     html_parts.append("<div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>")
-
     changed_teams: List[Dict[str, Any]] = []
     for tab in ["SHL", "HA", "HES", "HEN", "H2", "H3", "U20", "U18", "U16"]:
-        for series_name, series_teams in grouped_tabs[tab]:
+        for _, series_teams in grouped_tabs[tab]:
             for team in series_teams:
                 if team_has_changes(team, diff_map):
                     changed_teams.append(team)
-
     for team in changed_teams:
         logo_html = f"<img src='{html.escape(logo_path_html + team['logo_file'])}' class='team-logo'>" if team.get("logo_file") else ""
-        summary = (
-            "<div class='overview-summary'>"
-            f"<span class='overview-count'>{overview_counts.get(team['roster_file'], team['player_count'])}</span>"
-            f"<span>{logo_html}</span>"
-            f"<span>{escape_nbsp(team['team_name'])}</span>"
-            f"<span class='overview-serie'>{html.escape(team['series_name'])}</span>"
-            "</div>"
-        )
+        summary = ("<div class='overview-summary'>"
+                   f"<span class='overview-count'>{overview_counts.get(team['roster_file'], team['player_count'])}</span>"
+                   f"<span>{logo_html}</span>"
+                   f"<span>{escape_nbsp(team['team_name'])}</span>"
+                   f"<span class='overview-serie'>{html.escape(team['series_name'])}</span>"
+                   "</div>")
         html_parts.append(f"<details open><summary>{summary}</summary>")
         html_parts.extend(render_team_players(build_overview_players(team, diff_map, changes_only=True), overview_mode=True))
         html_parts.append("</details>")
-
-    html_parts.append(f"<h1>Antal Spelare {html_ts(current_ts)}</h1>")
-    html_parts.append(f"<div class='compare-note'>Jämförelsen använder snapshot från {html_ts(compare_ts)}</div>")
+    html_parts.append(f"<h1>Antal Spelare {html.escape(format_dt_minute(current_ts))}</h1>")
     html_parts.append("<div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>")
-    html_parts.append("<label class='toggle-all'><input type='checkbox' class='show-all-toggle' data-mode='%s'> visa alla spelare</label>" % mode_id)
-
+    html_parts.append(f"<label class='toggle-all'><input type='checkbox' class='show-all-toggle' data-mode='{mode_id}'> visa alla spelare</label>")
+    overview_teams = sorted(teams, key=lambda t: (-(overview_counts.get(t['roster_file'], t['player_count'])), t['team_name'].lower()))
     for team in overview_teams:
         count = overview_counts.get(team["roster_file"], team["player_count"])
         logo_html = f"<img src='{html.escape(logo_path_html + team['logo_file'])}' class='team-logo'>" if team.get("logo_file") else ""
-        summary = (
-            "<div class='overview-summary'>"
-            f"<span class='overview-count'>{count}</span>"
-            f"<span>{logo_html}</span>"
-            f"<span>{escape_nbsp(team['team_name'])}</span>"
-            f"<span class='overview-serie'>{html.escape(team['series_name'])}</span>"
-            "</div>"
-        )
+        summary = ("<div class='overview-summary'>"
+                   f"<span class='overview-count'>{count}</span>"
+                   f"<span>{logo_html}</span>"
+                   f"<span>{escape_nbsp(team['team_name'])}</span>"
+                   f"<span class='overview-serie'>{html.escape(team['series_name'])}</span>"
+                   "</div>")
         html_parts.append(f"<details><summary>{summary}</summary>")
         html_parts.append(f"<div class='overview-team-players' data-mode='{mode_id}'>")
-        html_parts.append(f"<div class='players-changes-only'>")
+        html_parts.append("<div class='players-changes-only'>")
         html_parts.extend(render_team_players(build_overview_players(team, diff_map, changes_only=True), overview_mode=True))
-        html_parts.append("</div>")
-        html_parts.append(f"<div class='players-all hidden'>")
+        html_parts.append("</div><div class='players-all hidden'>")
         html_parts.extend(render_team_players(build_overview_players(team, diff_map, changes_only=False), overview_mode=True))
-        html_parts.append("</div>")
-        html_parts.append("</div>")
-        html_parts.append("</details>")
-
+        html_parts.append("</div></div></details>")
     html_parts.append("</div>")
     return html_parts
 
 
-def generate_html(
-    teams: List[Dict[str, Any]],
-    all_players: List[Dict[str, str]],
-    output_path: Path,
-    title: str,
-    logo_path_html: str,
-    overview_counts: Dict[str, int],
-    compare_blocks: List[Dict[str, Any]],
-) -> None:
+def generate_html(teams: List[Dict[str, Any]], all_players: List[Dict[str, str]], output_path: Path, title: str, logo_path_html: str, overview_counts: Dict[str, int], compare_blocks: List[Dict[str, Any]]) -> None:
     grouped_tabs = build_tab_series(teams)
-
     html_parts: List[str] = []
     html_parts.append("<!DOCTYPE html><html><head><meta charset='utf-8'>")
     html_parts.append(f"<title>{html.escape(title)}</title>")
@@ -473,7 +472,6 @@ h2.serie-title { background:#444; color:white; padding:0.4em 0.6em; border-radiu
 .overview-mode-block.active { display:block; }
 .hidden { display:none; }
 .toggle-all { display:inline-block; margin: 0.5em 0 1em 0; }
-.compare-note { color:#444; margin-bottom:0.75em; }
 </style>
 <script>
 function showPage(id) {
@@ -514,13 +512,8 @@ function updateShowAll(mode, checked) {
     let a = el.querySelector(".players-all");
     let c = el.querySelector(".players-changes-only");
     if (!a || !c) return;
-    if (checked) {
-      a.classList.remove("hidden");
-      c.classList.add("hidden");
-    } else {
-      a.classList.add("hidden");
-      c.classList.remove("hidden");
-    }
+    if (checked) { a.classList.remove("hidden"); c.classList.add("hidden"); }
+    else { a.classList.add("hidden"); c.classList.remove("hidden"); }
   });
 }
 window.addEventListener("DOMContentLoaded", () => {
@@ -528,65 +521,33 @@ window.addEventListener("DOMContentLoaded", () => {
   var h = location.hash.replace('#','');
   if (h && document.getElementById(h)) { showPage(h); }
   document.querySelectorAll("nav a[data-target]").forEach(a => {
-    a.addEventListener("click", ev => {
-      ev.preventDefault();
-      showPage(a.getAttribute("data-target"));
-      return false;
-    });
+    a.addEventListener("click", ev => { ev.preventDefault(); showPage(a.getAttribute("data-target")); return false; });
   });
   let searchBox = document.getElementById("searchBox");
-  if (searchBox) {
-    searchBox.addEventListener("input", (e) => renderSearchResults(e.target.value));
-  }
-  document.querySelectorAll("input[name='compare-mode']").forEach(r => {
-    r.addEventListener("change", ev => updateOverviewMode(ev.target.value));
-  });
-  document.querySelectorAll(".show-all-toggle").forEach(c => {
-    c.addEventListener("change", ev => updateShowAll(ev.target.getAttribute("data-mode"), ev.target.checked));
-  });
+  if (searchBox) searchBox.addEventListener("input", (e) => renderSearchResults(e.target.value));
+  document.querySelectorAll("input[name='compare-mode']").forEach(r => r.addEventListener("change", ev => updateOverviewMode(ev.target.value)));
+  document.querySelectorAll(".show-all-toggle").forEach(c => c.addEventListener("change", ev => updateShowAll(ev.target.getAttribute("data-mode"), ev.target.checked)));
   let checked = document.querySelector("input[name='compare-mode']:checked");
   updateOverviewMode(checked ? checked.value : "day");
 });
 </script>
 """)
     html_parts.append("</head><body>")
-    nav_map = {
-        "overview": "Översikt", "SHL": "SHL", "HA": "HA", "HES": "HES", "HEN": "HEN",
-        "H2": "H2", "H3": "H3", "U20": "U20", "U18": "U18", "U16": "U16",
-        "all-players": "Alla Spelare", "search": "Sök Spelare",
-    }
+    nav_map = {"overview": "Översikt", "SHL": "SHL", "HA": "HA", "HES": "HES", "HEN": "HEN", "H2": "H2", "H3": "H3", "U20": "U20", "U18": "U18", "U16": "U16", "all-players": "Alla Spelare", "search": "Sök Spelare"}
     html_parts.append("<nav>")
     for tab in TAB_ORDER:
         html_parts.append(f"<a href='#{tab}' data-target='{tab}'>{nav_map[tab]}</a>")
     html_parts.append("</nav>")
-
-    html_parts.append("<section id='overview' class='active'>")
-    html_parts.append("<div class='compare-controls'>")
-    html_parts.append("<span>Jämför senast sparade spelare och lag med:</span>")
+    html_parts.append("<section id='overview' class='active'><div class='compare-controls'><span>Jämför senaste med:</span>")
     for i, (mode_id, mode_label, _) in enumerate(COMPARE_MODES):
         checked_attr = " checked" if i == 0 else ""
         html_parts.append(f"<label><input type='radio' name='compare-mode' value='{mode_id}'{checked_attr}> {html.escape(mode_label)}</label>")
     html_parts.append("</div>")
     for block in compare_blocks:
-        html_parts.extend(
-            build_overview_mode_block(
-                mode_id=block["mode_id"],
-                mode_label=block["mode_label"],
-                teams=teams,
-                grouped_tabs=grouped_tabs,
-                overview_counts=overview_counts,
-                diff_map=block["diff_map"],
-                compare_ts=block["compare_ts"],
-                current_ts=block["current_ts"],
-                logo_path_html=logo_path_html,
-                checked=(block["mode_id"] == "day"),
-            )
-        )
+        html_parts.extend(build_overview_mode_block(block["mode_id"], teams, grouped_tabs, overview_counts, block["diff_map"], block["compare_ts"], block["current_ts"], logo_path_html))
     html_parts.append("</section>")
-
     for tab in ["SHL", "HA", "HES", "HEN", "H2", "H3", "U20", "U18", "U16"]:
-        html_parts.append(f"<section id='{tab}'>")
-        html_parts.append(f"<h1>{html.escape(tab)}</h1>")
+        html_parts.append(f"<section id='{tab}'><h1>{html.escape(tab)}</h1>")
         for series_name, series_teams in grouped_tabs[tab]:
             html_parts.append(f"<h2 class='serie-title'>{html.escape(series_name)}</h2>")
             for team in series_teams:
@@ -595,23 +556,12 @@ window.addEventListener("DOMContentLoaded", () => {
                 html_parts.extend(render_team_players(team["players"], overview_mode=False))
                 html_parts.append("</details>")
         html_parts.append("</section>")
-
-    html_parts.append("<section id='all-players'>")
-    html_parts.append("<h1>Alla spelare</h1>")
+    html_parts.append("<section id='all-players'><h1>Alla spelare</h1>")
     for p in all_players:
         html_parts.append(player_line_html(p))
     html_parts.append("</section>")
-
-    html_parts.append("<section id='search'>")
-    html_parts.append("<h1>Sök Spelare</h1>")
-    html_parts.append("<input type='text' id='searchBox' placeholder='Skriv namn, lag eller serie...'>")
-    html_parts.append("<div id='searchResults'></div>")
-    html_parts.append("</section>")
-
-    html_parts.append("<script>")
-    html_parts.append("let allPlayers = " + json.dumps(all_players, ensure_ascii=False) + ";")
-    html_parts.append("</script>")
-    html_parts.append("</body></html>")
+    html_parts.append("<section id='search'><h1>Sök Spelare</h1><input type='text' id='searchBox' placeholder='Skriv namn, lag eller serie...'><div id='searchResults'></div></section>")
+    html_parts.append("<script>let allPlayers = " + json.dumps(all_players, ensure_ascii=False) + ";</script></body></html>")
     output_path.write_text("\n".join(html_parts), encoding="utf-8")
 
 
@@ -629,12 +579,10 @@ def main() -> int:
     dbg = args.debug
     teamsfile = Path(args.teamsfile)
     input_dir = Path(args.input_folder)
-    history_dir = input_dir / "history"
     logo_path_html = normalize_logo_path(args.logopath)
     logo_path_script = normalize_logo_path(args.logopath_script or args.logopath)
 
     teams_meta = parse_teams_file(teamsfile, args.season, dbg)
-
     teams: List[Dict[str, Any]] = []
     all_players: List[Dict[str, str]] = []
     for team_meta in teams_meta:
@@ -645,46 +593,27 @@ def main() -> int:
             print(f"Warning: Logo saknas för {team_meta['team_name']}: {logo_full_path}", file=sys.stderr)
         teams.append(team)
         all_players.extend(team["players"])
-
     all_players.sort(key=lambda p: p["name"].lower())
 
     current_summary_path = input_dir / f"lag_summering_{args.season}.txt"
     current_all_players_path = input_dir / f"alla_spelare_{args.season}.txt"
     overview_counts = parse_lag_summering_file(current_summary_path)
     current_map = parse_all_players_file(current_all_players_path)
-    current_ts = format_ts(current_summary_path) or format_ts(current_all_players_path)
 
-    history_all_players = list_history_files(history_dir, "alla_spelare", args.season)
-    debug(f"History all_players filer: {[p.name for p in history_all_players]}", dbg)
+    diff_items = list_all_players_diffs(input_dir, args.season, dbg)
+    states = reconstruct_run_states_from_diffs(current_map, diff_items, dbg)
+    current_ts = diff_items[-1]["new_ts"] if diff_items else datetime.fromtimestamp(current_all_players_path.stat().st_mtime)
 
     compare_blocks: List[Dict[str, Any]] = []
     for mode_id, mode_label, target_days in COMPARE_MODES:
-        compare_all_players_path = choose_compare_history_file(current_all_players_path, history_all_players, target_days)
-        compare_map = parse_all_players_file(compare_all_players_path) if compare_all_players_path else {}
-        compare_ts = format_ts(compare_all_players_path)
+        chosen_state = choose_compare_state(current_ts, states, target_days)
+        compare_map = chosen_state["map"] if chosen_state else {}
+        compare_ts = chosen_state["ts"] if chosen_state else None
         diff_map = build_diff_from_snapshots(current_map, compare_map)
-        debug(f"Mode {mode_id}: compare file={compare_all_players_path} ts={compare_ts}", dbg)
-        compare_blocks.append(
-            {
-                "mode_id": mode_id,
-                "mode_label": mode_label,
-                "compare_path": compare_all_players_path,
-                "compare_ts": compare_ts,
-                "current_ts": current_ts,
-                "diff_map": diff_map,
-            }
-        )
+        compare_blocks.append({"mode_id": mode_id, "mode_label": mode_label, "compare_ts": compare_ts, "current_ts": current_ts, "diff_map": diff_map})
 
     title = f"Series and Teams Catalog {season_to_title(args.season)}"
-    generate_html(
-        teams=teams,
-        all_players=all_players,
-        output_path=Path(args.output),
-        title=title,
-        logo_path_html=logo_path_html,
-        overview_counts=overview_counts,
-        compare_blocks=compare_blocks,
-    )
+    generate_html(teams, all_players, Path(args.output), title, logo_path_html, overview_counts, compare_blocks)
     print(f"Wrote HTML catalog to {args.output}")
     return 0
 
