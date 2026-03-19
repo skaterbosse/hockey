@@ -445,7 +445,7 @@ def generate_html(teams: List[Dict[str, Any]], all_players: List[Dict[str, str]]
     html_parts.append("""
 <style>
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-nav { background: #333; color: white; padding: 1em; display: flex; flex-wrap: wrap; font-size: 1.25em; gap: 0.8em; }
+nav { position: sticky; top: 0; z-index: 1000; background: #333; color: white; padding: 1em; display: flex; flex-wrap: wrap; font-size: 1.25em; gap: 0.8em; }
 nav a { color: white; text-decoration: none; }
 nav a:hover { text-decoration: underline; }
 section { display: none; padding: 1em; }
@@ -474,12 +474,15 @@ h2.serie-title { background:#444; color:white; padding:0.4em 0.6em; border-radiu
 .toggle-all { display:inline-block; margin: 0.5em 0 1em 0; }
 </style>
 <script>
-function showPage(id) {
+function showPage(id, updateHash = true) {
   var secs = document.querySelectorAll("section");
   secs.forEach(s => s.classList.remove("active"));
   var el = document.getElementById(id);
   if (el) { el.classList.add("active"); }
-  location.hash = id;
+  if (updateHash) {
+    history.replaceState(null, "", "#" + id);
+  }
+  window.scrollTo(0, 0);
 }
 function renderSearchResults(query) {
   let container = document.getElementById("searchResults");
@@ -517,9 +520,12 @@ function updateShowAll(mode, checked) {
   });
 }
 window.addEventListener("DOMContentLoaded", () => {
-  showPage("overview");
   var h = location.hash.replace('#','');
-  if (h && document.getElementById(h)) { showPage(h); }
+  if (h && document.getElementById(h)) {
+    showPage(h, false);
+  } else {
+    showPage("overview", false);
+  }
   document.querySelectorAll("nav a[data-target]").forEach(a => {
     a.addEventListener("click", ev => { ev.preventDefault(); showPage(a.getAttribute("data-target")); return false; });
   });
