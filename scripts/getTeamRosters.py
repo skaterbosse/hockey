@@ -363,6 +363,11 @@ def make_young_summary_file(output_dir: Path, season: str, all_players_file: Pat
     return out
 
 
+def _diff_header_line(prefix: str, path: Path) -> str:
+    ts = _dt.datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+    return f"{prefix} {path}\t{ts}\n"
+
+
 def save_diff(old_file: Path | None, new_file: Path, dbg: bool) -> Path:
     date_tag = _dt.datetime.now().strftime("%Y%m%d")
     diff_file = new_file.with_name(f"{new_file.stem}_diff_{date_tag}{new_file.suffix}")
@@ -375,7 +380,18 @@ def save_diff(old_file: Path | None, new_file: Path, dbg: bool) -> Path:
     if res.returncode > 1:
         raise RuntimeError(f"diff misslyckades för {old_file} och {new_file}: {res.stderr}")
 
-    write_text(diff_file, res.stdout if res.stdout else "Inga skillnader.\n")
+    if res.stdout:
+        diff_text = res.stdout
+    else:
+        # Skriv alltid header-rader med tidsstämplar även när inga skillnader finns.
+        # Då kan HTML-koden registrera att en ny körning faktiskt har skett.
+        diff_text = (
+            _diff_header_line("---", old_file)
+            + _diff_header_line("+++", new_file)
+            + "Inga skillnader.\n"
+        )
+
+    write_text(diff_file, diff_text)
     debug(f"Skapade diff-fil {diff_file}", dbg)
     return diff_file
 
