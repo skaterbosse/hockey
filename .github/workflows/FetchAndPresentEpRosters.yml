@@ -3,10 +3,15 @@ name: FetchAndPresentEpRosters
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 15 * * *"
+    # Vardagar: täck 16:00 Stockholm i både CET och CEST
+    - cron: "0 14 * * 1-5"
+    - cron: "0 15 * * 1-5"
 
-permissions:
-  contents: write
+    # Helger: täck 12:00 och 20:00 Stockholm i både CET och CEST
+    - cron: "0 10 * * 0,6"
+    - cron: "0 11 * * 0,6"
+    - cron: "0 18 * * 0,6"
+    - cron: "0 19 * * 0,6"
 
 jobs:
   fetch-and-present:
@@ -15,37 +20,75 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Ensure output directories exist
+      - name: Decide whether this UTC trigger matches Stockholm schedule
+        id: stockholm_gate
+        shell: bash
         run: |
-          mkdir -p ep_rosters/output
-          mkdir -p ep_rosters/output/history
+          export TZ=Europe/Stockholm
+
+          local_dow="$(date +%u)"   # 1=Mon ... 7=Sun
+          local_hm="$(date +%H:%M)"
+
+          echo "Stockholm local weekday=$local_dow"
+          echo "Stockholm local time=$local_hm"
+
+          should_run=false
+
+          if [[ "$local_dow" =~ ^[1-5]$ && "$local_hm" == "16:00" ]]; then
+            should_run=true
+          elif [[ "$local_dow" =~ ^[67]$ && ( "$local_hm" == "12:00" || "$local_hm" == "20:00" ) ]]; then
+            should_run=true
+          fi
+
+          echo "should_run=$should_run" >> "$GITHUB_OUTPUT"
+
+      - name: Stop if this trigger is only a DST coverage slot
+        if: github.event_name == 'schedule' && steps.stockholm_gate.outputs.should_run != 'true'
+        run: |
+          echo "This scheduled UTC slot does not correspond to a wanted Stockholm local time. Exiting."
+          exit 0
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
 
       - name: Run getTeamRosters
         run: |
-          python3 ./scripts/getTeamRosters.py -tf ./ep_rosters/lag_2026_2027.txt -od ./ep_rosters/output -s 2026-2027
+          export TZ=Europe/Stockholm
+          python3 ./scripts/getTeamRosters.py \
+            -tf ./ep_rosters/lag_2026_2027.txt \
+            -od ./ep_rosters/output \
+            -s 2026-2027
 
       - name: Run makeTeamCatalog
         run: |
-          python3 ./scripts/makeTeamCatalog.py -o ./SeriesAndTeams.html -tf ./ep_rosters/lag_2026_2027.txt -if ./ep_rosters/output -s 2026-2027 -lp ./logos/             -lp_script ./logos
+          export TZ=Europe/Stockholm
+          python3 ./scripts/makeTeamCatalog.py \
+            -o ./SeriesAndTeams.html \
+            -tf ./ep_rosters/lag_2026_2027.txt \
+            -if ./ep_rosters/output \
+            -s 2026-2027 \
+            -lp ./logos/ \
+            -lp_script ./logos
 
       - name: Commit and push generated files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add SeriesAndTeams.html
-          git add ep_rosters/output
+          git add ./SeriesAndTeams.html ./ep_rosters/output
 
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "No changes to commit."
             exit 0
           fi
 
