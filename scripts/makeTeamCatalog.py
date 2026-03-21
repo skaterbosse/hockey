@@ -580,19 +580,17 @@ window.addEventListener("DOMContentLoaded", () => {
     html_parts.append("</section>")
     for tab in ["SHL", "HA", "HES", "HEN", "H2", "H3", "U20", "U18", "U16"]:
         series_header_html = html.escape(tab)
-        tab_series_infos = [series_info.get(team["series_shortname"], {}) for _, sts in grouped_tabs[tab] for team in sts]
-        header_info = next((info for info in tab_series_infos if info), None)
+        header_info = series_info.get(tab, {})
         if header_info:
             logo_html = ""
             if header_info.get("logo_file"):
                 logo_html = f"<img src='{html.escape(logo_path_html + header_info['logo_file'])}' class='series-logo'>"
-            series_header_html = (
-                "<span class='series-header-row'>"
-                f"<span>{html.escape(tab)}</span>"
-                f"<span>{logo_html}</span>"
-                f"<span>{html.escape(header_info.get('main_name', ''))}</span>"
-                "</span>"
-            )
+            parts = [f"<span>{html.escape(tab)}</span>"]
+            if logo_html:
+                parts.append(f"<span>{logo_html}</span>")
+            if header_info.get("main_name"):
+                parts.append(f"<span>{html.escape(header_info.get('main_name', ''))}</span>")
+            series_header_html = "<span class='series-header-row'>" + "".join(parts) + "</span>"
         html_parts.append(f"<section id='{tab}'><h1>{series_header_html}</h1>")
         for series_name, series_teams in grouped_tabs[tab]:
             html_parts.append(f"<h2 class='serie-title'>{html.escape(series_name)}</h2>")
