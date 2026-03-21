@@ -81,6 +81,30 @@ def parse_player_line(line: str) -> Optional[Dict[str, str]]:
     }
 
 
+
+def parse_series_file(seriesfile: Optional[Path], dbg: bool) -> Dict[str, Dict[str, str]]:
+    series_map: Dict[str, Dict[str, str]] = {}
+    if seriesfile is None:
+        return series_map
+    with seriesfile.open("r", encoding="utf-8") as f:
+        for lineno, raw in enumerate(f, start=1):
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = [p.strip() for p in line.split(";")]
+            if len(parts) < 3:
+                print(f"ERROR: Ogiltig rad i series file på rad {lineno}: {line}", file=sys.stderr)
+                continue
+            shortname, main_name, logo_file = parts[:3]
+            series_map[shortname] = {
+                "shortname": shortname,
+                "main_name": main_name,
+                "logo_file": logo_file,
+            }
+            debug(f"Serie rad {lineno}: short={shortname} main={main_name} logo={logo_file}", dbg)
+    return series_map
+
+
 def parse_teams_file(teamsfile: Path, season: str, dbg: bool) -> List[Dict[str, str]]:
     teams: List[Dict[str, str]] = []
     with teamsfile.open("r", encoding="utf-8") as f:
@@ -437,7 +461,7 @@ def build_overview_mode_block(mode_id: str, teams: List[Dict[str, Any]], grouped
     return html_parts
 
 
-def generate_html(teams: List[Dict[str, Any]], all_players: List[Dict[str, str]], output_path: Path, title: str, logo_path_html: str, overview_counts: Dict[str, int], compare_blocks: List[Dict[str, Any]]) -> None:
+def generate_html(teams: List[Dict[str, Any]], all_players: List[Dict[str, str]], output_path: Path, title: str, logo_path_html: str, overview_counts: Dict[str, int], compare_blocks: List[Dict[str, Any]], series_info: Dict[str, Dict[str, str]]) -> None:
     grouped_tabs = build_tab_series(teams)
     html_parts: List[str] = []
     html_parts.append("<!DOCTYPE html><html><head><meta charset='utf-8'>")
@@ -461,6 +485,8 @@ h2.serie-title { background:#444; color:white; padding:0.4em 0.6em; border-radiu
 .overview-summary { display: grid; grid-template-columns: 5.5em 3em 1fr auto; align-items: center; width: 100%; gap: 0.6em; }
 .overview-count { font-variant-numeric: tabular-nums; }
 .overview-serie { font-size: 0.8em; color: #444; margin-left: auto; }
+.series-header-row { display: inline-flex; align-items: center; gap: 0.8em; }
+.series-logo { max-height: 2.2em; vertical-align: middle; }
 .legend { margin: 1em 0; display: flex; gap: 1em; flex-wrap: wrap; }
 .legend span { padding: 0.2em 0.4em; border-radius: 4px; border: 1px solid #ccc; }
 .legend .added { background: #eefbf0; color: #0a7a25; }
@@ -553,7 +579,21 @@ window.addEventListener("DOMContentLoaded", () => {
         html_parts.extend(build_overview_mode_block(block["mode_id"], teams, grouped_tabs, overview_counts, block["diff_map"], block["compare_ts"], block["current_ts"], logo_path_html))
     html_parts.append("</section>")
     for tab in ["SHL", "HA", "HES", "HEN", "H2", "H3", "U20", "U18", "U16"]:
-        html_parts.append(f"<section id='{tab}'><h1>{html.escape(tab)}</h1>")
+        series_header_html = html.escape(tab)
+        tab_series_infos = [series_info.get(team["series_shortname"], {}) for _, sts in grouped_tabs[tab] for team in sts]
+        header_info = next((info for info in tab_series_infos if info), None)
+        if header_info:
+            logo_html = ""
+            if header_info.get("logo_file"):
+                logo_html = f"<img src='{html.escape(logo_path_html + header_info['logo_file'])}' class='series-logo'>"
+            series_header_html = (
+                "<span class='series-header-row'>"
+                f"<span>{html.escape(tab)}</span>"
+                f"<span>{logo_html}</span>"
+                f"<span>{html.escape(header_info.get('main_name', ''))}</span>"
+                "</span>"
+            )
+        html_parts.append(f"<section id='{tab}'><h1>{series_header_html}</h1>")
         for series_name, series_teams in grouped_tabs[tab]:
             html_parts.append(f"<h2 class='serie-title'>{html.escape(series_name)}</h2>")
             for team in series_teams:
@@ -575,6 +615,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate Series and Teams HTML catalog.")
     parser.add_argument("-o", "--output", required=True, help="Output HTML file")
     parser.add_argument("-tf", "--teamsfile", required=True, help="Teams file with mapping")
+    parser.add_argument("-sf", "--seriesfile", help="Series file: Serie kortnamn;Huvudserie namn;logo fil")
     parser.add_argument("-s", "--season", default=DEFAULT_SEASON, help=f"Season, default {DEFAULT_SEASON}")
     parser.add_argument("-if", "--input-folder", default=DEFAULT_INPUT_FOLDER, help="Folder with generated roster/output files")
     parser.add_argument("-lp", "--logopath", required=True, help="Logo path for HTML references")
@@ -588,6 +629,7 @@ def main() -> int:
     logo_path_html = normalize_logo_path(args.logopath)
     logo_path_script = normalize_logo_path(args.logopath_script or args.logopath)
 
+    series_info = parse_series_file(Path(args.seriesfile) if args.seriesfile else None, dbg)
     teams_meta = parse_teams_file(teamsfile, args.season, dbg)
     teams: List[Dict[str, Any]] = []
     all_players: List[Dict[str, str]] = []
@@ -619,7 +661,7 @@ def main() -> int:
         compare_blocks.append({"mode_id": mode_id, "mode_label": mode_label, "compare_ts": compare_ts, "current_ts": current_ts, "diff_map": diff_map})
 
     title = f"Series and Teams Catalog {season_to_title(args.season)}"
-    generate_html(teams, all_players, Path(args.output), title, logo_path_html, overview_counts, compare_blocks)
+    generate_html(teams, all_players, Path(args.output), title, logo_path_html, overview_counts, compare_blocks, series_info)
     print(f"Wrote HTML catalog to {args.output}")
     return 0
 
