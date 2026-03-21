@@ -19,6 +19,8 @@ h2.serie-title { background:#444; color:white; padding:0.4em 0.6em; border-radiu
 .overview-summary { display: grid; grid-template-columns: 5.5em 3em 1fr auto; align-items: center; width: 100%; gap: 0.6em; }
 .overview-count { font-variant-numeric: tabular-nums; }
 .overview-serie { font-size: 0.8em; color: #444; margin-left: auto; }
+.series-header-row { display: inline-flex; align-items: center; gap: 0.8em; }
+.series-logo { max-height: 2.2em; vertical-align: middle; }
 .legend { margin: 1em 0; display: flex; gap: 1em; flex-wrap: wrap; }
 .legend span { padding: 0.2em 0.4em; border-radius: 4px; border: 1px solid #ccc; }
 .legend .added { background: #eefbf0; color: #0a7a25; }
@@ -118,13 +120,9 @@ window.addEventListener("DOMContentLoaded", () => {
 <label><input type='radio' name='compare-mode' value='fourweek'> ~4 vecka</label>
 </div>
 <div class='overview-mode-block' id='overview-mode-day'>
-<h1>Spelarförändringar [2026-03-20 16:21 - 2026-03-21 16:06]</h1>
+<h1>Spelarförändringar [2026-03-20 16:21 - 2026-03-21 19:17]</h1>
 <div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
-<details open><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Piteå_HC.png' class='team-logo'></span><span>Piteå&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
-<h3>Forwards</h3>
-<div class='player player-added'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
-</details>
-<h1>Antal Spelare 2026-03-21 16:06</h1>
+<h1>Antal Spelare 2026-03-21 19:17</h1>
 <div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
 <label class='toggle-all'><input type='checkbox' class='show-all-toggle' data-mode='day'> visa alla spelare</label>
 <details><summary><div class='overview-summary'><span class='overview-count'>13</span><span><img src='./logos/Tyringe_SoSS.png' class='team-logo'></span><span>Tyringe&nbsp;SoSS</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
@@ -286,11 +284,9 @@ window.addEventListener("DOMContentLoaded", () => {
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Piteå_HC.png' class='team-logo'></span><span>Piteå&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
 <div class='overview-team-players' data-mode='day'>
 <div class='players-changes-only'>
-<h3>Forwards</h3>
-<div class='player player-added'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
 </div><div class='players-all hidden'>
 <h3>Forwards</h3>
-<div class='player player-added'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
 </div></div></details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Tingsryds_AIF.png' class='team-logo'></span><span>Tingsryds&nbsp;AIF</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
 <div class='overview-team-players' data-mode='day'>
@@ -698,17 +694,13 @@ window.addEventListener("DOMContentLoaded", () => {
 </div></div></details>
 </div>
 <div class='overview-mode-block' id='overview-mode-three'>
-<h1>Spelarförändringar [2026-03-18 16:36 - 2026-03-21 16:06]</h1>
+<h1>Spelarförändringar [2026-03-18 16:36 - 2026-03-21 19:17]</h1>
 <div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
 <details open><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Mariestad_BoIS_HC.png' class='team-logo'></span><span>Mariestad&nbsp;BoIS&nbsp;HC</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
 <h3>Forwards</h3>
 <div class='player player-added'><a href="https://www.eliteprospects.com/player/33398/robin-hoglund">Robin Höglund</a> — LW · 1993</div>
 </details>
-<details open><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Piteå_HC.png' class='team-logo'></span><span>Piteå&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
-<h3>Forwards</h3>
-<div class='player player-added'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
-</details>
-<h1>Antal Spelare 2026-03-21 16:06</h1>
+<h1>Antal Spelare 2026-03-21 19:17</h1>
 <div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
 <label class='toggle-all'><input type='checkbox' class='show-all-toggle' data-mode='three'> visa alla spelare</label>
 <details><summary><div class='overview-summary'><span class='overview-count'>13</span><span><img src='./logos/Tyringe_SoSS.png' class='team-logo'></span><span>Tyringe&nbsp;SoSS</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
@@ -872,11 +864,9 @@ window.addEventListener("DOMContentLoaded", () => {
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Piteå_HC.png' class='team-logo'></span><span>Piteå&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
 <div class='overview-team-players' data-mode='three'>
 <div class='players-changes-only'>
-<h3>Forwards</h3>
-<div class='player player-added'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
 </div><div class='players-all hidden'>
 <h3>Forwards</h3>
-<div class='player player-added'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
 </div></div></details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Tingsryds_AIF.png' class='team-logo'></span><span>Tingsryds&nbsp;AIF</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
 <div class='overview-team-players' data-mode='three'>
@@ -1284,7 +1274,7 @@ window.addEventListener("DOMContentLoaded", () => {
 </div></div></details>
 </div>
 <div class='overview-mode-block' id='overview-mode-week'>
-<h1>Spelarförändringar [2026-03-14 18:37 - 2026-03-21 16:06]</h1>
+<h1>Spelarförändringar [2026-03-14 18:37 - 2026-03-21 19:17]</h1>
 <div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
 <details open><summary><div class='overview-summary'><span class='overview-count'>3</span><span><img src='./logos/Vimmerby_HC.png' class='team-logo'></span><span>Vimmerby&nbsp;HC</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
 <h3>Backar</h3>
@@ -1312,10 +1302,6 @@ window.addEventListener("DOMContentLoaded", () => {
 <details open><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Kiruna_IF.png' class='team-logo'></span><span>Kiruna&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
 <h3>Forwards</h3>
 <div class='player player-added'><a href="https://www.eliteprospects.com/player/342792/liam-nilsson">Liam Nilsson</a> — C/RW · 2000</div>
-</details>
-<details open><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Piteå_HC.png' class='team-logo'></span><span>Piteå&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
-<h3>Forwards</h3>
-<div class='player player-added'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
 </details>
 <details open><summary><div class='overview-summary'><span class='overview-count'>2</span><span><img src='./logos/Väsby_IK_HK.png' class='team-logo'></span><span>Väsby&nbsp;IK</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
 <h3>Målvakter</h3>
@@ -1353,7 +1339,7 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player player-added'><a href="https://www.eliteprospects.com/player/212515/tony-pappila">Tony Pappila</a> — RW · 1997</div>
 <div class='player player-added'><a href="https://www.eliteprospects.com/player/640959/walter-goransson">Walter Göransson</a> — F · 2005</div>
 </details>
-<h1>Antal Spelare 2026-03-21 16:06</h1>
+<h1>Antal Spelare 2026-03-21 19:17</h1>
 <div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
 <label class='toggle-all'><input type='checkbox' class='show-all-toggle' data-mode='week'> visa alla spelare</label>
 <details><summary><div class='overview-summary'><span class='overview-count'>13</span><span><img src='./logos/Tyringe_SoSS.png' class='team-logo'></span><span>Tyringe&nbsp;SoSS</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
@@ -1550,11 +1536,9 @@ window.addEventListener("DOMContentLoaded", () => {
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Piteå_HC.png' class='team-logo'></span><span>Piteå&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
 <div class='overview-team-players' data-mode='week'>
 <div class='players-changes-only'>
-<h3>Forwards</h3>
-<div class='player player-added'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
 </div><div class='players-all hidden'>
 <h3>Forwards</h3>
-<div class='player player-added'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
 </div></div></details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Tingsryds_AIF.png' class='team-logo'></span><span>Tingsryds&nbsp;AIF</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
 <div class='overview-team-players' data-mode='week'>
@@ -1966,7 +1950,7 @@ window.addEventListener("DOMContentLoaded", () => {
 </div></div></details>
 </div>
 <div class='overview-mode-block' id='overview-mode-fourweek'>
-<h1>Spelarförändringar [2026-03-14 18:37 - 2026-03-21 16:06]</h1>
+<h1>Spelarförändringar [2026-03-14 18:37 - 2026-03-21 19:17]</h1>
 <div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
 <details open><summary><div class='overview-summary'><span class='overview-count'>3</span><span><img src='./logos/Vimmerby_HC.png' class='team-logo'></span><span>Vimmerby&nbsp;HC</span><span class='overview-serie'>HockeyAllsvenskan</span></div></summary>
 <h3>Backar</h3>
@@ -1994,10 +1978,6 @@ window.addEventListener("DOMContentLoaded", () => {
 <details open><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Kiruna_IF.png' class='team-logo'></span><span>Kiruna&nbsp;IF</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
 <h3>Forwards</h3>
 <div class='player player-added'><a href="https://www.eliteprospects.com/player/342792/liam-nilsson">Liam Nilsson</a> — C/RW · 2000</div>
-</details>
-<details open><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Piteå_HC.png' class='team-logo'></span><span>Piteå&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
-<h3>Forwards</h3>
-<div class='player player-added'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
 </details>
 <details open><summary><div class='overview-summary'><span class='overview-count'>2</span><span><img src='./logos/Väsby_IK_HK.png' class='team-logo'></span><span>Väsby&nbsp;IK</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
 <h3>Målvakter</h3>
@@ -2035,7 +2015,7 @@ window.addEventListener("DOMContentLoaded", () => {
 <div class='player player-added'><a href="https://www.eliteprospects.com/player/212515/tony-pappila">Tony Pappila</a> — RW · 1997</div>
 <div class='player player-added'><a href="https://www.eliteprospects.com/player/640959/walter-goransson">Walter Göransson</a> — F · 2005</div>
 </details>
-<h1>Antal Spelare 2026-03-21 16:06</h1>
+<h1>Antal Spelare 2026-03-21 19:17</h1>
 <div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>
 <label class='toggle-all'><input type='checkbox' class='show-all-toggle' data-mode='fourweek'> visa alla spelare</label>
 <details><summary><div class='overview-summary'><span class='overview-count'>13</span><span><img src='./logos/Tyringe_SoSS.png' class='team-logo'></span><span>Tyringe&nbsp;SoSS</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
@@ -2232,11 +2212,9 @@ window.addEventListener("DOMContentLoaded", () => {
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Piteå_HC.png' class='team-logo'></span><span>Piteå&nbsp;HC</span><span class='overview-serie'>HockeyEttan Norra</span></div></summary>
 <div class='overview-team-players' data-mode='fourweek'>
 <div class='players-changes-only'>
-<h3>Forwards</h3>
-<div class='player player-added'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
 </div><div class='players-all hidden'>
 <h3>Forwards</h3>
-<div class='player player-added'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
+<div class='player'><a href="https://www.eliteprospects.com/player/705479/oscar-bramberg">Oscar Bramberg</a> — C/F · 2004</div>
 </div></div></details>
 <details><summary><div class='overview-summary'><span class='overview-count'>1</span><span><img src='./logos/Tingsryds_AIF.png' class='team-logo'></span><span>Tingsryds&nbsp;AIF</span><span class='overview-serie'>HockeyEttan Södra</span></div></summary>
 <div class='overview-team-players' data-mode='fourweek'>
