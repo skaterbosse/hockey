@@ -439,7 +439,6 @@ def build_overview_mode_block(mode_id: str, teams: List[Dict[str, Any]], grouped
         html_parts.append("</details>")
     html_parts.append(f"<h1>Antal Spelare {html.escape(format_dt_minute(current_ts))}</h1>")
     html_parts.append("<div class='legend'><span class='added'>Nya spelare</span><span class='removed'>Förlorade spelare</span></div>")
-    html_parts.append(f"<label class='toggle-all'><input type='checkbox' class='show-all-toggle' data-mode='{mode_id}'> visa alla spelare</label>")
     overview_teams = sorted(teams, key=lambda t: (-(overview_counts.get(t['roster_file'], t['player_count'])), t['team_name'].lower()))
     for team in overview_teams:
         count = overview_counts.get(team["roster_file"], team["player_count"])
@@ -451,12 +450,8 @@ def build_overview_mode_block(mode_id: str, teams: List[Dict[str, Any]], grouped
                    f"<span class='overview-serie'>{html.escape(team['series_name'])}</span>"
                    "</div>")
         html_parts.append(f"<details><summary>{summary}</summary>")
-        html_parts.append(f"<div class='overview-team-players' data-mode='{mode_id}'>")
-        html_parts.append("<div class='players-changes-only'>")
-        html_parts.extend(render_team_players(build_overview_players(team, diff_map, changes_only=True), overview_mode=True))
-        html_parts.append("</div><div class='players-all hidden'>")
         html_parts.extend(render_team_players(build_overview_players(team, diff_map, changes_only=False), overview_mode=True))
-        html_parts.append("</div></div></details>")
+        html_parts.append("</details>")
     html_parts.append("</div>")
     return html_parts
 
@@ -536,15 +531,6 @@ function updateOverviewMode(mode) {
   var block = document.getElementById("overview-mode-" + mode);
   if (block) block.classList.add("active");
 }
-function updateShowAll(mode, checked) {
-  document.querySelectorAll(".overview-team-players[data-mode='" + mode + "']").forEach(el => {
-    let a = el.querySelector(".players-all");
-    let c = el.querySelector(".players-changes-only");
-    if (!a || !c) return;
-    if (checked) { a.classList.remove("hidden"); c.classList.add("hidden"); }
-    else { a.classList.add("hidden"); c.classList.remove("hidden"); }
-  });
-}
 window.addEventListener("DOMContentLoaded", () => {
   var h = location.hash.replace('#','');
   if (h && document.getElementById(h)) {
@@ -558,7 +544,6 @@ window.addEventListener("DOMContentLoaded", () => {
   let searchBox = document.getElementById("searchBox");
   if (searchBox) searchBox.addEventListener("input", (e) => renderSearchResults(e.target.value));
   document.querySelectorAll("input[name='compare-mode']").forEach(r => r.addEventListener("change", ev => updateOverviewMode(ev.target.value)));
-  document.querySelectorAll(".show-all-toggle").forEach(c => c.addEventListener("change", ev => updateShowAll(ev.target.getAttribute("data-mode"), ev.target.checked)));
   let checked = document.querySelector("input[name='compare-mode']:checked");
   updateOverviewMode(checked ? checked.value : "day");
 });
