@@ -6,12 +6,8 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 14 * * 1-5"
-    - cron: "0 15 * * 1-5"
-    - cron: "0 10 * * 0,6"
-    - cron: "0 11 * * 0,6"
-    - cron: "0 18 * * 0,6"
-    - cron: "0 19 * * 0,6"
+    - cron: "35 14 * * *"
+    - cron: "35 15 * * *"
 
 concurrency:
   group: fetch-and-present-ep-rosters
@@ -54,9 +50,7 @@ jobs:
 
           should_run=false
 
-          if [[ "$local_dow" =~ ^[1-5]$ && "$local_hm" == "16:00" ]]; then
-            should_run=true
-          elif [[ "$local_dow" =~ ^[67]$ && ( "$local_hm" == "12:00" || "$local_hm" == "20:00" ) ]]; then
+          if [[ "$local_hm" == "16:35" ]]; then
             should_run=true
           fi
 

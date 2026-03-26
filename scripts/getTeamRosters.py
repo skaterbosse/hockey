@@ -369,7 +369,7 @@ def _diff_header_line(prefix: str, path: Path) -> str:
 
 
 def save_diff(old_file: Path | None, new_file: Path, dbg: bool) -> Path:
-    date_tag = _dt.datetime.now().strftime("%Y%m%d")
+    date_tag = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
     diff_file = new_file.with_name(f"{new_file.stem}_diff_{date_tag}{new_file.suffix}")
     if old_file is None or not old_file.exists():
         write_text(diff_file, f"Ingen tidigare fil att jämföra med för {new_file.name}\n")
