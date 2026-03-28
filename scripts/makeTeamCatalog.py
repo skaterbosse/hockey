@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 DEFAULT_SEASON = "2026-2027"
 DEFAULT_INPUT_FOLDER = "./output"
+DEFAULT_HISTORY_START = "2026-03-26 18:00"
 TAB_ORDER = ["overview", "SHL", "HA", "HES", "HEN", "H2", "H3", "U20", "U18", "U16", "all-players", "search"]
 COMPARE_MODES = [("day", "~1 dag", 1), ("three", "~3 dag", 3), ("week", "~1 vecka", 7), ("fourweek", "~4 vecka", 28)]
 
@@ -335,6 +336,89 @@ def build_tab_series(teams: List[Dict[str, Any]]) -> Dict[str, List[Tuple[str, L
     return grouped
 
 
+
+def parse_history_start(value: str) -> datetime:
+    for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(value, fmt)
+        except ValueError:
+            pass
+    raise ValueError(
+        f"Ogiltigt format för -hs/--history-start: {value!r}. "
+        "Använd YYYY-MM-DD eller YYYY-MM-DD HH:MM"
+    )
+
+
+def build_diff_map_from_diff_item(diff_item: Dict[str, Any]) -> Dict[str, Dict[str, List[Dict[str, str]]]]:
+    diff_map: Dict[str, Dict[str, List[Dict[str, str]]]] = {}
+    for p in diff_item.get("added", []):
+        diff_map.setdefault(p["team_file"], {"added": [], "removed": []})["added"].append(p)
+    for p in diff_item.get("removed", []):
+        diff_map.setdefault(p["team_file"], {"added": [], "removed": []})["removed"].append(p)
+    return diff_map
+
+
+def build_history_block(
+    teams: List[Dict[str, Any]],
+    grouped_tabs: Dict[str, List[Tuple[str, List[Dict[str, Any]]]]],
+    overview_counts: Dict[str, int],
+    diff_items: List[Dict[str, Any]],
+    history_start: datetime,
+    logo_path_html: str,
+) -> List[str]:
+    html_parts: List[str] = []
+    html_parts.append(f"<h1>Historik efter {html.escape(format_dt_minute(history_start))}</h1>")
+
+    filtered_items = [
+        item for item in sorted(diff_items, key=lambda x: x["new_ts"], reverse=True)
+        if item.get("new_ts") and item["new_ts"] >= history_start
+    ]
+
+    if not filtered_items:
+        html_parts.append("<p>Ingen historik hittades inom valt intervall.</p>")
+        return html_parts
+
+    team_by_file = {team["roster_file"]: team for team in teams}
+    ordered_team_files: List[str] = []
+    for tab in ["SHL", "HA", "HES", "HEN", "H2", "H3", "U20", "U18", "U16"]:
+        for _, series_teams in grouped_tabs[tab]:
+            for team in series_teams:
+                ordered_team_files.append(team["roster_file"])
+
+    for item in filtered_items:
+        html_parts.append(f"<h2>Spelarförändringar [{html.escape(format_dt_minute(item['new_ts']))}]</h2>")
+        diff_map = build_diff_map_from_diff_item(item)
+
+        changed_files = [
+            team_file for team_file in ordered_team_files
+            if team_file in diff_map and (diff_map[team_file].get("added") or diff_map[team_file].get("removed"))
+        ]
+
+        if not changed_files:
+            html_parts.append("<p>Inga förändringar.</p>")
+            continue
+
+        for team_file in changed_files:
+            team = team_by_file.get(team_file)
+            if not team:
+                continue
+            count = overview_counts.get(team["roster_file"], team["player_count"])
+            logo_html = f"<img src='{html.escape(logo_path_html + team['logo_file'])}' class='team-logo'>" if team.get("logo_file") else ""
+            summary = (
+                "<div class='overview-summary'>"
+                f"<span class='overview-count'>{count}</span>"
+                f"<span>{logo_html}</span>"
+                f"<span>{escape_nbsp(team['team_name'])}</span>"
+                f"<span class='overview-serie'>{html.escape(team['series_name'])}</span>"
+                "</div>"
+            )
+            html_parts.append(f"<details open><summary>{summary}</summary>")
+            html_parts.extend(render_team_players(build_overview_players(team, diff_map, changes_only=True), overview_mode=True))
+            html_parts.append("</details>")
+
+    return html_parts
+
+
 def parse_diff_timestamp_from_header(header_line: str) -> Optional[datetime]:
     m = re.search(r"\t(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})", header_line)
     return datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S") if m else None
@@ -456,7 +540,7 @@ def build_overview_mode_block(mode_id: str, teams: List[Dict[str, Any]], grouped
     return html_parts
 
 
-def generate_html(teams: List[Dict[str, Any]], all_players: List[Dict[str, str]], output_path: Path, title: str, logo_path_html: str, overview_counts: Dict[str, int], compare_blocks: List[Dict[str, Any]], series_info: Dict[str, Dict[str, str]]) -> None:
+def generate_html(teams: List[Dict[str, Any]], all_players: List[Dict[str, str]], output_path: Path, title: str, logo_path_html: str, overview_counts: Dict[str, int], compare_blocks: List[Dict[str, Any]], series_info: Dict[str, Dict[str, str]], diff_items: List[Dict[str, Any]], history_start: datetime) -> None:
     grouped_tabs = build_tab_series(teams)
     html_parts: List[str] = []
     html_parts.append("<!DOCTYPE html><html><head><meta charset='utf-8'>")
@@ -562,6 +646,7 @@ window.addEventListener("DOMContentLoaded", () => {
     html_parts.append("</div>")
     for block in compare_blocks:
         html_parts.extend(build_overview_mode_block(block["mode_id"], teams, grouped_tabs, overview_counts, block["diff_map"], block["compare_ts"], block["current_ts"], logo_path_html))
+    html_parts.extend(build_history_block(teams, grouped_tabs, overview_counts, diff_items, history_start, logo_path_html))
     html_parts.append("</section>")
     for tab in ["SHL", "HA", "HES", "HEN", "H2", "H3", "U20", "U18", "U16"]:
         series_header_html = html.escape(tab)
@@ -604,9 +689,11 @@ def main() -> int:
     parser.add_argument("-lp", "--logopath", required=True, help="Logo path for HTML references")
     parser.add_argument("-lp_script", "--logopath_script", help="Local path for script to access logo files (defaults to -lp)")
     parser.add_argument("-dbg", "--debug", action="store_true", help="Verbose debug to stderr")
+    parser.add_argument("-hs", "--history-start", default=DEFAULT_HISTORY_START, help="Historikstart, format YYYY-MM-DD eller YYYY-MM-DD HH:MM")
     args = parser.parse_args()
 
     dbg = args.debug
+    history_start = parse_history_start(args.history_start)
     teamsfile = Path(args.teamsfile)
     input_dir = Path(args.input_folder)
     logo_path_html = normalize_logo_path(args.logopath)
@@ -644,7 +731,7 @@ def main() -> int:
         compare_blocks.append({"mode_id": mode_id, "mode_label": mode_label, "compare_ts": compare_ts, "current_ts": current_ts, "diff_map": diff_map})
 
     title = f"Series and Teams Catalog {season_to_title(args.season)}"
-    generate_html(teams, all_players, Path(args.output), title, logo_path_html, overview_counts, compare_blocks, series_info)
+    generate_html(teams, all_players, Path(args.output), title, logo_path_html, overview_counts, compare_blocks, series_info, diff_items, history_start)
     print(f"Wrote HTML catalog to {args.output}")
     return 0
 
