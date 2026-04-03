@@ -9,6 +9,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -23,6 +24,7 @@ class League:
     script_path: Path
     flashscore_results: str
     active_windows_raw: str
+    active_week_windows_raw: str
 
 
 @dataclass
@@ -47,6 +49,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("-od", "--output-directory", required=True, help="Output directory")
     p.add_argument("-oh", "--output-html", default=None, help="Output HTML file")
     p.add_argument("-off", "--offline", action="store_true", help="Use saved highlights text files when generating HTML")
+    p.add_argument("-fo", "--force-online", action="store_true", help="Force online update for all leagues, ignoring active date/time windows")
     p.add_argument("-nh", "--no-html", action="store_true", help="Do not generate HTML")
     p.add_argument("-ld", "--logo-directory", required=True, help="Logo directory")
     p.add_argument("-sd", "--script-directory", default=None, help="Script directory")
@@ -86,7 +89,7 @@ def parse_leagues_file(path: Path, script_dir: Optional[Path], debug: bool) -> L
             if not line or line.startswith("#"):
                 continue
             parts = [p.strip() for p in line.split(";")]
-            while len(parts) < 8:
+            while len(parts) < 9:
                 parts.append("")
             if not parts[0] or not parts[5]:
                 dbg(debug, f"Skipping malformed league row: {line}")
@@ -101,6 +104,7 @@ def parse_leagues_file(path: Path, script_dir: Optional[Path], debug: bool) -> L
                     script_path=(script_base / parts[5]).resolve(),
                     flashscore_results=parts[6],
                     active_windows_raw=parts[7],
+                    active_week_windows_raw=parts[8],
                 )
             )
     return out
@@ -124,14 +128,70 @@ def is_active_today(active_windows_raw: str, today: date, debug: bool) -> bool:
         piece = block.strip()
         if not piece:
             continue
-        m = re.match(r"^\s*(\d{4}[-/.]\d{2}[-/.]\d{2})\s*-\s*(\d{4}[-/.]\d{2}[-/.]\d{2})\s*$", piece)
+        m = re.match(r"^\s*(\d{4}[-/.]\d{2}[-/.]\d{2})\s*,\s*(\d{4}[-/.]\d{2}[-/.]\d{2})\s*$", piece)
         if not m:
-            dbg(debug, f"Could not parse active window: {piece}")
+            m = re.match(r"^\s*(\d{4}[-/.]\d{2}[-/.]\d{2})\s*-\s*(\d{4}[-/.]\d{2}[-/.]\d{2})\s*$", piece)
+        if not m:
+            dbg(debug, f"Could not parse active date window: {piece}")
             continue
         start = parse_date_flex(m.group(1))
         end = parse_date_flex(m.group(2))
         if start and end and start <= today <= end:
             return True
+    return False
+
+
+def parse_week_time_to_minutes(value: str) -> Optional[int]:
+    value = value.strip()
+    m = re.match(r"^(\d{2}):(\d{2})$", value)
+    if not m:
+        return None
+    hh = int(m.group(1))
+    mm = int(m.group(2))
+    if hh == 24 and mm == 0:
+        return 1440
+    if 0 <= hh <= 23 and 0 <= mm <= 59:
+        return hh * 60 + mm
+    return None
+
+
+def is_active_now_in_week(active_week_windows_raw: str, now_dt: datetime, debug: bool) -> bool:
+    raw = (active_week_windows_raw or "").strip()
+    if not raw:
+        return True
+
+    current_day = now_dt.isoweekday()
+    previous_day = 7 if current_day == 1 else current_day - 1
+    current_minutes = now_dt.hour * 60 + now_dt.minute
+
+    for block in raw.split("|"):
+        piece = block.strip()
+        if not piece:
+            continue
+
+        m = re.match(
+            r"^\s*\{([0-9, ]+)\}\s*,\s*\{(\d{2}:\d{2})\s*,\s*(\d{2}:\d{2})\}\s*$",
+            piece,
+        )
+        if not m:
+            dbg(debug, f"Could not parse active week time window: {piece}")
+            continue
+
+        days = {int(x.strip()) for x in m.group(1).split(",") if x.strip()}
+        start_minutes = parse_week_time_to_minutes(m.group(2))
+        end_minutes = parse_week_time_to_minutes(m.group(3))
+
+        if start_minutes is None or end_minutes is None:
+            dbg(debug, f"Could not parse times in active week time window: {piece}")
+            continue
+
+        if start_minutes <= end_minutes:
+            if current_day in days and start_minutes <= current_minutes < end_minutes:
+                return True
+        else:
+            if (current_day in days and current_minutes >= start_minutes) or (previous_day in days and current_minutes < end_minutes):
+                return True
+
     return False
 
 def load_team_assets(team_file: Optional[Path], debug: bool) -> Dict[str, Tuple[str, str]]:
@@ -226,15 +286,21 @@ def dedupe(items: List[Highlight]) -> List[Highlight]:
     return out
 
 
-def collect_for_league(league: League, output_dir: Path, today: date, offline: bool, debug: bool) -> List[Highlight]:
+def collect_for_league(league: League, output_dir: Path, now_dt: datetime, offline: bool, force_online: bool, debug: bool) -> Tuple[List[Highlight], bool]:
     save_path = output_dir / f"{safe_filename(league.name)}_Highlights.txt"
-    active_today = is_active_today(league.active_windows_raw, today, debug)
-    dbg(debug, f"{league.name}: active_today={active_today}, offline={offline}")
+    active_today = is_active_today(league.active_windows_raw, now_dt.date(), debug)
+    active_now = force_online or (active_today and is_active_now_in_week(league.active_week_windows_raw, now_dt, debug))
+    dbg(debug, f"{league.name}: active_today={active_today}, active_now={active_now}, offline={offline}, force_online={force_online}")
 
+    updated = False
     if offline:
         lines = read_saved(save_path)
     else:
-        lines = run_script(league.script_path, debug) if active_today else read_saved(save_path)
+        if active_now:
+            lines = run_script(league.script_path, debug)
+            updated = True
+        else:
+            lines = read_saved(save_path)
 
     parsed: List[Highlight] = []
     for line in lines:
@@ -246,9 +312,9 @@ def collect_for_league(league: League, output_dir: Path, today: date, offline: b
         parsed.append(h)
 
     parsed = dedupe(parsed)
-    if not offline:
+    if not offline and updated:
         write_saved(save_path, parsed)
-    return parsed
+    return parsed, updated
 
 
 def parse_highlight_datetime(h: Highlight) -> Optional[datetime]:
@@ -587,11 +653,13 @@ def main() -> int:
         print("No leagues found.", file=sys.stderr)
         return 1
 
-    today = date.today()
+    now_dt = datetime.now(ZoneInfo("Europe/Stockholm"))
     league_items: Dict[str, List[Highlight]] = {}
+    any_league_updated = False
     for league in leagues:
         try:
-            league_items[league.name] = collect_for_league(league, output_dir, today, args.offline, args.debug)
+            league_items[league.name], league_updated = collect_for_league(league, output_dir, now_dt, args.offline, args.force_online, args.debug)
+            any_league_updated = any_league_updated or league_updated
             dbg(args.debug, f"{league.name}: {len(league_items[league.name])} highlights")
         except subprocess.CalledProcessError as e:
             print(f"Failed running script for {league.name}: {e}", file=sys.stderr)
@@ -601,6 +669,10 @@ def main() -> int:
         except Exception as e:
             print(f"Failed processing league {league.name}: {e}", file=sys.stderr)
             return 3
+
+    if not args.offline and not any_league_updated:
+        dbg(args.debug, "No leagues updated; skipping HTML generation.")
+        return 0
 
     if not args.no_html:
         output_html = Path(args.output_html).resolve() if args.output_html else (output_dir / "hockeyHighlights.html")
