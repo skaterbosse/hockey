@@ -55,7 +55,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.force_online }}" == "true" ]]; then
             EXTRA_ARGS="-fo"
           fi
-          python3 scripts/showHighlights.py -l ./highlights/Leagues.txt -ld ./logos -od ./highlights/output -oh highlights.html -dbg $EXTRA_ARGS
+          python3 scripts/showHighlights.py -l ./highlights/Leagues.txt -sd ./scripts -ld ./logos -od ./highlights/output -oh highlights.html -dbg $EXTRA_ARGS
 
       - name: Decide whether HTML changed
         id: decide
