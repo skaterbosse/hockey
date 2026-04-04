@@ -346,6 +346,19 @@ def inline_image_data(path: Optional[Path], debug: bool, context: str) -> str:
     return f"data:{mime};base64,{data}"
 
 
+def resolve_static_asset(*relative_parts: str) -> Optional[Path]:
+    candidates = [
+        Path.cwd(),
+        Path(__file__).resolve().parent,
+        Path(__file__).resolve().parent.parent,
+    ]
+    for base in candidates:
+        candidate = base.joinpath(*relative_parts)
+        if candidate.exists():
+            return candidate
+    return None
+
+
 def resolve_team_display_and_logo(
     league_name: str,
     raw_team_name: str,
@@ -388,6 +401,31 @@ def resolve_league_logo(league: League, logo_dir: Path, debug: bool) -> Optional
     return None
 
 
+
+def format_highlight_title(title: str, max_line: int = 25) -> str:
+    title = title.replace("\r", " ").replace("\n", " ")
+    title = re.sub(r"\s+", " ", title.strip())
+
+    if len(title) <= max_line:
+        return html.escape(title)
+
+    split_idx = -1
+    for i in range(min(len(title), max_line), 0, -1):
+        if title[i - 1] in [" ", "-"]:
+            split_idx = i
+            break
+
+    if split_idx == -1:
+        first = title[:max_line]
+        second = title[max_line:max_line * 2]
+        return html.escape(first) + "<br>" + html.escape(second)
+
+    first = title[:split_idx].rstrip(" -")
+    second = title[split_idx:].lstrip(" -")
+    second = second[:max_line]
+    return html.escape(first) + "<br>" + html.escape(second)
+
+
 def render_html(leagues: List[League], league_items: Dict[str, List[Highlight]], output_html: Path, logo_dir: Path, debug: bool) -> None:
     league_map = {l.name: l for l in leagues}
     team_maps = {l.name: load_team_assets(l.teams_file, debug) for l in leagues}
@@ -401,6 +439,9 @@ def render_html(leagues: List[League], league_items: Dict[str, List[Highlight]],
     latest = [h for h in all_items if (parse_highlight_datetime(h) and parse_highlight_datetime(h) >= cutoff)]
 
     tab_names = ["Senaste"] + [l.name for l in leagues]
+
+    play_icon_src = inline_image_data(resolve_static_asset("icons", "localsport_play_symbol.svg"), debug, "localsport play symbol")
+    brand_logo_src = inline_image_data(resolve_static_asset("icons", "local_sport_full_logo_night_mode_highlights.svg"), debug, "localsport full logo")
 
     def build_row(h: Highlight) -> str:
         league = league_map[h.league]
@@ -419,25 +460,26 @@ def render_html(leagues: List[League], league_items: Dict[str, List[Highlight]],
         league_bg_src = inline_image_data(league_logo_path, debug, f"{h.league} league logo")
 
         dt = h.date_str + (f"  {h.time_str}" if h.time_str else "")
-        
+
         if league_bg_src:
             bg_style = f'style="--league-logo:url(\'{league_bg_src}\');"'
         else:
             bg_style = ""
-            
+
         home_img = f'<img class="team-logo" src="{home_src}" alt="{html.escape(home_display)} logo">' if home_src else ''
         away_img = f'<img class="team-logo" src="{away_src}" alt="{html.escape(away_display)} logo">' if away_src else ''
+        play_img = f'<img class="play-icon" src="{play_icon_src}" alt="Play">' if play_icon_src else '<span class="play-fallback">▶</span>'
 
         return f"""
 <a class="highlight-link" href="{html.escape(h.url)}" target="_blank" rel="noopener noreferrer">
   <div class="highlight-bg"{bg_style}></div>
   <div class="highlight-grid">
     <div class="hl-date">{html.escape(dt)}</div>
-    <div class="hl-desc">{html.escape(h.title)}</div>
+    <div class="hl-desc">{format_highlight_title(h.title)}</div>
     <div class="hl-league">{html.escape(h.league)}</div>
 
     <div class="hl-home-logo">{home_img}</div>
-    <div class="hl-play"><span class="play-circle"><span class="play-triangle"></span></span></div>
+    <div class="hl-play">{play_img}</div>
     <div class="hl-away-logo">{away_img}</div>
 
     <div class="hl-home-name">{html.escape(home_display)}</div>
@@ -448,7 +490,7 @@ def render_html(leagues: List[League], league_items: Dict[str, List[Highlight]],
 """
 
     nav_html = "\n".join(
-        f"<a href='#tab-{html.escape(name)}' data-target='tab-{html.escape(name)}'>{html.escape(name)}</a>"
+        f'<a href="#tab-{html.escape(name)}" data-target="tab-{html.escape(name)}">{html.escape(name)}</a>'
         for name in tab_names
     )
 
@@ -457,14 +499,60 @@ def render_html(leagues: List[League], league_items: Dict[str, List[Highlight]],
     for lg in leagues:
         sections.append(f"<section id='tab-{html.escape(lg.name)}'><div class='highlights-list'>{''.join(build_row(h) for h in league_items.get(lg.name, []))}</div></section>")
 
+    brand_header = f'<header class="site-brand"><img class="site-brand-logo" src="{brand_logo_src}" alt="LocalSport Highlights"></header>' if brand_logo_src else ""
+
     html_text = f"""<!DOCTYPE html><html><head><meta charset='utf-8'>
-<title>Hockey Highlights</title>
+<title>Local Sports: Highlights</title>
+<meta property="og:title" content="Local Sports: Highlights">
+<meta property="og:type" content="website">
+<meta property="og:image" content="icons/localsport_1200x630_black.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-body {{ font-family: Arial, sans-serif; margin: 0; padding: 0; background:#f0f0f0; }}
-nav {{ position: sticky; top: 0; z-index: 1000; background: #333; color: white; padding: 1em; display: flex; flex-wrap: wrap; font-size: 1.25em; gap: 0.8em; }}
-nav a {{ color: white; text-decoration: none; }}
-nav a:hover {{ text-decoration: underline; }}
+body {{ font-family: Arial, sans-serif; margin: 0; padding: 0; background:#101827; }}
+.site-brand {{
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  background: #111827;
+  padding: 0.55em 1em 0.45em 1em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+}}
+.site-brand-logo {{
+  max-width: min(92vw, 420px);
+  width: 100%;
+  height: auto;
+  display: block;
+}}
+nav {{
+  position: sticky;
+  top: 68px;
+  z-index: 1000;
+  background: #101827;
+  color: white;
+  padding: 1em;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 1.25em;
+  gap: 0.8em;
+}}
+nav a {{
+  color: white;
+  text-decoration: none;
+  border-bottom: 5px solid transparent;
+  padding-bottom: 0.18em;
+  font-weight: 700;
+}}
+nav a:hover {{
+  text-decoration: none;
+}}
+nav a.active {{
+  border-bottom-color: #d7f378;
+}}
 section {{ display: none; padding: 0.75em; }}
 section.active {{ display: block; }}
 
@@ -519,6 +607,12 @@ section.active {{ display: block; }}
   font-size: clamp(0.9rem, 2.3vw, 1.1rem);
   font-weight: 700;
   line-height:1.15;
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: break-word;
 }}
 
 .hl-league {{
@@ -546,24 +640,15 @@ section.active {{ display: block; }}
   object-fit: contain;
 }}
 
-.play-circle {{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:72px;
-  height:72px;
-  border-radius:50%;
-  background: #c70039;
-  box-shadow:0 3px 10px rgba(0,0,0,0.18);
+.play-icon {{
+  width: 76px;
+  height: 76px;
+  display: block;
 }}
 
-.play-triangle {{
-  width: 0;
-  height: 0;
-  border-top: 18px solid transparent;
-  border-bottom: 18px solid transparent;
-  border-left: 28px solid white;
-  margin-left: 6px;
+.play-fallback {{
+  font-size: 58px;
+  line-height: 1;
 }}
 
 .hl-home-name, .hl-away-name {{
@@ -571,6 +656,10 @@ section.active {{ display: block; }}
   font-weight: 800;
   text-align:center;
   line-height:1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }}
 
 .hl-home-name {{ grid-column: 1; grid-row: 3; }}
@@ -585,25 +674,30 @@ section.active {{ display: block; }}
     max-height: 110px;
     max-width: 110px;
   }}
+  .play-icon {{
+    width: 88px;
+    height: 88px;
+  }}
 }}
 
 @media (max-width: 480px) {{
+  .site-brand {{
+    padding-left: 0.75em;
+    padding-right: 0.75em;
+  }}
+  nav {{
+    top: 60px;
+  }}
   .highlight-grid {{
     grid-template-columns: 1fr 100px 1fr;
-  }}
-  .play-circle {{
-    width: 58px;
-    height: 58px;
-  }}
-  .play-triangle {{
-    border-top: 14px solid transparent;
-    border-bottom: 14px solid transparent;
-    border-left: 22px solid white;
-    margin-left: 4px;
   }}
   .team-logo {{
     max-height: 74px;
     max-width: 74px;
+  }}
+  .play-icon {{
+    width: 62px;
+    height: 62px;
   }}
 }}
 </style>
@@ -613,6 +707,12 @@ function showPage(id, updateHash = true) {{
   secs.forEach(s => s.classList.remove("active"));
   var el = document.getElementById(id);
   if (el) {{ el.classList.add("active"); }}
+
+  var links = document.querySelectorAll("nav a[data-target]");
+  links.forEach(a => a.classList.remove("active"));
+  var activeLink = document.querySelector('nav a[data-target="' + id + '"]');
+  if (activeLink) {{ activeLink.classList.add("active"); }}
+
   if (updateHash) {{
     history.replaceState(null, "", "#" + id);
   }}
@@ -631,6 +731,7 @@ window.addEventListener("DOMContentLoaded", () => {{
 }});
 </script>
 </head><body>
+{brand_header}
 <nav>
 {nav_html}
 </nav>
