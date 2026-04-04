@@ -516,12 +516,12 @@ def render_html(leagues: List[League], league_items: Dict[str, List[Highlight]],
 <link rel="apple-touch-icon" href="https://localsport.se/icons/localsport_1200x630_black.png">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-body {{ font-family: Arial, sans-serif; margin: 0; padding: 0; background:#101827; }}
+body {{ font-family: Arial, sans-serif; margin: 0; padding: 0; background:#000000; }}
 .site-brand {{
   position: sticky;
   top: 0;
   z-index: 1100;
-  background: #111827;
+  background: #000000;
   padding: 0.55em 1em 0.45em 1em;
   display: flex;
   justify-content: center;
@@ -538,7 +538,7 @@ nav {{
   position: sticky;
   top: 68px;
   z-index: 1000;
-  background: #101827;
+  background: #000000;
   color: white;
   padding: 1em;
   display: flex;
