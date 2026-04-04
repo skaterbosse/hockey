@@ -505,7 +505,9 @@ def render_html(leagues: List[League], league_items: Dict[str, List[Highlight]],
 <title>Local Sports: Highlights</title>
 <meta property="og:title" content="Local Sports: Highlights">
 <meta property="og:type" content="website">
-<meta property="og:image" content="icons/localsport_1200x630_black.png">
+<meta property="og:url" content="https://localsport.se/highlights.html">
+<meta property="og:description" content="Highlights från hockeyligor samlade på ett ställe.">
+<meta property="og:image" content="https://localsport.se/icons/localsport_1200x630_black.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="viewport" content="width=device-width,initial-scale=1">
