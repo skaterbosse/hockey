@@ -19,11 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    outputs:
-      html_changed: ${{ steps.decide.outputs.html_changed }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -63,7 +64,7 @@ jobs:
         run: |
           if [[ ! -f highlights.html ]]; then
             echo "html_changed=false" >> "$GITHUB_OUTPUT"
-            echo "No HTML file generated. Exiting without deploy."
+            echo "No HTML file generated. Exiting without commit."
             exit 0
           fi
 
@@ -73,48 +74,25 @@ jobs:
 
           if [[ "$BEFORE_EXISTS" == "true" && "$BEFORE_SHA" == "$AFTER_SHA" ]]; then
             echo "html_changed=false" >> "$GITHUB_OUTPUT"
-            echo "HTML unchanged. Exiting without deploy."
+            echo "HTML unchanged. Exiting without commit."
             exit 0
           fi
 
           echo "html_changed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Prepare Pages artifact
+      - name: Commit and push generated files
         if: steps.decide.outputs.html_changed == 'true'
         shell: bash
         run: |
-          mkdir -p _site
-          cp index.html _site/index.html
-          cp highlights.html _site/highlights.html
-          cp SeriesAndTeams.html _site/SeriesAndTeams.html
-          cp OS_Milano_2026_TV-tider.html _site/OS_Milano_2026_TV-tider.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          cp -R icons _site/icons
-          cp -R logos _site/logos
+          git add -A
 
+          if git diff --cached --quiet; then
+            echo "No staged changes to commit."
+            exit 0
+          fi
 
-      - name: Configure GitHub Pages
-        if: steps.decide.outputs.html_changed == 'true'
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        if: steps.decide.outputs.html_changed == 'true'
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: _site
-
-  deploy:
-    if: needs.build.outputs.html_changed == 'true'
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          git commit -m "Update highlights"
+          git push
