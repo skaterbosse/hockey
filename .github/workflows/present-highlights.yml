@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pages: write
+      id-token: write
 
     steps:
       - name: Checkout repository
@@ -80,6 +82,45 @@ jobs:
 
           echo "html_changed=true" >> "$GITHUB_OUTPUT"
 
+      - name: Configure GitHub Pages
+        if: steps.decide.outputs.html_changed == 'true'
+        uses: actions/configure-pages@v5
+
+      - name: Prepare Pages artifact
+        if: steps.decide.outputs.html_changed == 'true'
+        shell: bash
+        run: |
+          mkdir -p _site
+          cp highlights.html _site/highlights.html
+
+          if [[ -f index.html ]]; then
+            cp index.html _site/index.html
+          else
+            cp highlights.html _site/index.html
+          fi
+
+          if [[ -d icons ]]; then
+            cp -R icons _site/icons
+          fi
+
+          if [[ -d logos ]]; then
+            cp -R logos _site/logos
+          fi
+
+          if [[ -f SeriesAndTeams.html ]]; then
+            cp SeriesAndTeams.html _site/SeriesAndTeams.html
+          fi
+
+          if [[ -f OS_Milano_2026_TV-tider.html ]]; then
+            cp OS_Milano_2026_TV-tider.html _site/OS_Milano_2026_TV-tider.html
+          fi
+
+      - name: Upload Pages artifact
+        if: steps.decide.outputs.html_changed == 'true'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
       - name: Commit and push generated files
         if: steps.decide.outputs.html_changed == 'true'
         shell: bash
@@ -96,3 +137,17 @@ jobs:
 
           git commit -m "Update highlights"
           git push
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
