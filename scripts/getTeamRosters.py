@@ -75,7 +75,7 @@ def parse_offline_mapping(path: Path, season: str, dbg: bool) -> Dict[str, Path]
     return mapping
 
 
-def fetch_html(url: str, season: str, dbg: bool, dbg_raw_input: bool) -> str:
+def fetch_html(url: str, season: str, dbg: bool, dbg_raw_input: bool, raw_label: str) -> str:
     debug(f"Hämtar HTML: {url}", dbg)
     headers = {
         "User-Agent": (
@@ -101,18 +101,14 @@ def fetch_html(url: str, season: str, dbg: bool, dbg_raw_input: bool) -> str:
                 html_text = data.decode(charset, errors="replace")
                 debug(f"Hämtade {len(data)} bytes från {final_url}", dbg)
 
-                if _norm(final_url) != _norm(url) and season not in _norm(final_url):
-                    debug(
-                        f"Svarade med annan URL än begärt: {url} -> {final_url}; "
-                        f"säsongen {season} saknas i slutlig URL, tolkar som tom roster",
-                        dbg,
-                    )
-                    return ""
-
                 if dbg_raw_input:
-                    print("DEBUG_RAW_INPUT_START", file=sys.stderr)
+                    print(f"****** RAW INPUT START, {raw_label} ******", file=sys.stderr)
                     print(html_text, file=sys.stderr, end="" if html_text.endswith("\n") else "\n")
-                    print("DEBUG_RAW_INPUT_END", file=sys.stderr)
+                    print(f"****** RAW INPUT END, {raw_label} ******", file=sys.stderr)
+
+                if _norm(final_url) != _norm(url):
+                    debug(f"Svarade med annan URL än begärt: {url} -> {final_url}; fortsätter att parsa svaret", dbg)
+
                 return html_text
         except urllib.error.HTTPError as e:
             if e.code == 308:
@@ -127,7 +123,7 @@ def fetch_html(url: str, season: str, dbg: bool, dbg_raw_input: bool) -> str:
     raise RuntimeError(f"För många redirects vid hämtning av {url}")
 
 
-def read_offline_html(url: str, offline_map: Dict[str, Path], dbg: bool, dbg_raw_input: bool) -> str:
+def read_offline_html(url: str, offline_map: Dict[str, Path], dbg: bool, dbg_raw_input: bool, raw_label: str) -> str:
     if url not in offline_map:
         raise RuntimeError(f"URL saknas i OFFLINE FILE: {url}")
     offline_file = offline_map[url]
@@ -136,9 +132,9 @@ def read_offline_html(url: str, offline_map: Dict[str, Path], dbg: bool, dbg_raw
     debug(f"Läser offline HTML för {url}: {offline_file}", dbg)
     html_text = offline_file.read_text(encoding="utf-8", errors="replace")
     if dbg_raw_input:
-        print("DEBUG_RAW_INPUT_START", file=sys.stderr)
+        print(f"****** RAW INPUT START, {raw_label} ******", file=sys.stderr)
         print(html_text, file=sys.stderr, end="" if html_text.endswith("\n") else "\n")
-        print("DEBUG_RAW_INPUT_END", file=sys.stderr)
+        print(f"****** RAW INPUT END, {raw_label} ******", file=sys.stderr)
     return html_text
 
 
@@ -249,12 +245,13 @@ def run_python_parser(
     dbg: bool,
     dbg_raw_input: bool,
     offline_map: Optional[Dict[str, Path]],
+    raw_label: str,
 ) -> None:
     debug(f"Källa URL: {url}", dbg)
     if offline_map is None:
-        html_text = fetch_html(url, season, dbg, dbg_raw_input)
+        html_text = fetch_html(url, season, dbg, dbg_raw_input, raw_label)
     else:
-        html_text = read_offline_html(url, offline_map, dbg, dbg_raw_input)
+        html_text = read_offline_html(url, offline_map, dbg, dbg_raw_input, raw_label)
 
     roster_lines = parse_roster_from_html(html_text, season, dbg)
 
@@ -410,7 +407,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "-dbg_raw_input",
         "--debug-raw-input",
         action="store_true",
-        help="Dumpa rå input mellan DEBUG_RAW_INPUT_START/END till stderr.",
+        help="Dumpa hela rå HTML mellan RAW INPUT START/END till stderr.",
     )
     return p
 
@@ -456,7 +453,8 @@ def main() -> int:
         roster_filename = team["roster_filename"]
         roster_path = output_dir / roster_filename
         roster_filenames.append(roster_filename)
-        run_python_parser(url, season, roster_path, dbg, dbg_raw_input, offline_map)
+        raw_label = Path(roster_filename).stem
+        run_python_parser(url, season, roster_path, dbg, dbg_raw_input, offline_map, raw_label)
 
     new_all_players = make_all_players_file(output_dir, season, roster_filenames, dbg)
     new_summary = make_team_summary_file(output_dir, season, roster_filenames, dbg)
