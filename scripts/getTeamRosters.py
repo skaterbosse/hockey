@@ -75,6 +75,60 @@ def parse_offline_mapping(path: Path, season: str, dbg: bool) -> Dict[str, Path]
     return mapping
 
 
+def season_page_matches_requested_roster(html_text: str, season: str, dbg: bool) -> bool:
+    patterns = [
+        f'"defaultSeason":"{season}"',
+        f'"seasonObject":{{"__typename":"TeamSeason","eliteprospectsUrlPath":"',
+        f'"slug":"{season}"',
+        f'"query":{{"slug":[',
+    ]
+
+    has_default_season = f'"defaultSeason":"{season}"' in html_text
+    has_query_season = f'"query":{{"slug":[' in html_text and f'"{season}"' in html_text
+    has_season_object_slug = re.search(r'"seasonObject":\{.*?"slug":"' + re.escape(season) + r'"', html_text, re.S) is not None
+
+    debug(
+        f"Säsongsmatchning: defaultSeason={has_default_season}, "
+        f"seasonObject.slug={has_season_object_slug}, query.slug innehåller säsong={has_query_season}",
+        dbg,
+    )
+    return has_default_season or has_season_object_slug or has_query_season
+
+
+def requested_roster_has_no_data(html_text: str, season: str, dbg: bool) -> bool:
+    # Begränsa "No Data Found" till själva rosterblocket och inte senare sektioner
+    # som t.ex. Staff. Vi tittar bara kort efter roster-rubriken/tabellen.
+    patterns = [
+        re.escape(season) + r'.{0,800}?Roster.{0,2500}?No Data Found',
+        r'LineupCard_header__Q8LNC"><h2>' + re.escape(season) + r'.{0,200}?Roster</h2>.*?No Data Found',
+        r'SortTable_table__.*?No Data Found',
+    ]
+    no_data = any(re.search(p, html_text, re.S) is not None for p in patterns)
+
+    # Om roster-tabellen faktiskt innehåller spelarlänkar ska vi inte tolka sidan som tom,
+    # även om "No Data Found" förekommer senare i t.ex. Staff-sektionen.
+    has_player_link = re.search(r'href="/player/[^"]+"', html_text) is not None
+    if has_player_link:
+        no_data = False
+
+    debug(f"No Data Found för begärd roster={no_data} (has_player_link={has_player_link})", dbg)
+    return no_data
+
+
+def should_accept_html_as_requested_season(html_text: str, season: str, dbg: bool) -> bool:
+    season_match = season_page_matches_requested_roster(html_text, season, dbg)
+    no_data = requested_roster_has_no_data(html_text, season, dbg)
+    accept = season_match and not no_data
+    debug(f"Accepterar HTML som roster för {season}={accept}", dbg)
+    return accept
+
+
+def dump_raw_html(raw_label: str, html_text: str) -> None:
+    print(f"****** RAW INPUT START, {raw_label} ******", file=sys.stderr)
+    print(html_text, file=sys.stderr, end="" if html_text.endswith("\n") else "\n")
+    print(f"****** RAW INPUT END, {raw_label} ******", file=sys.stderr)
+
+
 def fetch_html(url: str, season: str, dbg: bool, dbg_raw_input: bool, raw_label: str) -> str:
     debug(f"Hämtar HTML: {url}", dbg)
     headers = {
@@ -102,18 +156,53 @@ def fetch_html(url: str, season: str, dbg: bool, dbg_raw_input: bool, raw_label:
                 debug(f"Hämtade {len(data)} bytes från {final_url}", dbg)
 
                 if dbg_raw_input:
-                    print(f"****** RAW INPUT START, {raw_label} ******", file=sys.stderr)
-                    print(html_text, file=sys.stderr, end="" if html_text.endswith("\n") else "\n")
-                    print(f"****** RAW INPUT END, {raw_label} ******", file=sys.stderr)
+                    dump_raw_html(raw_label, html_text)
 
                 if _norm(final_url) != _norm(url):
-                    debug(f"Svarade med annan URL än begärt: {url} -> {final_url}; fortsätter att parsa svaret", dbg)
+                    if should_accept_html_as_requested_season(html_text, season, dbg):
+                        debug(
+                            f"Svarade med annan URL än begärt: {url} -> {final_url}; "
+                            f"HTML matchar roster för {season}, accepterar svaret",
+                            dbg,
+                        )
+                        return html_text
+                    debug(
+                        f"Svarade med annan URL än begärt: {url} -> {final_url}; "
+                        f"HTML matchar inte roster för {season}, tolkar som tom roster",
+                        dbg,
+                    )
+                    return ""
 
                 return html_text
         except urllib.error.HTTPError as e:
             if e.code == 308:
                 location = e.headers.get("Location")
                 new_url = urllib.parse.urljoin(current_url, location) if location else "(okänd)"
+                html_text = ""
+                if location:
+                    debug(f"308 debug-fetch av redirect-mål: {new_url}", dbg)
+                    try:
+                        redirect_req = urllib.request.Request(new_url, headers=headers)
+                        with urllib.request.urlopen(redirect_req, timeout=60) as redirect_resp:
+                            redirect_final_url = redirect_resp.geturl()
+                            redirect_charset = redirect_resp.headers.get_content_charset() or "utf-8"
+                            redirect_data = redirect_resp.read()
+                            html_text = redirect_data.decode(redirect_charset, errors="replace")
+                            debug(f"Hämtade {len(redirect_data)} bytes från {redirect_final_url}", dbg)
+                    except Exception as fetch_exc:
+                        debug(f"Kunde inte hämta redirect-mål {new_url}: {fetch_exc}", dbg)
+
+                if dbg_raw_input:
+                    dump_raw_html(raw_label, html_text if html_text else new_url)
+
+                if html_text and should_accept_html_as_requested_season(html_text, season, dbg):
+                    debug(
+                        f"308 Permanent Redirect för {current_url} -> {new_url}; "
+                        f"redirect-målets HTML matchar roster för {season}, accepterar svaret",
+                        dbg,
+                    )
+                    return html_text
+
                 debug(f"308 Permanent Redirect för {current_url} -> {new_url}; tolkar som tom roster", dbg)
                 return ""
             raise RuntimeError(f"HTTP-fel vid hämtning av {current_url}: {e.code} {e.reason}") from e
@@ -132,9 +221,7 @@ def read_offline_html(url: str, offline_map: Dict[str, Path], dbg: bool, dbg_raw
     debug(f"Läser offline HTML för {url}: {offline_file}", dbg)
     html_text = offline_file.read_text(encoding="utf-8", errors="replace")
     if dbg_raw_input:
-        print(f"****** RAW INPUT START, {raw_label} ******", file=sys.stderr)
-        print(html_text, file=sys.stderr, end="" if html_text.endswith("\n") else "\n")
-        print(f"****** RAW INPUT END, {raw_label} ******", file=sys.stderr)
+        dump_raw_html(raw_label, html_text)
     return html_text
 
 
