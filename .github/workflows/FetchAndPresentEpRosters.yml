@@ -6,8 +6,7 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-    - cron: "35 14 * * *"
-    - cron: "35 15 * * *"
+    - cron: "0 15 * * *"
 
 concurrency:
   group: fetch-and-present-ep-rosters
@@ -27,40 +26,6 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-
-      - name: Debug time
-        shell: bash
-        run: |
-          echo "UTC:"
-          date -u
-          echo "Stockholm:"
-          TZ=Europe/Stockholm date
-
-      - name: Decide whether this UTC trigger matches Stockholm schedule
-        id: stockholm_gate
-        shell: bash
-        run: |
-          export TZ=Europe/Stockholm
-
-          local_dow="$(date +%u)"   # 1=Mon ... 7=Sun
-          local_hm="$(date +%H:%M)"
-
-          echo "Stockholm local weekday=$local_dow"
-          echo "Stockholm local time=$local_hm"
-
-          should_run=false
-
-          if [[ "$local_hm" == "16:35" ]]; then
-            should_run=true
-          fi
-
-          echo "should_run=$should_run" >> "$GITHUB_OUTPUT"
-
-      - name: Stop if this trigger is only a DST coverage slot
-        if: github.event_name == 'schedule' && steps.stockholm_gate.outputs.should_run != 'true'
-        run: |
-          echo "This scheduled UTC slot does not correspond to a wanted Stockholm local time. Exiting."
-          exit 0
 
       - name: Install dependencies
         run: |
