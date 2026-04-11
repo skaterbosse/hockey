@@ -26,6 +26,54 @@ def escape_nbsp(s: str) -> str:
     return html.escape(s).replace(" ", "&nbsp;")
 
 
+def classify_position(pos: str) -> str:
+    p = (pos or "").upper()
+    if p == "G":
+        return "G"
+    if "D" in p and "G" not in p:
+        return "D"
+    return "F"
+
+
+def compute_team_stats(team: Dict[str, Any]) -> Dict[str, Any]:
+    g = d = f = 0
+    years = []
+    for p in team.get("players", []):
+        cls = classify_position(p.get("position", ""))
+        if cls == "G":
+            g += 1
+        elif cls == "D":
+            d += 1
+        else:
+            f += 1
+        try:
+            years.append(int(p.get("birthyear")))
+        except Exception:
+            pass
+    avg = None
+    med = None
+    if years:
+        ages = [2026 - y + 0.5 for y in years]
+        avg = sum(ages) / len(ages)
+        ys = sorted(years)
+        med = ys[len(ys)//2]
+    return {"G": g, "D": d, "F": f, "avg": avg, "med": med}
+
+
+def render_dist_block(stats: Dict[str, Any]) -> str:
+    return (
+        "<span class='overview-dist'>"
+        "["
+        f"<span class='dist-part'>G<span class='dist-num'>{stats['G']}</span></span>"
+        "|"
+        f"<span class='dist-part'>D<span class='dist-num'>{stats['D']}</span></span>"
+        "|"
+        f"<span class='dist-part'>F<span class='dist-num'>{stats['F']}</span></span>"
+        "]"
+        "</span>"
+    )
+
+
 def normalize_logo_path(p: str) -> str:
     return p if p.endswith("/") else p + "/"
 
@@ -404,10 +452,13 @@ def build_history_block(
                 continue
             count = overview_counts.get(team["roster_file"], team["player_count"])
             logo_html = f"<img src='{html.escape(logo_path_html + team['logo_file'])}' class='team-logo'>" if team.get("logo_file") else ""
+            stats = compute_team_stats(team)
+            dist_html = render_dist_block(stats)
             summary = (
-                "<div class='overview-summary'>"
+                "<div class='overview-team-summary'>"
                 f"<span class='overview-count'>{count}</span>"
-                f"<span>{logo_html}</span>"
+                f"{dist_html}"
+                f"<span class='overview-logo-slot'>{logo_html}</span>"
                 f"<span>{escape_nbsp(team['team_name'])}</span>"
                 f"<span class='overview-serie'>{html.escape(team['series_name'])}</span>"
                 "</div>"
@@ -512,9 +563,12 @@ def build_overview_mode_block(mode_id: str, teams: List[Dict[str, Any]], grouped
                     changed_teams.append(team)
     for team in changed_teams:
         logo_html = f"<img src='{html.escape(logo_path_html + team['logo_file'])}' class='team-logo'>" if team.get("logo_file") else ""
-        summary = ("<div class='overview-summary'>"
+        stats = compute_team_stats(team)
+        dist_html = render_dist_block(stats)
+        summary = ("<div class='overview-team-summary'>"
                    f"<span class='overview-count'>{overview_counts.get(team['roster_file'], team['player_count'])}</span>"
-                   f"<span>{logo_html}</span>"
+                   f"{dist_html}"
+                   f"<span class='overview-logo-slot'>{logo_html}</span>"
                    f"<span>{escape_nbsp(team['team_name'])}</span>"
                    f"<span class='overview-serie'>{html.escape(team['series_name'])}</span>"
                    "</div>")
@@ -527,9 +581,12 @@ def build_overview_mode_block(mode_id: str, teams: List[Dict[str, Any]], grouped
     for team in overview_teams:
         count = overview_counts.get(team["roster_file"], team["player_count"])
         logo_html = f"<img src='{html.escape(logo_path_html + team['logo_file'])}' class='team-logo'>" if team.get("logo_file") else ""
-        summary = ("<div class='overview-summary'>"
+        stats = compute_team_stats(team)
+        dist_html = render_dist_block(stats)
+        summary = ("<div class='overview-team-summary'>"
                    f"<span class='overview-count'>{count}</span>"
-                   f"<span>{logo_html}</span>"
+                   f"{dist_html}"
+                   f"<span class='overview-logo-slot'>{logo_html}</span>"
                    f"<span>{escape_nbsp(team['team_name'])}</span>"
                    f"<span class='overview-serie'>{html.escape(team['series_name'])}</span>"
                    "</div>")
@@ -561,9 +618,16 @@ details { margin-bottom: 0.5em; }
 summary { font-weight: bold; cursor: pointer; padding: 0.35em 0.5em; background: #eee; border: 1px solid #ccc; border-radius: 4px; font-size: 1.45em; display: flex; align-items: center; gap: 0.5em; }
 h1 { margin-top: 1em; }
 h2.serie-title { background:#444; color:white; padding:0.4em 0.6em; border-radius:6px; font-size:1.35em; }
-.overview-summary { display: grid; grid-template-columns: 5.5em 3em 1fr auto; align-items: center; width: 100%; gap: 0.6em; }
-.overview-count { font-variant-numeric: tabular-nums; }
+.overview-summary { display: grid; grid-template-columns: 3ch auto 3em 1fr auto; align-items: center; width: 100%; gap: 0.6em; }
+.overview-count { font-variant-numeric: tabular-nums; display:inline-block; min-width:2ch; text-align:right; }
 .overview-serie { font-size: 0.8em; color: #444; margin-left: auto; }
+.overview-dist { font-family: monospace; font-size: 0.9em; white-space: nowrap; display:inline-block; min-width:14ch; }
+.series-team-summary { display:grid; grid-template-columns: 3ch auto 3em 1fr auto; align-items:center; width:100%; gap:0.6em; }
+.series-logo-slot { display:inline-flex; align-items:center; justify-content:flex-start; width:3em; }
+.overview-team-summary { display:grid; grid-template-columns: 3ch auto 3em 1fr auto; align-items:center; width:100%; gap:0.6em; }
+.overview-logo-slot { display:inline-flex; align-items:center; justify-content:flex-start; width:3em; }
+.dist-part { display:inline; }
+.dist-num { display:inline-block; min-width:2ch; text-align:right; }
 .series-header-row { display: inline-flex; align-items: center; gap: 0.8em; }
 .series-logo { max-height: 2.2em; vertical-align: middle; }
 .legend { margin: 1em 0; display: flex; gap: 1em; flex-wrap: wrap; }
@@ -610,6 +674,25 @@ function renderSearchResults(query) {
     container.appendChild(div);
   });
 }
+function toggleSeriesSort(tab, enabled) {
+  const section = document.getElementById(tab);
+  if (!section) return;
+  section.querySelectorAll(".series-group").forEach(group => {
+    const items = Array.from(group.querySelectorAll("details[data-player-count][data-team-name]"));
+    items.sort((a, b) => {
+      if (enabled) {
+        const ca = parseInt(a.getAttribute("data-player-count") || "0", 10);
+        const cb = parseInt(b.getAttribute("data-player-count") || "0", 10);
+        if (cb !== ca) return cb - ca;
+      }
+      const na = (a.getAttribute("data-team-name") || "").toLowerCase();
+      const nb = (b.getAttribute("data-team-name") || "").toLowerCase();
+      return na.localeCompare(nb);
+    });
+    items.forEach(item => group.appendChild(item));
+  });
+}
+
 function updateOverviewMode(mode) {
   document.querySelectorAll(".overview-mode-block").forEach(el => el.classList.remove("active"));
   var block = document.getElementById("overview-mode-" + mode);
@@ -661,14 +744,39 @@ window.addEventListener("DOMContentLoaded", () => {
             if header_info.get("main_name"):
                 parts.append(f"<span>{html.escape(header_info.get('main_name', ''))}</span>")
             series_header_html = "<span class='series-header-row'>" + "".join(parts) + "</span>"
-        html_parts.append(f"<section id='{tab}'><h1>{series_header_html}</h1>")
+        html_parts.append(
+            f"<section id='{tab}'><h1 style='display:flex;align-items:center;justify-content:space-between;gap:1em;'>"
+            f"<span>{series_header_html}</span>"
+            f"<label style='font-size:0.6em;font-weight:normal;white-space:nowrap;'>Antalsortering: <input type='checkbox' checked onchange=\"toggleSeriesSort('{tab}', this.checked)\"></label>"
+            f"</h1>"
+        )
         for series_name, series_teams in grouped_tabs[tab]:
             html_parts.append(f"<h2 class='serie-title'>{html.escape(series_name)}</h2>")
-            for team in series_teams:
+            html_parts.append("<div class='series-group'>")
+            for team in sorted(series_teams, key=lambda t: (-t["player_count"], t["team_name"].lower())):
                 logo_html = f"<img src='{html.escape(logo_path_html + team['logo_file'])}' class='team-logo'>" if team.get("logo_file") else ""
-                html_parts.append(f"<details><summary>{logo_html}{escape_nbsp(team['team_name'])}</summary>")
+                stats = compute_team_stats(team)
+                dist_html = render_dist_block(stats)
+                if stats["avg"] is not None:
+                    avg_txt = f"{stats['avg']:.1f}".replace(".", ",")
+                    age_block = f"[Avg: {avg_txt}|Med: {stats['med']}]"
+                else:
+                    age_block = "[Avg: -|-]"
+                summary = (
+                    "<div class='series-team-summary'>"
+                    "<span class='overview-count'>"
+                    f"{team['player_count']}"
+                    "</span>"
+                    f"{dist_html}"
+                    f"<span class='series-logo-slot'>{logo_html}</span>"
+                    f"<span>{escape_nbsp(team['team_name'])}</span>"
+                    f"<span style='margin-left:auto'>{html.escape(age_block)}</span>"
+                    "</div>"
+                )
+                html_parts.append(f"<details data-player-count='{team['player_count']}' data-team-name='{html.escape(team['team_name'], quote=True)}'><summary>{summary}</summary>")
                 html_parts.extend(render_team_players(team["players"], overview_mode=False))
                 html_parts.append("</details>")
+            html_parts.append("</div>")
         html_parts.append("</section>")
     html_parts.append("<section id='all-players'><h1>Alla spelare</h1>")
     for p in all_players:
