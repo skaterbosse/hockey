@@ -516,12 +516,12 @@ def render_html(leagues: List[League], league_items: Dict[str, List[Highlight]],
 <link rel="apple-touch-icon" href="https://localsport.se/icons/localsport_1200x630_black.png">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-body {{ font-family: Arial, sans-serif; margin: 0; padding: 0; background:#000000; }}
+body {{ font-family: Arial, sans-serif; margin: 0; padding: 0; background:#101827; }}
 .site-brand {{
   position: sticky;
   top: 0;
   z-index: 1100;
-  background: #000000;
+  background: #111827;
   padding: 0.55em 1em 0.45em 1em;
   display: flex;
   justify-content: center;
@@ -538,7 +538,7 @@ nav {{
   position: sticky;
   top: 68px;
   z-index: 1000;
-  background: #000000;
+  background: #101827;
   color: white;
   padding: 1em;
   display: flex;
@@ -573,7 +573,7 @@ section.active {{ display: block; }}
   text-decoration:none;
   color:#111;
   background:#efefef;
-  min-height: 175px;
+  min-height: 162px;
 }}
 
 .highlight-bg {{
@@ -592,27 +592,33 @@ section.active {{ display: block; }}
   position:relative;
   z-index:1;
   display:grid;
-  grid-template-columns: 1fr 140px 1fr;
-  gap: 0.6em 0.8em;
+  grid-template-columns: minmax(0, 1fr) 92px minmax(0, 1fr);
+  gap: 0.15em 0.45em;
   align-items:center;
-  padding: 0.9em 0.9em 1em 0.9em;
+  padding: 3.15em 0.9em 0.6em 0.9em;
 }}
 
 .hl-date {{
-  grid-column: 1;
-  grid-row: 1;
+  position: absolute;
+  top: 0.72em;
+  left: 0.9em;
+  width: 25%;
   font-size: clamp(1.0rem, 2.8vw, 1.45rem);
   font-weight: 800;
   text-align:left;
+  line-height: 1.05;
 }}
 
 .hl-desc {{
-  grid-column: 2;
-  grid-row: 1;
+  position: absolute;
+  top: 0.56em;
+  left: 50%;
+  width: min(69%, calc(100% - (0.9em + 25% + 0.3em) - (0.9em + 3ch + 0.3em)));
+  transform: translateX(-50%);
   text-align:center;
   font-size: clamp(0.9rem, 2.3vw, 1.1rem);
   font-weight: 700;
-  line-height:1.15;
+  line-height:1.12;
   max-width: 100%;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -622,8 +628,10 @@ section.active {{ display: block; }}
 }}
 
 .hl-league {{
-  grid-column: 3;
-  grid-row: 1;
+  position: absolute;
+  top: 0.72em;
+  right: 0.9em;
+  width: 3ch;
   text-align:right;
   font-size: clamp(1rem, 2.8vw, 1.35rem);
   font-weight: 800;
@@ -647,8 +655,8 @@ section.active {{ display: block; }}
 }}
 
 .play-icon {{
-  width: 76px;
-  height: 76px;
+  width: 72px;
+  height: 72px;
   display: block;
 }}
 
