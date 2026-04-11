@@ -17,6 +17,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      html_changed: ${{ steps.decide.outputs.html_changed }}
     permissions:
       contents: write
       pages: write
@@ -139,6 +141,7 @@ jobs:
           git push
 
   deploy:
+    if: needs.build.outputs.html_changed == 'true'
     needs: build
     runs-on: ubuntu-latest
     permissions:
