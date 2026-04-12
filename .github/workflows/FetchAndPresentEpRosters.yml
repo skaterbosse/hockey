@@ -89,6 +89,10 @@ jobs:
             cp -R logos _site/logos
           fi
 
+          if [[ -d icons ]]; then
+            cp -R icons _site/icons
+          fi
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
