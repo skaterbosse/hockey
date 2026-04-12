@@ -604,8 +604,8 @@ def generate_html(teams: List[Dict[str, Any]], all_players: List[Dict[str, str]]
     html_parts.append(f"<title>{html.escape(title)}</title>")
     html_parts.append("""
 <style>
-body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-nav { position: sticky; top: 0; z-index: 1000; background: #333; color: white; padding: 1em; display: flex; flex-wrap: wrap; font-size: 1.25em; gap: 0.8em; }
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #ffffff; }
+nav { position: sticky; top: 88px; z-index: 1000; background: #000000; color: white; padding: 1em; display: flex; flex-wrap: wrap; font-size: 1.25em; gap: 0.8em; box-sizing: border-box; border-top: 1px solid #000000; }
 nav a { color: white; text-decoration: none; }
 nav a:hover { text-decoration: underline; }
 section { display: none; padding: 1em; }
@@ -617,7 +617,7 @@ details { margin-bottom: 0.5em; }
 .team-logo { margin-right: 0.5em; max-height: 2.2em; vertical-align: middle; }
 summary { font-weight: bold; cursor: pointer; padding: 0.35em 0.5em; background: #eee; border: 1px solid #ccc; border-radius: 4px; font-size: 1.45em; display: flex; align-items: center; gap: 0.5em; }
 h1 { margin-top: 1em; }
-h2.serie-title { background:#444; color:white; padding:0.4em 0.6em; border-radius:6px; font-size:1.35em; }
+h2.serie-title { background:#000000; color:white; padding:0.4em 0.6em; border-radius:6px; font-size:1.35em; }
 .overview-summary { display: grid; grid-template-columns: 3ch auto 3em 1fr auto; align-items: center; width: 100%; gap: 0.6em; }
 .overview-count { font-variant-numeric: tabular-nums; display:inline-block; min-width:2ch; text-align:right; }
 .overview-serie { font-size: 0.8em; color: #444; margin-left: auto; }
@@ -641,6 +641,8 @@ h2.serie-title { background:#444; color:white; padding:0.4em 0.6em; border-radiu
 .overview-mode-block.active { display:block; }
 .hidden { display:none; }
 .toggle-all { display:inline-block; margin: 0.5em 0 1em 0; }
+.site-header { position:sticky; top:0; z-index:1100; background:#000000; padding:0.65em 1em 0.45em 1em; min-height:88px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; }
+.site-header img { max-width:min(92vw, 720px); width:100%; height:auto; display:block; }
 </style>
 <script>
 function showPage(id, updateHash = true) {
@@ -717,6 +719,7 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 """)
     html_parts.append("</head><body>")
+    html_parts.append("<div class='site-header'><img src='icons/local_sport_full_logo_night_mode_silly_26_27.svg' alt='LocalSport'></div>")
     nav_map = {"overview": "Översikt", "SHL": "SHL", "HA": "HA", "HES": "HES", "HEN": "HEN", "H2": "H2", "H3": "H3", "U20": "U20", "U18": "U18", "U16": "U16", "all-players": "Alla Spelare", "search": "Sök Spelare"}
     html_parts.append("<nav>")
     for tab in TAB_ORDER:
