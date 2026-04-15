@@ -605,7 +605,7 @@ def generate_html(teams: List[Dict[str, Any]], all_players: List[Dict[str, str]]
     html_parts.append("""
 <style>
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #ffffff; }
-nav { position: sticky; top: 88px; z-index: 1000; background: #000000; color: white; padding: 1em; display: flex; flex-wrap: wrap; font-size: 1.25em; gap: 0.8em; box-sizing: border-box; border-top: 1px solid #000000; }
+nav { position: static; background: #000000; color: white; padding: 1em; display: flex; flex-wrap: wrap; font-size: 1.25em; gap: 0.8em; box-sizing: border-box; border-top: 1px solid #000000; }
 nav a { color: white; text-decoration: none; }
 nav a:hover { text-decoration: underline; }
 section { display: none; padding: 1em; }
@@ -641,8 +641,9 @@ h2.serie-title { background:#000000; color:white; padding:0.4em 0.6em; border-ra
 .overview-mode-block.active { display:block; }
 .hidden { display:none; }
 .toggle-all { display:inline-block; margin: 0.5em 0 1em 0; }
-.site-header { position:sticky; top:0; z-index:1100; background:#000000; padding:0.65em 1em 0.45em 1em; min-height:88px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; }
-.site-header img { width:100%; height:auto; display:block; }
+.top-sticky { position: sticky; top: 0; z-index: 1100; background:#000000; width:100%; }
+.site-header { position:static; background:#000000; width:100%; padding:0.65em 0 0.45em 0; min-height:88px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; }
+.site-header img { width:100vw; max-width:none; height:auto; display:block; }
 </style>
 <script>
 function showPage(id, updateHash = true) {
@@ -719,12 +720,14 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 """)
     html_parts.append("</head><body>")
+    html_parts.append("<div class='top-sticky'>")
     html_parts.append("<div class='site-header'><img src='icons/local_sport_full_logo_night_mode_silly_26_27.svg' alt='LocalSport'></div>")
     nav_map = {"overview": "Översikt", "SHL": "SHL", "HA": "HA", "HES": "HES", "HEN": "HEN", "H2": "H2", "H3": "H3", "U20": "U20", "U18": "U18", "U16": "U16", "all-players": "Alla Spelare", "search": "Sök Spelare"}
     html_parts.append("<nav>")
     for tab in TAB_ORDER:
         html_parts.append(f"<a href='#{tab}' data-target='{tab}'>{nav_map[tab]}</a>")
     html_parts.append("</nav>")
+    html_parts.append("</div>")
     html_parts.append("<section id='overview' class='active'><div class='compare-controls'><span>Jämför senaste med:</span>")
     for i, (mode_id, mode_label, _) in enumerate(COMPARE_MODES):
         checked_attr = " checked" if i == 0 else ""

@@ -3,7 +3,7 @@
 
 <style>
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #ffffff; }
-nav { position: sticky; top: 88px; z-index: 1000; background: #000000; color: white; padding: 1em; display: flex; flex-wrap: wrap; font-size: 1.25em; gap: 0.8em; box-sizing: border-box; border-top: 1px solid #000000; }
+nav { position: static; background: #000000; color: white; padding: 1em; display: flex; flex-wrap: wrap; font-size: 1.25em; gap: 0.8em; box-sizing: border-box; border-top: 1px solid #000000; }
 nav a { color: white; text-decoration: none; }
 nav a:hover { text-decoration: underline; }
 section { display: none; padding: 1em; }
@@ -39,8 +39,9 @@ h2.serie-title { background:#000000; color:white; padding:0.4em 0.6em; border-ra
 .overview-mode-block.active { display:block; }
 .hidden { display:none; }
 .toggle-all { display:inline-block; margin: 0.5em 0 1em 0; }
-.site-header { position:sticky; top:0; z-index:1100; background:#000000; padding:0.65em 1em 0.45em 1em; min-height:88px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; }
-.site-header img { width:100%; height:auto; display:block; }
+.top-sticky { position: sticky; top: 0; z-index: 1100; background:#000000; width:100%; }
+.site-header { position:static; background:#000000; width:100%; padding:0.65em 0 0.45em 0; min-height:88px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; }
+.site-header img { width:100vw; max-width:none; height:auto; display:block; }
 </style>
 <script>
 function showPage(id, updateHash = true) {
@@ -117,6 +118,7 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 
 </head><body>
+<div class='top-sticky'>
 <div class='site-header'><img src='icons/local_sport_full_logo_night_mode_silly_26_27.svg' alt='LocalSport'></div>
 <nav>
 <a href='#overview' data-target='overview'>Översikt</a>
@@ -132,6 +134,7 @@ window.addEventListener("DOMContentLoaded", () => {
 <a href='#all-players' data-target='all-players'>Alla Spelare</a>
 <a href='#search' data-target='search'>Sök Spelare</a>
 </nav>
+</div>
 <section id='overview' class='active'><div class='compare-controls'><span>Jämför senaste med:</span>
 <label><input type='radio' name='compare-mode' value='day' checked> ~1 dag</label>
 <label><input type='radio' name='compare-mode' value='three'> ~3 dag</label>
