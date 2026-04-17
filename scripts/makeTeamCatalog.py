@@ -605,9 +605,10 @@ def generate_html(teams: List[Dict[str, Any]], all_players: List[Dict[str, str]]
     html_parts.append("""
 <style>
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #ffffff; }
-nav { position: static; background: #000000; color: white; padding: 1em; display: flex; flex-wrap: wrap; font-size: 1.25em; gap: 0.8em; box-sizing: border-box; border-top: 1px solid #000000; }
-nav a { color: white; text-decoration: none; }
-nav a:hover { text-decoration: underline; }
+nav { position: static; background: #000000; color: white; padding: 0.6em 1em; display: flex; flex-wrap: wrap; font-size: 1.35em; gap: 0.8em; box-sizing: border-box; border-top: 1px solid #000000; }
+nav a { color: white; text-decoration: none; border-bottom: 5px solid transparent; padding-bottom: 0.2em; font-weight:700; }
+nav a:hover { text-decoration: none; }
+nav a.active { border-bottom-color: #d7f378; }
 section { display: none; padding: 1em; }
 section.active { display: block; }
 .player { border-bottom: 1px solid #ddd; padding: 4px 0; font-size: 1.15em; }
@@ -641,8 +642,8 @@ h2.serie-title { background:#000000; color:white; padding:0.4em 0.6em; border-ra
 .overview-mode-block.active { display:block; }
 .hidden { display:none; }
 .toggle-all { display:inline-block; margin: 0.5em 0 1em 0; }
-.top-sticky { position: sticky; top: 0; z-index: 1100; background:#000000; width:100%; }
-.site-header { position:static; background:#000000; width:100%; padding:0.65em 0 0.45em 0; min-height:88px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; }
+.top-sticky { position: sticky; top: 0; z-index: 1100; background:#000000; width:100%; box-shadow: 0 2px 8px rgba(0,0,0,0.14); }
+.site-header { position:static; background:#000000; width:100%; padding:0.4em 0 0.25em 0; min-height:88px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; }
 .site-header img { width:100vw; max-width:none; height:auto; display:block; }
 </style>
 <script>
@@ -651,6 +652,12 @@ function showPage(id, updateHash = true) {
   secs.forEach(s => s.classList.remove("active"));
   var el = document.getElementById(id);
   if (el) { el.classList.add("active"); }
+
+  var links = document.querySelectorAll("nav a[data-target]");
+  links.forEach(a => a.classList.remove("active"));
+  var activeLink = document.querySelector('nav a[data-target="' + id + '"]');
+  if (activeLink) { activeLink.classList.add("active"); }
+
   if (updateHash) {
     history.replaceState(null, "", "#" + id);
   }
