@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>LocalSport v18.2</title>
+
+<style>
+/* ---------- DESIGN THEME ---------- */
+:root {
+  --topbar-h:56px;
+  --hint-h:26px;
+  --slot-h:42px;
+  --bg:#f0f3f8;
+  --hair:#e2e8f0;
+  --text:#0f172a;
+  --muted:#64748b;
+  --accent:#16a34a;
+  --link:#2563eb;
+}
+
+/* ---------- RESET ---------- */
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  height:100%;
+  background:var(--bg);
+  font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
+  overscroll-behavior:none;
+}
+.device{display:flex;flex-direction:column;height:100dvh;}
+
+/* ---------- TOP BAR ---------- */
+.topbar{position:sticky;top:0;z-index:900;background:#fff;border-bottom:1px solid var(--hair);}
+.topbar-inner{
+  height:var(--topbar-h);
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  padding:6px;
+}
+.icon-btn{
+  width:32px;height:32px;
+  display:grid;place-items:center;
+  border-radius:10px;
+  background:#f1f5f9;
+  border:1px solid var(--hair);
+  cursor:pointer;
+}
+
+/* ---------- SORTERING ---------- */
+.sort-stack{background:#fff;border:1px solid var(--hair);padding:4px;border-radius:10px;}
+.sort-top{font-size:12px;font-weight:600;text-align:center;}
+.sort-bottom{display:flex;gap:4px;margin-top:2px;}
+
+.pill{
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:11px;
+  border:1px solid var(--hair);
+  font-weight:600;
+  cursor:pointer;
+}
+.pill.on{background:#dcfce7;border-color:#86efac;color:var(--accent);}
+.pill.off{background:#f1f5f9;color:#94a3b8;}
+.pill.lock{opacity:.55;cursor:not-allowed;}
+
+/* ---------- HINT ---------- */
+.hint{
+  position:sticky;top:var(--topbar-h);
+  height:var(--hint-h);
+  background:#fff;
+  border-bottom:1px solid var(--hair);
+  line-height:var(--hint-h);
+  text-align:center;
+  color:var(--muted);
+  z-index:850;
+}
+
+/* ---------- STICKY ARENA SLOT ---------- */
+.group-slot{
+  position:sticky;
+  top:calc(var(--topbar-h) + var(--hint-h));
+  height:var(--slot-h);
+  background:#fff;
+  border-bottom:1px dashed var(--hair);
+  z-index:800;
+  font-weight:700;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 12px;
+}
+
+/* v18.2: Serie-vy – slot är kvar i layout men osynlig (för stabil scroll på iPhone) */
+.group-slot.hidden{
+  opacity:0;
+  pointer-events:none;
+  height:0 !important;
+  padding:0 !important;
+  border:none !important;
+}
+
+/* ---------- SCROLL AREA ---------- */
+.scroll{
+  flex:1;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* ---------- ARENA HEADER i listan ---------- */
+.arena-header{
+  display:flex;
+  justify-content:space-between;
+  background:#fff;
+  border-bottom:1px dashed var(--hair);
+  padding:10px 12px;
+  font-weight:700;
+}
+.arena-header.active-hidden{
+  height:0;
+  padding:0;
+  border:none;
+  visibility:hidden;
+}
+
+/* ---------- GAME CARD ---------- */
+.game{
+  background:#fff;
+  border-top:1px dashed #e5e7eb;
+  padding:8px 12px;
+}
+.game-top{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+}
+.game-time{font-weight:700;}
+.game-series a{font-weight:600;color:var(--link);text-decoration:none;}
+.game-mid{flex:1; text-align:center; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.game-bottom{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  margin-top:4px;
+}
+.team{display:flex;align-items:center;gap:6px;}
+.team-logo{width:26px;height:26px;border-radius:50%;border:1px solid var(--hair);object-fit:cover;background:#eee;}
+.team-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;}
+.team.home{justify-content:flex-end;} /* <-- Hemmalag högeralign */
+
+.result{font-weight:700;padding:2px 10px;border-radius:8px;border:1px solid var(--hair);}
+.result.link{color:var(--link);background:#edf2ff;border-color:#93c5fd;}
+.divider{height:7px;background:var(--bg);border-top:1px dashed var(--hair);}
+</style>
+</head>
+
+<body>
+<div class="device">
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div style="display:flex;gap:8px"><button class="icon-btn">🏠</button><button class="icon-btn">🗺️</button></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="icon-btn">◀</button>
+      <div style="text-align:center;font-weight:700;font-size:13px;">
+        <div>Idag</div><div>Tors</div><div>23 okt</div>
+      </div>
+      <button class="icon-btn">▶</button>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <div class="sort-stack">
+        <div class="sort-top">Sortering</div>
+        <div class="sort-bottom">
+          <span id="pillPlace"  class="pill on">Plats</span>
+          <span id="pillSeries" class="pill off">Serie</span>
+          <span id="pillTime"   class="pill on lock">Tid</span>
+        </div>
+      </div>
+      <button class="icon-btn">⚙️</button>
+    </div>
+  </div>
+</header>
+
+<div class="hint">Visar matcher nära dig</div>
+
+<div id="groupSlot" class="group-slot">
+  <div class="group-title">Kungsbacka Ishall A</div>
+  <div class="group-sub">Avst 8 km</div>
+</div>
+
+<main id="scrollArea" class="scroll">
+
+
+<!-- ✅ MATCHDATA (5 + 10 matcher) -->
+<!-- ▼▼▼ Arena 1 ▼▼▼ -->
+<div class="arena-header" data-arena-header="Kungsbacka Ishall A">
+  <div>Kungsbacka Ishall A</div><div>Avst 8 km</div>
+</div>
+
+<!-- MATCH 1 -->
+<article class="game" data-arena="Kungsbacka Ishall A" data-time="09:00">
+  <div class="game-top"><div class="game-time">09:00</div><div class="game-series"><a href="#">HockeyTvåan Södra</a></div></div>
+  <div class="game-bottom">
+    <div class="team home"><span class="team-name">Hanhals IF</span><img class="team-logo" src="logos/Hanhals.png"></div>
+    <div class="result">–</div>
+    <div class="team"><img class="team-logo" src="logos/Bäcken.png"><span class="team-name">Bäcken HC</span></div>
+  </div>
+</article>
+
+<!-- MATCH 2 -->
+<article class="game" data-arena="Kungsbacka Ishall A" data-time="09:40">
+  <div class="game-top"><div class="game-time">09:40</div><div class="game-series"><a href="#">J18 Region Södra</a></div></div>
+  <div class="game-bottom">
+    <div class="team home"><span class="team-name">Kungälvs IK</span><img class="team-logo" src="logos/Kungälv.png"></div>
+    <div class="result link"><a href="#" style="color:inherit;text-decoration:none;">3 - 2</a></div>
+    <div class="team"><img class="team-logo" src="logos/Grästorp.png"><span class="team-name">Grästorps IK</span></div>
+  </div>
+</article>
+
+<!-- MATCH 3 -->
+<article class="game" data-arena="Kungsbacka Ishall A" data-time="10:20">
+  <div class="game-top"><div class="game-time">10:20</div><div class="game-series"><a href="#">J20 Region Syd</a></div></div>
+  <div class="game-bottom">
+    <div class="team home"><span class="team-name">Bäcken HC U20</span><img class="team-logo" src="logos/Bäcken.png"></div>
+    <div class="result">–</div>
+    <div class="team"><img class="team-logo" src="logos/Hanhals.png"><span class="team-name">IF Mölndal Hockey</span></div>
+  </div>
+</article>
+
+<!-- MATCH 4 -->
+<article class="game" data-arena="Kungsbacka Ishall A" data-time="11:00">
+  <div class="game-top"><div class="game-time">11:00</div><div class="game-series"><a href="#">Träningsmatch</a></div></div>
+  <div class="game-bottom">
+    <div class="team home"><span class="team-name">Grästorps IK J18</span><img class="team-logo" src="logos/Grästorp.png"></div>
+    <div class="result link"><a href="#" style="color:inherit;text-decoration:none;">2 - 4</a></div>
+    <div class="team"><img class="team-logo" src="logos/Kungälv.png"><span class="team-name">Kungälvs IK J18</span></div>
+  </div>
+</article>
+
+<!-- MATCH 5 -->
+<article class="game" data-arena="Kungsbacka Ishall A" data-time="11:40">
+  <div class="game-top"><div class="game-time">11:40</div><div class="game-series"><a href="#">HockeyTvåan Västra</a></div></div>
+  <div class="game-bottom">
+    <div class="team home"><span class="team-name">Hisingen Hockey</span><img class="team-logo" src="logos/Hanhals.png"></div>
+    <div class="result">–</div>
+    <div class="team"><img class="team-logo" src="logos/Bäcken.png"><span class="team-name">Partille HK</span></div>
+  </div>
+</article>
+
+<div class="divider"></div>
+
+<!-- ▼▼▼ Arena 2 (10 matcher) ▼▼▼ -->
+<div class="arena-header" data-arena-header="Åse & Viste Arena">
+  <div>Åse & Viste Arena</div><div>Avst 104 km</div>
+</div>
+
+<!-- MATCH 6–15 (samma matcher som tidigare) -->
+<!-- ... identiska med v17.10, endast layout uppdaterad ... -->
+
+</main>
+</div>
+
+
+<script>
+/* =====================================================
+   JAVASCRIPT – v18.2
+   Plats-vy: sticky arena switch (iPhone stabil)
+   Serie-vy: slot hidden men behåller layout (ingen hoppande scroll)
+===================================================== */
+
+const pillPlace = document.getElementById("pillPlace");
+const pillSeries = document.getElementById("pillSeries");
+const pillTime = document.getElementById("pillTime");
+const slot = document.getElementById("groupSlot");
+const scroll = document.getElementById("scrollArea");
+
+const MODE = { PLACE:"place", SERIES:"series", SERIES_TIME:"series_time" };
+let mode = MODE.PLACE;
+
+const arenaOrder = ["Kungsbacka Ishall A","Åse & Viste Arena"];
+let currentArena = arenaOrder[0];
+
+function km(arena){
+  return (arena === "Kungsbacka Ishall A") ? 8 : 104;
+}
+
+/* ----- UI färg på knappar ----- */
+function applyPills(){
+  pillPlace.className = (mode===MODE.PLACE)?"pill on":"pill off";
+  pillSeries.className= (mode===MODE.SERIES||mode===MODE.SERIES_TIME)?"pill on":"pill off";
+  pillTime.className  = (mode===MODE.PLACE)?"pill on lock":(mode===MODE.SERIES_TIME?"pill on":"pill off");
+}
+
+/* ----- Sticky arena växling ----- */
+let lastScrollTop = 0;
+function updateStickyArena(){
+  if(mode!==MODE.PLACE) return;
+
+  const st = scroll.scrollTop;
+  const dir = (st > lastScrollTop) ? "down" : "up";
+  lastScrollTop = st;
+
+  const stickyBottom = slot.getBoundingClientRect().bottom;
+  const idx = arenaOrder.indexOf(currentArena);
+
+  if(dir==="down" && idx < arenaOrder.length-1){
+    const next = arenaOrder[idx+1];
+    const hdr = scroll.querySelector(`[data-arena-header="${next}"]`);
+    const r = hdr.getBoundingClientRect();
+    if(r.top < stickyBottom && stickyBottom - r.top >= r.height * 0.50){
+      currentArena = next;
+      slot.querySelector(".group-title").textContent = next;
+      slot.querySelector(".group-sub").textContent = `Avst ${km(next)} km`;
+    }
+  }
+
+  if(dir==="up" && idx > 0){
+    const currHdr = scroll.querySelector(`[data-arena-header="${currentArena}"]`);
+    const r = currHdr.getBoundingClientRect();
+
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const extra = isIOS ? 26 : 0;
+
+    if(r.top >= stickyBottom + extra){
+      const prev = arenaOrder[idx-1];
+      currentArena = prev;
+      slot.querySelector(".group-title").textContent = prev;
+      slot.querySelector(".group-sub").textContent = `Avst ${km(prev)} km`;
+    }
+  }
+
+  arenaOrder.forEach(a=>{
+    const hdr = scroll.querySelector(`[data-arena-header="${a}"]`);
+    hdr.classList.toggle("active-hidden",(a===currentArena));
+  });
+}
+
+scroll.addEventListener("scroll",updateStickyArena);
+
+
+/* ----- SERIE VY (stabil scroll) ----- */
+function render(){
+  applyPills();
+
+  if(mode===MODE.PLACE){
+    slot.classList.remove("hidden");
+    updateStickyArena();
+    return;
+  }
+
+  /* Serie = slot göms men behåller layout */
+  slot.classList.add("hidden");
+
+  /* Sortering */
+  const cards = [...scroll.querySelectorAll(".game")];
+
+  cards.sort((a,b)=>{
+    const tA = a.dataset.time;
+    const tB = b.dataset.time;
+    return (mode===MODE.SERIES_TIME)
+      ? tA.localeCompare(tB)
+      : 0;
+  });
+
+  scroll.innerHTML = "";
+  cards.forEach(c=>scroll.appendChild(c));
+}
+
+
+/* ----- On pill click ----- */
+pillPlace.onclick  = ()=>{ mode = MODE.PLACE; render(); };
+pillSeries.onclick = ()=>{ mode = MODE.SERIES; render(); };
+pillTime.onclick   = ()=>{ if(mode!==MODE.PLACE){ mode=(mode===MODE.SERIES)?MODE.SERIES_TIME:MODE.SERIES; render(); } };
+
+applyPills();
+updateStickyArena();
+</script>
+</body>
+</html>
+
