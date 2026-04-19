@@ -83,7 +83,10 @@ jobs:
         run: |
           mkdir -p _site
           cp SeriesAndTeams.html _site/SeriesAndTeams.html
-          cp SeriesAndTeams.html _site/index.html
+
+          if [[ -f index.html ]]; then
+            cp index.html _site/index.html
+          fi
 
           if [[ -d logos ]]; then
             cp -R logos _site/logos
