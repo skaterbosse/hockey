@@ -96,6 +96,10 @@ jobs:
             cp -R icons _site/icons
           fi
 
+          if [[ -f LocalSports.html ]]; then
+            cp LocalSports.html _site/LocalSports.html
+          fi
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
