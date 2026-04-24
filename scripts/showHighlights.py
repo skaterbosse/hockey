@@ -499,7 +499,7 @@ def render_html(leagues: List[League], league_items: Dict[str, List[Highlight]],
     for lg in leagues:
         sections.append(f"<section id='tab-{html.escape(lg.name)}'><div class='highlights-list'>{''.join(build_row(h) for h in league_items.get(lg.name, []))}</div></section>")
 
-    brand_header = f'<header class="site-brand"><img class="site-brand-logo" src="{brand_logo_src}" alt="LocalSport Highlights"></header>' if brand_logo_src else ""
+    brand_header = f'<header class="site-brand"><a href="index.html"><img class="site-brand-logo" src="{brand_logo_src}" alt="LocalSport Highlights"></a></header>' if brand_logo_src else ""
 
     html_text = f"""<!DOCTYPE html><html><head><meta charset='utf-8'>
 <title>Local Sports: Highlights</title>
