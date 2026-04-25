@@ -25,6 +25,7 @@ class League:
     flashscore_results: str
     active_windows_raw: str
     active_week_windows_raw: str
+    script_args_raw: str
 
 
 @dataclass
@@ -89,8 +90,9 @@ def parse_leagues_file(path: Path, script_dir: Optional[Path], debug: bool) -> L
             if not line or line.startswith("#"):
                 continue
             parts = [p.strip() for p in line.split(";")]
-            while len(parts) < 9:
-                parts.append("")
+            if len(parts) != 10:
+                dbg(debug, f"Skipping malformed league row, expected 10 columns got {len(parts)}: {line}")
+                continue
             if not parts[0] or not parts[5]:
                 dbg(debug, f"Skipping malformed league row: {line}")
                 continue
@@ -105,6 +107,7 @@ def parse_leagues_file(path: Path, script_dir: Optional[Path], debug: bool) -> L
                     flashscore_results=parts[6],
                     active_windows_raw=parts[7],
                     active_week_windows_raw=parts[8],
+                    script_args_raw=parts[9],
                 )
             )
     return out
@@ -252,10 +255,10 @@ def sort_key(h: Highlight) -> Tuple[str, str, str, str]:
     return (h.date_str, h.time_str or "", h.league, h.title)
 
 
-def run_script(script_path: Path, debug: bool) -> List[str]:
+def run_script(script_path: Path, script_args_raw: str, debug: bool) -> List[str]:
     if not script_path.exists():
         raise FileNotFoundError(f"Script not found: {script_path}")
-    cmd = [str(script_path)]
+    cmd = [str(script_path)] + (shlex.split(script_args_raw) if script_args_raw else [])
     dbg(debug, f"Running: {shlex.join(cmd)}")
     cp = subprocess.run(cmd, capture_output=True, text=True, check=True)
     if cp.stderr.strip():
@@ -297,7 +300,7 @@ def collect_for_league(league: League, output_dir: Path, now_dt: datetime, offli
         lines = read_saved(save_path)
     else:
         if active_now:
-            lines = run_script(league.script_path, debug)
+            lines = run_script(league.script_path, league.script_args_raw, debug)
             updated = True
         else:
             lines = read_saved(save_path)
