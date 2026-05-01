@@ -340,10 +340,8 @@ def serialize_football_json(items: List[Highlight]) -> str:
         })
     return json.dumps(rows, ensure_ascii=False, indent=2)
 
-
 def sort_key(h: Highlight) -> Tuple[str, str, str, str]:
-    return (h.date_str, h.time_str or "", h.league, h.title)
-
+    return (h.date_str, h.time_str or "14:00", h.league, h.title)
 
 def run_script(script_path: Path, script_args_raw: str, debug: bool) -> List[str]:
     if not script_path.exists():
@@ -439,15 +437,13 @@ def collect_for_league(league: League, output_dir: Path, now_dt: datetime, offli
         write_saved(save_path, parsed)
     return parsed, updated
 
-
 def parse_highlight_datetime(h: Highlight) -> Optional[datetime]:
     try:
         if h.time_str:
             return datetime.strptime(f"{h.date_str} {h.time_str}", "%Y-%m-%d %H:%M")
-        return datetime.strptime(h.date_str, "%Y-%m-%d")
+        return datetime.strptime(f"{h.date_str} 14:00", "%Y-%m-%d %H:%M")
     except ValueError:
         return None
-
 
 def inline_image_data(path: Optional[Path], debug: bool, context: str) -> str:
     if not path or not path.exists():
