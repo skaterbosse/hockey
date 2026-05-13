@@ -13,7 +13,7 @@ fi
 
 URL="https://www.iihf.com/en/video?year=${YEAR}&tournament=${TOURNAMENT}&country=${COUNTRY}&maintag=${MAINTAG}"
 
-IIHF_URL="$URL" node <<'EOF' | jq -r '
+IIHF_URL="$URL" node <<'EOF_NODE' | jq -r '
 def month(m):
   {"JAN":"01","FEB":"02","MAR":"03","APR":"04","MAY":"05","JUN":"06",
    "JUL":"07","AUG":"08","SEP":"09","OCT":"10","NOV":"11","DEC":"12"}[m];
@@ -46,7 +46,14 @@ const { chromium } = require("playwright");
   const page = await context.newPage();
 
   await page.goto(url, { waitUntil: "domcontentloaded" });
-  await page.waitForSelector("[data-video-url]", { timeout: 30000 });
+
+  try {
+    await page.waitForSelector("[data-video-url]", { timeout: 5000 });
+  } catch (error) {
+    console.log(JSON.stringify([]));
+    await browser.close();
+    return;
+  }
 
   const videos = await page.$$eval("[data-video-url]", els =>
     els.map(el => {
@@ -67,4 +74,4 @@ const { chromium } = require("playwright");
   console.log(JSON.stringify(videos));
   await browser.close();
 })();
-EOF
+EOF_NODE
