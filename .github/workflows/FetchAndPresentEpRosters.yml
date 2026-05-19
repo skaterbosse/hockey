@@ -72,8 +72,8 @@ jobs:
 
           git commit -m "Update EP rosters and catalog"
 
-          git pull --rebase origin "${GITHUB_REF_NAME}"
-          git push origin HEAD:"${GITHUB_REF_NAME}"
+          # 🔥 force push istället för rebase
+          git push origin HEAD:"${GITHUB_REF_NAME}" --force
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
