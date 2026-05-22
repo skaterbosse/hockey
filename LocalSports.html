@@ -708,6 +708,55 @@ body.map-view .map-wrap{
   }
 }
 
+
+/* v21 portrait correction */
+
+/* Move Header 2/Header 3 up in portrait to reduce the gray gap */
+@media (orientation: portrait){
+  :root{
+    --header2-extra-offset: -18px;
+  }
+}
+
+/* iPhone/narrow portrait: keep full logo width visible, no side clipping */
+@media (orientation: portrait) and (max-width: 600px){
+  .site-header{
+    min-height:calc(var(--logo-h) * 0.68) !important;
+    height:calc(var(--logo-h) * 0.68) !important;
+    padding:0 !important;
+  }
+
+  .site-header img{
+    width:100vw !important;
+    height:100% !important;
+    max-width:none !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+  }
+}
+
+/* iPhone/narrow portrait: move cluster header down below Header 3 */
+@media (orientation: portrait) and (max-width: 600px){
+  .group-slot{
+    top:calc(var(--dynamic-header2-bottom) + var(--hint-h) + 42px) !important;
+    display:flex !important;
+    visibility:visible !important;
+    min-height:38px !important;
+    padding-top:8px !important;
+    padding-bottom:10px !important;
+    background:#000000 !important;
+  }
+}
+
+
+/* v22 hide match list completely in map view */
+body.map-view #scrollArea,
+body.map-view #groupSlot,
+body.map-view .scroll,
+body.map-view .group-slot{
+  display:none !important;
+}
+
 </style>
 </head>
 
