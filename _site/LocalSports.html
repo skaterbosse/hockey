@@ -781,6 +781,56 @@ body.map-view .group-slot{
   }
 }
 
+
+/* v24 portrait fine tuning */
+
+/* iPhone portrait */
+@media (orientation: portrait) and (max-width: 600px){
+  /* Move Header 3 + everything below slightly up */
+  .hint{
+    top:calc(var(--dynamic-header2-bottom) - 38px) !important;
+  }
+
+  .group-slot{
+    top:calc(var(--dynamic-header2-bottom) + var(--hint-h) - 40px) !important;
+  }
+
+  /* Move map up closer to Header 2 */
+  body.map-view .map-wrap{
+    top:calc(var(--dynamic-header2-bottom) - 30px) !important;
+  }
+}
+
+/* iPad portrait */
+@media (orientation: portrait) and (min-width: 601px) and (max-width: 1200px){
+  /* Move Header 2 down on iPad portrait */
+  :root{
+    --header2-extra-offset: 48px;
+  }
+
+  /* Keep Header 3 under Header 2 */
+  .hint{
+    top:calc(var(--dynamic-header2-bottom) + 8px) !important;
+  }
+
+  /* Try to expose cluster header in iPad portrait */
+  .group-slot{
+    display:flex !important;
+    visibility:visible !important;
+    height:auto !important;
+    min-height:38px !important;
+    padding-top:10px !important;
+    padding-bottom:10px !important;
+    background:#000000 !important;
+    top:calc(var(--dynamic-header2-bottom) + var(--hint-h) + 8px) !important;
+  }
+
+  /* Move map up relative to the larger gray gap */
+  body.map-view .map-wrap{
+    top:calc(var(--dynamic-header2-bottom) - 28px) !important;
+  }
+}
+
 </style>
 </head>
 
