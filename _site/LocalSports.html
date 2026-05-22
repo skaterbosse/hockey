@@ -652,6 +652,23 @@ body.map-view .map-wrap{
   padding-top:18px !important;
 }
 
+
+/* v19 targeted visual fixes */
+
+/* 1) Give the active cluster header a complete black lower edge */
+.group-slot{
+  padding-top:18px !important;
+  padding-bottom:10px !important;
+  background:#000000 !important;
+}
+
+/* 2) Reduce empty gap between Header 1 and Header 2 on portrait devices */
+@media (orientation: portrait){
+  :root{
+    --header2-extra-offset: 24px;
+  }
+}
+
 </style>
 </head>
 
