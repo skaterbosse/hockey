@@ -44,7 +44,7 @@
   --slot-h:44px;
   --map-h:260px;
   --bg:#0f172a;
-  --panel:#111827;
+  --panel:#000000;
   --panel2:#1f2937;
   --hair:#334155;
   --text:#f8fafc;
@@ -288,7 +288,7 @@ body.map-view #groupSlot{display:none;}
 }
 .leaflet-popup-content{font-size:13px;line-height:1.3;}
 .field-label{
-  background:rgba(17,24,39,.9);
+  background:rgba(0,0,0,.9);
   border:1px solid var(--hair);
   border-radius:4px;
   padding:2px 4px;
@@ -413,6 +413,82 @@ body.map-view .map-wrap{
   top:calc(var(--logo-h) + 56px + var(--topbar-h)) !important;
 }
 
+
+/* position settings additions */
+.settings-select{
+  width:100%;
+  max-width:100%;
+  margin:0 0 10px 0;
+  padding:7px;
+  border-radius:8px;
+  border:1px solid var(--hair);
+  background:var(--panel2);
+  color:var(--text);
+  font-weight:700;
+}
+body.location-picker-mode .leaflet-marker-icon,
+body.location-picker-mode .leaflet-tooltip{
+  display:none !important;
+}
+
+
+/* date box update */
+.date-box{
+  border:1px solid var(--hair);
+  border-radius:10px;
+  padding:4px 10px;
+  min-width:64px;
+  background:var(--panel);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.date-rel{
+  display:block;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:700;
+  line-height:1.05;
+  margin-bottom:1px;
+}
+.date-main{
+  display:block;
+  color:var(--text);
+  font-size:13px;
+  font-weight:800;
+  line-height:1.05;
+}
+.date-box small{
+  line-height:1.05;
+  margin-top:2px;
+}
+
+
+/* fixed-width date box */
+.date-box{
+  width:72px !important;
+  min-width:72px !important;
+  max-width:72px !important;
+}
+.date-rel{
+  max-width:100%;
+  white-space:nowrap;
+  overflow:hidden;
+  text-align:center;
+}
+.date-rel.long{
+  font-size:9px !important;
+}
+
+
+/* cluster divider update */
+.divider{
+  height:7px !important;
+  background:#d7f379 !important;
+  border-top:none !important;
+}
+
 </style>
 </head>
 
@@ -436,7 +512,8 @@ body.map-view .map-wrap{
     <div style="display:flex;gap:8px;align-items:center;justify-content:center;">
       <button class="icon-btn" id="prevDay">◀</button>
       <div class="date-box">
-        <div id="dateLabel">Laddar…</div>
+        <div id="dateRelLabel" class="date-rel"></div>
+        <div id="dateLabel" class="date-main">Laddar…</div>
         <small id="dateSubLabel"></small>
       </div>
       <button class="icon-btn" id="nextDay">▶</button>
@@ -461,6 +538,12 @@ body.map-view .map-wrap{
 <div id="settingsPanel" class="settings-panel" aria-hidden="true">
   <div class="settings-card">
     <div class="settings-title">Inställningar</div>
+    <div class="settings-label">Min plats</div>
+    <select id="locationSetting" class="settings-select">
+      <option value="__default__">Gamla Ullevi</option>
+      <option value="__map__">Välj plats på kartan</option>
+    </select>
+
     <div class="settings-label">Maxavstånd till fotbollskluster</div>
     <label><input type="radio" name="maxDistanceKm" value="2"> 2 km</label>
     <label><input type="radio" name="maxDistanceKm" value="5"> 5 km</label>
@@ -497,6 +580,7 @@ body.map-view .map-wrap{
 
 <script>
 const DATA_URL = "./data/football_games.csv";
+const CLUSTER_URL = "./data/FootballClustersEnhanced.csv";
 
 // Default aktuell plats: Gamla Ullevi
 const CURRENT_LOCATION = {
@@ -509,6 +593,7 @@ const REQUIRED = {
   date: "Datum",
   time: "Klockslag",
   series: "SerieNamn",
+  seriesId: "SerieId",
   matchId: "MatchId",
   status: "MatchStatus",
   matchUrl: "MatchUrl",
@@ -531,7 +616,11 @@ let selectedDate = "";
 let currentArena = "";
 let map = null;
 let currentMarker = null;
+let maxDistanceRing = null;
 let arenaLayer = null;
+let locationPickerCircle = null;
+let locationPickerActive = false;
+let clusterLocations = [];
 let arenaHeaders = [];
 let lastScrollTop = 0;
 
@@ -555,6 +644,317 @@ function syncSettingsPanel(){
   document.querySelectorAll('input[name="maxDistanceKm"]').forEach(input => {
     input.checked = Number(input.value) === Number(maxDistanceKm);
   });
+}
+
+const SETTINGS_LOCATION_KEY = "localsport_football_location_v1";
+const DEFAULT_LOCATION = {
+  type: "default",
+  name: "Gamla Ullevi",
+  lat: 57.706411,
+  lon: 11.980905
+};
+
+function loadLocationSetting(){
+  try{
+    return JSON.parse(localStorage.getItem(SETTINGS_LOCATION_KEY) || "null") || DEFAULT_LOCATION;
+  } catch(_err){
+    return DEFAULT_LOCATION;
+  }
+}
+
+function saveLocationSetting(value){
+  localStorage.setItem(SETTINGS_LOCATION_KEY, JSON.stringify(value));
+}
+
+function applyCurrentLocation(value){
+  CURRENT_LOCATION.name = value.name || "Min plats";
+  CURRENT_LOCATION.lat = Number(value.lat);
+  CURRENT_LOCATION.lon = Number(value.lon);
+
+  if(currentMarker){
+    currentMarker.setLatLng([CURRENT_LOCATION.lat, CURRENT_LOCATION.lon]);
+    currentMarker.bindPopup(`<b>${escapeHtml(CURRENT_LOCATION.name)}</b><br>Aktuell plats`);
+  }
+
+  updateMaxDistanceRing();
+}
+
+function updateMaxDistanceRing(){
+  if(!map) return;
+
+  if(maxDistanceRing){
+    map.removeLayer(maxDistanceRing);
+    maxDistanceRing = null;
+  }
+
+  if(maxDistanceKm >= 999999) return;
+
+  maxDistanceRing = L.circle([CURRENT_LOCATION.lat, CURRENT_LOCATION.lon], {
+    radius: maxDistanceKm * 1000,
+    color: "#dc2626",
+    fillOpacity: 0,
+    weight: 2
+  }).addTo(map);
+}
+
+
+function looksLikeCoordinates(value){
+  return /^\s*-?\d+(?:[.,]\d+)?\s*,\s*-?\d+(?:[.,]\d+)?\s*$/.test(String(value || ""));
+}
+
+function parseClusterCoordinate(value){
+  const parts = String(value || "").split(",");
+  if(parts.length < 2) return null;
+
+  const lat = Number(parts[0].trim().replace(",", "."));
+  const lon = Number(parts[1].trim().replace(",", "."));
+
+  if(!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  return {lat, lon};
+}
+
+async function buildLocationOptions(){
+  const byCluster = new Map();
+
+  console.info(`[LocalSport] Läser fotbollskluster från ${CLUSTER_URL}`);
+
+  try{
+    const response = await fetch(CLUSTER_URL, { cache:"no-store" });
+    console.info(`[LocalSport] ${CLUSTER_URL} status=${response.status} ok=${response.ok}`);
+
+    if(response.ok){
+      const text = await response.text();
+      console.info(`[LocalSport] ${CLUSTER_URL} bytes=${text.length}`);
+
+      const rows = parseCSV(text);
+      console.info(`[LocalSport] ${CLUSTER_URL} rader=${rows.length}`);
+
+      let parsedRows = 0;
+      let skippedRows = 0;
+
+      for(const row of rows){
+        if(!row || row.length < 3){
+          skippedRows++;
+          continue;
+        }
+
+        // Stöd båda formaten:
+        // 1) assIdLista;klusternamn;koordinater;adress;...
+        // 2) assIdLista;?;klusternamn;koordinater;adress;...
+        let clusterName = "";
+        let coordText = "";
+        let address = "";
+
+        if(looksLikeCoordinates(row[2])){
+          clusterName = (row[1] || "").trim();
+          coordText = (row[2] || "").trim();
+          address = (row[3] || "").trim();
+        } else if(looksLikeCoordinates(row[3])){
+          clusterName = (row[2] || "").trim();
+          coordText = (row[3] || "").trim();
+          address = (row[4] || "").trim();
+        } else {
+          skippedRows++;
+          continue;
+        }
+
+        const coord = parseClusterCoordinate(coordText);
+        if(!clusterName || !coord){
+          skippedRows++;
+          continue;
+        }
+
+        if(!byCluster.has(clusterName)){
+          byCluster.set(clusterName, {
+            type: "cluster",
+            name: clusterName,
+            lat: coord.lat,
+            lon: coord.lon,
+            address
+          });
+          parsedRows++;
+        }
+      }
+
+      console.info(`[LocalSport] Kluster från fil: ${byCluster.size}, parsade=${parsedRows}, hoppade över=${skippedRows}`);
+    }
+  } catch(err){
+    console.warn(`[LocalSport] Kunde inte läsa ${CLUSTER_URL}`, err);
+  }
+
+  if(byCluster.size === 0){
+    console.warn("[LocalSport] Inga kluster kunde läsas från FootballClustersEnhanced.csv, använder fallback från football_games.csv");
+
+    for(const game of allGames){
+      if(!game.cluster || !Number.isFinite(game.lat) || !Number.isFinite(game.lon)) continue;
+
+      if(!byCluster.has(game.cluster)){
+        byCluster.set(game.cluster, {
+          type: "cluster",
+          name: game.cluster,
+          lat: game.lat,
+          lon: game.lon,
+          address: game.address || ""
+        });
+      }
+    }
+
+    console.info(`[LocalSport] Fallback-kluster från matcher: ${byCluster.size}`);
+  }
+
+  clusterLocations = [...byCluster.values()].sort((a,b) => a.name.localeCompare(b.name, "sv"));
+
+  const select = document.getElementById("locationSetting");
+  if(!select) return;
+
+  const saved = loadLocationSetting();
+  const options = [
+    `<option value="__default__">Gamla Ullevi</option>`,
+    `<option value="__map__">Välj plats på kartan</option>`
+  ];
+
+  if(saved.type === "custom"){
+    options.push(`<option value="__custom__">Min plats</option>`);
+  }
+
+  for(const item of clusterLocations){
+    options.push(`<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)}</option>`);
+  }
+
+  select.innerHTML = options.join("");
+
+  if(saved.type === "map"){
+    select.value = "__map__";
+  } else if(saved.type === "custom"){
+    select.value = "__custom__";
+    applyCurrentLocation(saved);
+  } else if(saved.type === "cluster"){
+    const found = clusterLocations.find(item => item.name === saved.name);
+    if(found){
+      select.value = found.name;
+      applyCurrentLocation(found);
+    } else {
+      select.value = "__default__";
+      applyCurrentLocation(DEFAULT_LOCATION);
+    }
+  } else {
+    select.value = "__default__";
+    applyCurrentLocation(DEFAULT_LOCATION);
+  }
+
+  console.info(`[LocalSport] Positionslista klar: ${clusterLocations.length} kluster`);
+}
+
+function isLocationPickerSelected(){
+  const select = document.getElementById("locationSetting");
+  return select && select.value === "__map__";
+}
+
+function setNormalMapControl(){
+  const label = document.querySelector(".map-control span");
+  if(label) label.textContent = "Visa alla Arenor";
+  showAllArenas.checked = false;
+}
+
+function setLocationPickerMapControl(){
+  const label = document.querySelector(".map-control span");
+  if(label) label.textContent = "Spara platsen";
+  showAllArenas.checked = false;
+}
+
+function updateLocationPickerCircle(){
+  if(!map || !locationPickerActive) return;
+
+  const center = map.getCenter();
+  if(!locationPickerCircle){
+    locationPickerCircle = L.circle([center.lat, center.lng], {
+      radius: 450,
+      color: "#dc2626",
+      fillColor: "#dc2626",
+      fillOpacity: 0.25,
+      weight: 3
+    }).addTo(map);
+  } else {
+    locationPickerCircle.setLatLng([center.lat, center.lng]);
+  }
+}
+
+function startLocationPickerMap(){
+  if(!map) return;
+
+  locationPickerActive = true;
+  document.body.classList.add("location-picker-mode");
+  setLocationPickerMapControl();
+
+  if(arenaLayer) arenaLayer.clearLayers();
+  if(currentMarker && map.hasLayer(currentMarker)) map.removeLayer(currentMarker);
+
+  map.setMaxBounds([[55.0, 10.0], [69.5, 25.0]]);
+  map.setMinZoom(4);
+
+  updateLocationPickerCircle();
+  map.off("move", updateLocationPickerCircle);
+  map.on("move", updateLocationPickerCircle);
+}
+
+function stopLocationPickerMap(){
+  locationPickerActive = false;
+  document.body.classList.remove("location-picker-mode");
+  if(map) map.off("move", updateLocationPickerCircle);
+
+  if(locationPickerCircle){
+    map.removeLayer(locationPickerCircle);
+    locationPickerCircle = null;
+  }
+
+  if(map && currentMarker && !map.hasLayer(currentMarker)){
+    currentMarker.addTo(map);
+  }
+
+  setNormalMapControl();
+}
+
+function saveLocationFromMapCenter(){
+  if(!map) return;
+
+  const center = map.getCenter();
+  const value = {
+    type: "custom",
+    name: "Min plats",
+    lat: center.lat,
+    lon: center.lng
+  };
+
+  saveLocationSetting(value);
+  applyCurrentLocation(value);
+  buildLocationOptions();
+
+  stopLocationPickerMap();
+
+  const games = visibleGamesForSelectedDate();
+  const arenas = groupByArena(games);
+  renderList(arenas);
+  renderMap(arenas, false);
+  updateHint(games, arenas);
+}
+
+function refreshOpenMapAfterLocationSettingChange(){
+  if(!document.body.classList.contains("map-view") || !map){
+    return;
+  }
+
+  setTimeout(() => {
+    map.invalidateSize();
+
+    if(isLocationPickerSelected()){
+      startLocationPickerMap();
+    } else {
+      stopLocationPickerMap();
+      const games = visibleGamesForSelectedDate();
+      const arenas = groupByArena(games);
+      renderMap(arenas, true);
+    }
+  }, 50);
 }
 
 
@@ -626,6 +1026,22 @@ function fmtDate(dateStr){
   };
 }
 
+function fmtRelativeDate(dateStr){
+  const selected = new Date(`${dateStr}T12:00:00`);
+  const today = new Date();
+  const todayNoon = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0);
+
+  if(Number.isNaN(selected.getTime())) return "";
+
+  const diffDays = Math.round((selected - todayNoon) / (24 * 60 * 60 * 1000));
+
+  if(diffDays === 0) return "Idag";
+  if(diffDays === -1) return "Igår";
+  if(diffDays === 1) return "Imorgon";
+  if(diffDays < 0) return `Dag ${diffDays}`;
+  return `Dag +${diffDays}`;
+}
+
 function absoluteUrl(url){
   if(!url) return "#";
   if(url.startsWith("http://") || url.startsWith("https://")) return url;
@@ -678,6 +1094,10 @@ function groupByArena(games){
 
 function render(){
   const {main, sub} = fmtDate(selectedDate);
+  const dateRelLabel = document.getElementById("dateRelLabel");
+  const relText = fmtRelativeDate(selectedDate);
+  dateRelLabel.textContent = relText;
+  dateRelLabel.classList.toggle("long", relText.length > 6);
   document.getElementById("dateLabel").textContent = main;
   document.getElementById("dateSubLabel").textContent = sub;
 
@@ -738,7 +1158,7 @@ function renderList(arenas){
       article.innerHTML = `
         <div class="game-top">
           <div class="game-time">${escapeHtml(game.time)}</div>
-          <div class="game-series">${escapeHtml(game.series)}</div>
+          <div class="game-series"><a href="https://www.gbgfotboll.se/go-to/?ftid=${encodeURIComponent(game.seriesId || "")}" target="_blank" style="color:inherit;text-decoration:none;">${escapeHtml(game.series)}</a></div>
         </div>
         <div class="game-bottom">
           <div class="team home">
@@ -767,10 +1187,12 @@ function renderList(arenas){
 
 function updateHint(games, arenas){
   const hint = document.getElementById("hint");
+  const locationName = CURRENT_LOCATION.name || "vald plats";
+
   if(!games.length){
-    hint.textContent = "Inga fotbollsmatcher för valt datum";
+    hint.textContent = `Inga fotbollsmatcher för valt datum och inom valt maxavstånd till ${locationName}`;
   } else {
-    hint.textContent = `Visar ${games.length} matcher på ${arenas.length} arenor, sorterat på avstånd`;
+    hint.textContent = `Visar ${games.length} matcher på ${arenas.length} arenor, sorterat på avstånd till ${locationName}`;
   }
 }
 
@@ -801,6 +1223,7 @@ function updateStickyArena(){
 
 function initMap(){
   map = L.map("map", { zoomControl:true }).setView([CURRENT_LOCATION.lat, CURRENT_LOCATION.lon], 11);
+  map.setMaxBounds([[55.0, 10.0], [69.5, 25.0]]);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
@@ -819,6 +1242,8 @@ function initMap(){
     showCoverageOnHover:false,
     maxClusterRadius:46
   }).addTo(map);
+
+  updateMaxDistanceRing();
 }
 
 function allKnownArenas(){
@@ -843,12 +1268,13 @@ function allKnownArenas(){
 }
 
 function renderMap(activeArenas, preserveView=false){
-  if(!map) return;
+  if(!map || locationPickerActive) return;
 
   const previousCenter = map.getCenter();
   const previousZoom = map.getZoom();
 
   arenaLayer.clearLayers();
+  updateMaxDistanceRing();
 
   const activeNames = new Set(activeArenas.map(a => a.name));
   const showAll = showAllArenas.checked;
@@ -926,6 +1352,7 @@ async function loadGames(){
       date: col(row, REQUIRED.date),
       time: col(row, REQUIRED.time),
       series: col(row, REQUIRED.series),
+      seriesId: col(row, REQUIRED.seriesId),
       matchId: col(row, REQUIRED.matchId),
       status: col(row, REQUIRED.status),
       matchUrl: col(row, REQUIRED.matchUrl),
@@ -976,6 +1403,7 @@ document.getElementById("nextDay").addEventListener("click", () => {
 });
 
 document.getElementById("homeBtn").addEventListener("click", () => {
+  if(locationPickerActive) stopLocationPickerMap();
   document.body.classList.remove("map-view");
   document.getElementById("mapWrap").classList.remove("open");
 });
@@ -989,9 +1417,15 @@ document.getElementById("mapBtn").addEventListener("click", () => {
   setTimeout(() => {
     if(map){
       map.invalidateSize();
-      const games = visibleGamesForSelectedDate();
-      const arenas = groupByArena(games);
-      renderMap(arenas, true);
+
+      if(isLocationPickerSelected()){
+        startLocationPickerMap();
+      } else {
+        stopLocationPickerMap();
+        const games = visibleGamesForSelectedDate();
+        const arenas = groupByArena(games);
+        renderMap(arenas, true);
+      }
     }
   }, 50);
 });
@@ -1010,6 +1444,48 @@ if(hintEl){
   hintEl.addEventListener("wheel", ev => ev.preventDefault(), { passive:false });
 }
 
+
+
+document.getElementById("locationSetting").addEventListener("change", (ev) => {
+  const value = ev.target.value;
+
+  if(value === "__map__"){
+    // Spara inte över den senast fungerande platsen förrän användaren klickar "Spara platsen".
+    refreshOpenMapAfterLocationSettingChange();
+    return;
+  }
+
+  if(value === "__default__"){
+    saveLocationSetting(DEFAULT_LOCATION);
+    applyCurrentLocation(DEFAULT_LOCATION);
+    render();
+    refreshOpenMapAfterLocationSettingChange();
+    return;
+  }
+
+  if(value === "__custom__"){
+    const saved = loadLocationSetting();
+    applyCurrentLocation(saved);
+    render();
+    refreshOpenMapAfterLocationSettingChange();
+    return;
+  }
+
+  const cluster = clusterLocations.find(item => item.name === value);
+  if(cluster){
+    const saved = {
+      type: "cluster",
+      name: cluster.name,
+      lat: cluster.lat,
+      lon: cluster.lon,
+      address: cluster.address || ""
+    };
+    saveLocationSetting(saved);
+    applyCurrentLocation(saved);
+    render();
+    refreshOpenMapAfterLocationSettingChange();
+  }
+});
 
 document.getElementById("settingsBtn").addEventListener("click", (ev) => {
   ev.preventDefault();
@@ -1034,6 +1510,7 @@ document.querySelectorAll('input[name="maxDistanceKm"]').forEach(input => {
   input.addEventListener("change", () => {
     maxDistanceKm = Number(input.value);
     localStorage.setItem(SETTINGS_MAX_DISTANCE_KEY, String(maxDistanceKm));
+    updateMaxDistanceRing();
     document.getElementById("settingsPanel").classList.remove("open");
     render();
   });
@@ -1042,6 +1519,11 @@ document.querySelectorAll('input[name="maxDistanceKm"]').forEach(input => {
 syncSettingsPanel();
 
 showAllArenas.addEventListener("change", () => {
+  if(locationPickerActive){
+    saveLocationFromMapCenter();
+    return;
+  }
+
   const games = visibleGamesForSelectedDate();
   const arenas = groupByArena(games);
   renderMap(arenas, true);
@@ -1052,6 +1534,7 @@ scroll.addEventListener("scroll", updateStickyArena, { passive:true });
   try{
     initMap();
     await loadGames();
+    await buildLocationOptions();
     render();
   } catch(err){
     console.error(err);
