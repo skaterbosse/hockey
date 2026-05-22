@@ -489,6 +489,169 @@ body.location-picker-mode .leaflet-tooltip{
   border-top:none !important;
 }
 
+
+/* dynamic header layout test */
+:root{
+  --dynamic-header1-bottom: var(--logo-h);
+  --dynamic-header2-bottom: calc(var(--logo-h) + var(--topbar-h));
+}
+
+.topbar{
+  top:var(--dynamic-header1-bottom) !important;
+}
+
+.device{
+  padding-top:var(--topbar-h) !important;
+}
+
+.hint{
+  top:var(--dynamic-header2-bottom) !important;
+}
+
+.group-slot{
+  top:calc(var(--dynamic-header2-bottom) + var(--hint-h)) !important;
+}
+
+.map-wrap,
+body.map-view .map-wrap{
+  top:calc(var(--dynamic-header2-bottom) + var(--hint-h)) !important;
+}
+
+body.map-view .map-wrap{
+  top:var(--dynamic-header2-bottom) !important;
+}
+
+.settings-panel{
+  top:calc(var(--dynamic-header2-bottom) + 8px) !important;
+}
+
+
+/* local Mac header2 offset test */
+:root{
+  --header2-extra-offset: 42px;
+}
+
+.topbar{
+  top:calc(var(--dynamic-header1-bottom) + var(--header2-extra-offset)) !important;
+}
+
+.hint{
+  top:var(--dynamic-header2-bottom) !important;
+}
+
+.group-slot{
+  top:calc(var(--dynamic-header2-bottom) + var(--hint-h)) !important;
+}
+
+.map-wrap{
+  top:calc(var(--dynamic-header2-bottom) + var(--hint-h)) !important;
+}
+
+body.map-view .map-wrap{
+  top:var(--dynamic-header2-bottom) !important;
+}
+
+.settings-panel{
+  top:calc(var(--dynamic-header2-bottom) + 8px) !important;
+}
+
+
+/* v13 header fine tuning */
+:root{
+  --header2-extra-offset: 52px;
+}
+
+body.map-view .map-wrap{
+  top:calc(var(--dynamic-header2-bottom) + 8px) !important;
+}
+
+.group-slot{
+  height:0 !important;
+  min-height:0 !important;
+  max-height:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:0 !important;
+  overflow:hidden !important;
+  visibility:hidden !important;
+}
+
+.hint{
+  position:fixed !important;
+  left:0 !important;
+  right:0 !important;
+  top:var(--dynamic-header2-bottom) !important;
+  height:var(--hint-h) !important;
+  z-index:1190 !important;
+}
+
+.scroll{
+  padding-top:var(--hint-h) !important;
+}
+
+.map-wrap{
+  top:calc(var(--dynamic-header2-bottom) + var(--hint-h)) !important;
+}
+
+
+/* v14 map and header3 correction */
+.hint{
+  display:block !important;
+  position:fixed !important;
+  left:0 !important;
+  right:0 !important;
+  top:var(--dynamic-header2-bottom) !important;
+  height:var(--hint-h) !important;
+  line-height:var(--hint-h) !important;
+  z-index:1210 !important;
+  background:var(--panel) !important;
+}
+
+.scroll{
+  padding-top:0 !important;
+  margin-top:var(--hint-h) !important;
+}
+
+body.map-view .hint{
+  display:none !important;
+}
+
+body.map-view .map-wrap{
+  top:calc(var(--dynamic-header2-bottom) + 48px) !important;
+}
+
+.map-wrap{
+  top:calc(var(--dynamic-header2-bottom) + var(--hint-h)) !important;
+}
+
+
+/* v15 move header3 below header2 */
+.hint{
+  top:calc(var(--dynamic-header2-bottom) + 12px) !important;
+}
+
+
+/* v16 move header3 further down */
+.hint{
+  top:calc(var(--dynamic-header2-bottom) + 44px) !important;
+}
+
+
+/* v17 restore cluster headers in place view */
+.group-slot{
+  height:auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  overflow:visible !important;
+  visibility:visible !important;
+}
+
+
+/* v18 move cluster header slightly down */
+.group-slot{
+  padding-top:18px !important;
+}
+
 </style>
 </head>
 
@@ -576,21 +739,34 @@ body.location-picker-mode .leaflet-tooltip{
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-function updateHeaderLayout(){
-  const header1 = document.querySelector('.top-header');
-  if(!header1) return;
+function updateDynamicHeaderLayout(){
+  const header1 = document.querySelector(".top-sticky");
+  const header2 = document.querySelector(".topbar");
 
-  const h = Math.ceil(header1.getBoundingClientRect().height);
+  if(!header1 || !header2) return;
 
-  document.documentElement.style.setProperty('--header1-height', `${h}px`);
+  const header1Bottom = Math.ceil(header1.getBoundingClientRect().bottom);
+  document.documentElement.style.setProperty("--dynamic-header1-bottom", `${header1Bottom}px`);
+
+  // Vänta en frame så Header 2 hinner flytta sig innan vi mäter dess botten.
+  requestAnimationFrame(() => {
+    const header2Bottom = Math.ceil(header2.getBoundingClientRect().bottom);
+    document.documentElement.style.setProperty("--dynamic-header2-bottom", `${header2Bottom}px`);
+
+    if(window.map && typeof map.invalidateSize === "function"){
+      map.invalidateSize();
+    }
+  });
 }
 
-window.addEventListener('resize', updateHeaderLayout);
-window.addEventListener('orientationchange', updateHeaderLayout);
+window.addEventListener("resize", updateDynamicHeaderLayout);
+window.addEventListener("orientationchange", updateDynamicHeaderLayout);
+window.addEventListener("load", updateDynamicHeaderLayout);
 
-setTimeout(updateHeaderLayout, 0);
-setTimeout(updateHeaderLayout, 100);
-setTimeout(updateHeaderLayout, 500);
+setTimeout(updateDynamicHeaderLayout, 0);
+setTimeout(updateDynamicHeaderLayout, 100);
+setTimeout(updateDynamicHeaderLayout, 500);
+setTimeout(updateDynamicHeaderLayout, 1200);
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
@@ -1408,6 +1584,7 @@ document.getElementById("prevDay").addEventListener("click", () => {
   if(idx > 0){
     selectedDate = allDates[idx-1];
     render();
+    updateDynamicHeaderLayout();
   }
 });
 
