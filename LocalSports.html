@@ -859,6 +859,14 @@ body.map-view .group-slot{
   }
 }
 
+
+/* v26 iPad portrait cluster header only */
+@media (orientation: portrait) and (min-width: 601px) and (max-width: 1200px){
+  .group-slot{
+    top:calc(var(--dynamic-header2-bottom) + var(--hint-h) + 6px) !important;
+  }
+}
+
 </style>
 </head>
 
