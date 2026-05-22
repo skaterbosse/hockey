@@ -831,6 +831,34 @@ body.map-view .group-slot{
   }
 }
 
+
+/* v25 iPad portrait tuning only */
+@media (orientation: portrait) and (min-width: 601px) and (max-width: 1200px){
+  /* Move Header 2 up compared with v24 */
+  :root{
+    --header2-extra-offset: 10px;
+  }
+
+  /* Header 3 follows Header 2 */
+  .hint{
+    top:calc(var(--dynamic-header2-bottom) + 8px) !important;
+  }
+
+  /* Move cluster header and list down a bit as one group */
+  .group-slot{
+    top:calc(var(--dynamic-header2-bottom) + var(--hint-h) + 26px) !important;
+  }
+
+  .scroll{
+    margin-top:18px !important;
+  }
+
+  /* Move map down compared with v24 */
+  body.map-view .map-wrap{
+    top:calc(var(--dynamic-header2-bottom) + 12px) !important;
+  }
+}
+
 </style>
 </head>
 
