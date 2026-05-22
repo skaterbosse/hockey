@@ -757,6 +757,30 @@ body.map-view .group-slot{
   display:none !important;
 }
 
+
+/* v23 iPhone portrait alignment */
+@media (orientation: portrait) and (max-width: 600px){
+  :root{
+    /* Move Header 2 up about half a sort-box height compared with v22 */
+    --header2-extra-offset: -40px;
+  }
+
+  /* Move Header 3 up as part of the header block */
+  .hint{
+    top:calc(var(--dynamic-header2-bottom) - 26px) !important;
+  }
+
+  /* Move cluster header up, but keep it below Header 3 */
+  .group-slot{
+    top:calc(var(--dynamic-header2-bottom) + var(--hint-h) - 28px) !important;
+  }
+
+  /* In map view, no Header 3/cluster header is shown, so map can start directly below Header 2 */
+  body.map-view .map-wrap{
+    top:var(--dynamic-header2-bottom) !important;
+  }
+}
+
 </style>
 </head>
 
