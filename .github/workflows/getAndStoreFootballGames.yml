@@ -1,0 +1,71 @@
+name: getAndStoreFootballGames
+
+on:
+  workflow_dispatch:
+  schedule:
+    # GitHub cron uses UTC.
+    # 05:00 Europe/Stockholm during summer time = 03:00 UTC.
+    - cron: "0 3 * * *"
+    # 19:30 Europe/Stockholm during summer time = 17:30 UTC.
+    - cron: "30 17 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: get-and-store-football-games
+  cancel-in-progress: false
+
+jobs:
+  get-and-store-football-games:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Get and store football games
+        run: |
+          python3 ./scripts/getCreateHandleFootballGames.py \
+            --mode update-csv \
+            -dbg \
+            -dl "-3:+8" \
+            -ail "1,7,8,21,28" \
+            -ik ./data/FootballFieldsCluster.txt \
+            -ef ./data/EF_getCreateHandleFootballGames.txt \
+            -umf ./data/UnsafeMappings_getCreateHandleFootballGames.txt \
+            -io ./data/football_games.csv \
+            -old ./data/football_games_old.csv \
+            -state ./data/getCreateHandleFootballGames.state.json
+
+      - name: Show changed files
+        run: |
+          git status --short
+
+      - name: Commit updated football data
+        run: |
+          if git diff --quiet; then
+            echo "No football data changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            ./data/football_games.csv \
+            ./data/football_games_old.csv \
+            ./data/FootballClustersEnhanced.csv \
+            ./data/EF_getCreateHandleFootballGames.txt \
+            ./data/UnsafeMappings_getCreateHandleFootballGames.txt \
+            ./data/getCreateHandleFootballGames.state.json
+
+          git commit -m "Update football games data"
+          git push
