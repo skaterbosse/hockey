@@ -45,6 +45,11 @@ jobs:
             -old ./data/football_games_old.csv \
             -state ./data/getCreateHandleFootballGames.state.json
 
+      - name: Copy generated data to _site
+        run: |
+          cp ./data/football_games.csv ./_site/data/football_games.csv
+          cp ./data/FootballClustersEnhanced.csv ./_site/data/FootballClustersEnhanced.csv
+
       - name: Show changed files
         run: |
           git status --short
@@ -65,7 +70,9 @@ jobs:
             ./data/FootballClustersEnhanced.csv \
             ./data/EF_getCreateHandleFootballGames.txt \
             ./data/UnsafeMappings_getCreateHandleFootballGames.txt \
-            ./data/getCreateHandleFootballGames.state.json
+            ./data/getCreateHandleFootballGames.state.json \
+            ./_site/data/football_games.csv \
+            ./_site/data/FootballClustersEnhanced.csv
 
           git commit -m "Update football games data"
           git push
