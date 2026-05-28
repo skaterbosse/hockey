@@ -9,6 +9,7 @@ import re
 import shlex
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -354,6 +355,10 @@ def run_script(script_path: Path, script_args_raw: str, debug: bool) -> List[str
     return [ln for ln in cp.stdout.splitlines() if ln.strip()]
 
 
+def should_retry_empty_result(league: League) -> bool:
+    return "iihf" in league.name.lower() or "iihf" in league.script_path.name.lower()
+
+
 def read_saved(path: Path) -> List[str]:
     if not path.exists():
         return []
@@ -422,17 +427,27 @@ def collect_for_league(league: League, output_dir: Path, now_dt: datetime, offli
         else:
             lines = read_saved(save_path)
 
-    parsed: List[Highlight] = []
-    for line in lines:
-        h = parse_highlight_line(line)
-        if not h:
-            dbg(debug, f"{league.name}: could not parse line: {line}")
-            continue
-        h.league = league.name
-        h.sport = league.sport
-        parsed.append(h)
+    def parse_lines(raw_lines: List[str]) -> List[Highlight]:
+        parsed_lines: List[Highlight] = []
+        for line in raw_lines:
+            h = parse_highlight_line(line)
+            if not h:
+                dbg(debug, f"{league.name}: could not parse line: {line}")
+                continue
+            h.league = league.name
+            h.sport = league.sport
+            parsed_lines.append(h)
+        return dedupe(parsed_lines)
 
-    parsed = dedupe(parsed)
+    parsed = parse_lines(lines)
+    if not offline and active_now and updated and not parsed and should_retry_empty_result(league):
+        for attempt in (2, 3):
+            dbg(debug, f"{league.name}: 0 highlights, waiting 60 seconds before retry {attempt}/3")
+            time.sleep(60)
+            lines = run_script(league.script_path, league.script_args_raw, debug)
+            parsed = parse_lines(lines)
+            if parsed:
+                break
     if not offline and updated:
         write_saved(save_path, parsed)
     return parsed, updated
