@@ -5,13 +5,6 @@ import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-COMPETITIONS = {
-    "PL": {
-        "slug": "premier-league",
-        "serie": "Premier League",
-    },
-}
-
 TIMEOUT_SECONDS = 30
 
 
@@ -83,7 +76,18 @@ def format_duration(seconds):
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch football highlights from ReFooty.")
-    parser.add_argument("league", choices=COMPETITIONS.keys(), help="League code, for example PL")
+    
+    parser.add_argument(
+        "slug",
+        help="ReFooty competition slug, e.g. premier-league or uefa-champions-league"
+    )
+
+    parser.add_argument(
+        "--serie",
+        default=None,
+        help="Display name of the league"
+    )
+
     parser.add_argument(
         "-n",
         "--count",
@@ -97,8 +101,7 @@ def main():
         print("count must be at least 1", file=sys.stderr)
         return 2
 
-    cfg = COMPETITIONS[args.league]
-    items = fetch_competition(cfg["slug"], args.count)
+    items = fetch_competition(args.slug, args.count)
 
     highlights = []
     seen = set()
@@ -126,7 +129,7 @@ def main():
         highlights.append(
             {
                 "Matchstart": matchstart,
-                "Serie": cfg["serie"],
+                "Serie": args.serie or args.slug.replace("-", " ").title(),
                 "Titel": item.get("title") or f"{home} vs {away}",
                 "Hemmalag": home,
                 "Logo hemmalag": home_team.get("logo_url", ""),
