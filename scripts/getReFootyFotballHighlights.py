@@ -28,15 +28,12 @@ def fetch_competition(slug):
 
 ap=argparse.ArgumentParser()
 ap.add_argument("league",choices=COMPETITIONS.keys())
-ap.add_argument("-n","--count", type=int, default=50, help="Max antal highlights att returnera")
 args=ap.parse_args()
 
 highlights=[]
 seen=set()
 
 for item in fetch_competition(COMPETITIONS[args.league]):
-    if len(highlights) >= args.count:
-        break
     source=item.get("source","")
     if "match=" not in source:
         continue
