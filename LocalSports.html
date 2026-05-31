@@ -1675,6 +1675,29 @@ function allKnownArenas(){
   return [...byCluster.values()];
 }
 
+
+function goToArenaFromMap(arenaName){
+  document.body.classList.remove("map-view");
+  document.getElementById("mapWrap").classList.remove("open");
+
+  setTimeout(() => {
+    const hdr = [...scroll.querySelectorAll(".arena-header")]
+      .find(x => x.dataset.arenaHeader === arenaName);
+
+    if(hdr){
+      const scrollRect = scroll.getBoundingClientRect();
+      const hdrRect = hdr.getBoundingClientRect();
+      const targetTop = scroll.scrollTop + hdrRect.top - scrollRect.top;
+
+      scroll.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: "smooth"
+      });
+    }
+  }, 80);
+}
+
+
 function renderMap(activeArenas, preserveView=false){
   if(!map || locationPickerActive) return;
 
@@ -1708,7 +1731,12 @@ function renderMap(activeArenas, preserveView=false){
     });
 
     const dist = fmtKm(haversineKm(CURRENT_LOCATION.lat, CURRENT_LOCATION.lon, arena.lat, arena.lon));
-    const gamesText = arena.active ? `<br>${arena.games || 0} matcher valt datum` : `<br>Ingen match valt datum`;
+    const activeArenaInfo = activeArenas.find(a => a.name === arena.name);
+    const gameCount = activeArenaInfo ? activeArenaInfo.games.length : 0;
+
+    const gamesText = gameCount > 0
+      ? `<br>${gameCount} matcher valt datum<br><a href="#" onclick="goToArenaFromMap('${String(arena.name).replace(/'/g,"\\'")}');return false;">Visa matcher i listan</a>`
+      : `<br>Ingen match valt datum`;
 
     marker.bindPopup(`
       <b>${escapeHtml(arena.name)}</b><br>
