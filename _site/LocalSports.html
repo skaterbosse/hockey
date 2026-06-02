@@ -867,6 +867,8 @@ body.map-view .group-slot{
   }
 }
 
+
+.arena-map-link{color:var(--link) !important;text-decoration:none !important;cursor:pointer;}
 </style>
 </head>
 
@@ -1522,6 +1524,29 @@ function render(){
   updateHint(games, arenas);
 }
 
+
+function openArenaOnMap(arenaName){
+  const games = visibleGamesForSelectedDate();
+  const arenas = groupByArena(games);
+  const arena = arenas.find(a => a.name === arenaName);
+
+  if(!arena || !Number.isFinite(arena.lat) || !Number.isFinite(arena.lon)){
+    return;
+  }
+
+  document.body.classList.add("map-view");
+  document.getElementById("mapWrap").classList.add("open");
+
+  setTimeout(() => {
+    if(map){
+      map.invalidateSize();
+      renderMap(arenas, true);
+      map.setView([arena.lat, arena.lon], Math.max(map.getZoom(), 15), {animate:false});
+    }
+  }, 50);
+}
+
+
 function renderList(arenas){
   scroll.innerHTML = "";
 
@@ -1544,7 +1569,7 @@ function renderList(arenas){
     header.className = "arena-header";
     header.dataset.arenaHeader = arena.name;
     header.innerHTML = `
-      <div>${escapeHtml(arena.name)}<small>${escapeHtml(arena.address || "")}</small></div>
+      <div><a href="#" onclick="openArenaOnMap('${String(arena.name).replace(/'/g,"\\'")}');return false;" style="color:var(--link);text-decoration:none;">${escapeHtml(arena.name)}</a><small>${escapeHtml(arena.address || "")}</small></div>
       <div>${fmtKm(arena.dist)}</div>
     `;
     frag.appendChild(header);
@@ -1560,13 +1585,13 @@ function renderList(arenas){
       const resultText = displayResult(game.result);
       const resultClass = (game.matchUrl ? "result link" : "result") + (game.status === "4" ? " status-4" : "");
       const resultHtml = game.matchUrl
-        ? `<a href="${escapeHtml(absoluteUrl(game.matchUrl))}" style="color:inherit;text-decoration:none;">${escapeHtml(resultText)}</a>`
+        ? `<a href="${escapeHtml(absoluteUrl(game.matchUrl))}" style="color:var(--link);text-decoration:none;">${escapeHtml(resultText)}</a>`
         : escapeHtml(resultText);
 
       article.innerHTML = `
         <div class="game-top">
           <div class="game-time">${escapeHtml(game.time)}</div>
-          <div class="game-series"><a href="https://www.gbgfotboll.se/go-to/?ftid=${encodeURIComponent(game.seriesId || "")}" target="_blank" style="color:inherit;text-decoration:none;">${escapeHtml(game.series)}</a></div>
+          <div class="game-series"><a href="https://www.gbgfotboll.se/go-to/?ftid=${encodeURIComponent(game.seriesId || "")}" target="_blank" style="color:var(--link);text-decoration:none;">${escapeHtml(game.series)}</a></div>
         </div>
         <div class="game-bottom">
           <div class="team home">
