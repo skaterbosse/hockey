@@ -223,12 +223,12 @@ def parse_args() -> argparse.Namespace:
         prog="getCreateHandleFootballGames.py",
         description="Samlat script för LocalSport fotboll: hämta, mappa, skapa CSV, uppdatera CSV, förbättra kluster och analysera mappning.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='ANVÄNDNINGSFALL\n\n1) Normal drift / GitHub Action: uppdatera data/football_games.csv\n   Hämtar matcher online, mappar till fotbollskluster och ersätter alla matcher\n   för datumen i -dl i befintlig CSV.\n\n   Exempel:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode update-csv \\\n       -dbg \\\n       -dl "2026-05-19-2026-05-30" \\\n       -ail "1,7,8,21,28" \\\n       -ik data/FootballFieldsCluster.txt \\\n       -ef temp/Error_File_createFotballGames.txt \\\n       -io data/football_games.csv\n\n   Input:\n     data/football_games.csv\n     data/FootballFieldsCluster.txt\n\n   Output:\n     data/football_games.csv\n     temp/Error_File_createFotballGames.txt\n\n   Princip:\n     För varje datum i -dl tas gamla matcher för datumet bort och ersätts helt\n     av nya matcher.\n\n\n2) Endast hämta rå matcher: ersätter gamla getGbgFootball.py\n   Hämtar rå JSON från gbgfotboll.se och skriver:\n     datum;associationId;json-response\n\n   Exempel:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode fetch-raw \\\n       -dbg \\\n       -dl "2026-05-21-2026-05-22" \\\n       -ail "1,7,8,21,28" \\\n       -of temp/gbgfotboll_matches_2026-05-21_2026-05-22.txt\n\n   Outputformat:\n     2026-05-21;7;{"associationId":7,"date":"2026-05-21T00:00:00","competitions":[...]}\n     2026-05-21;8;{"associationId":8,"date":"2026-05-21T00:00:00","competitions":[...]}\n\n   Notera:\n     JSON-raderna kan vara mycket långa.\n\n\n3) Endast mappa rå matcher till intern matchfil: ersätter gamla createFootballGames.py\n   Läser råfilen från fetch-raw, mappar location till fotbollskluster och skriver\n   intern semikolonfil med 22 kolumner.\n\n   Exempel:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode map-games \\\n       -ig temp/gbgfotboll_matches_2026-05-21_2026-05-22.txt \\\n       -ik data/FootballFieldsCluster.txt \\\n       -og temp/footballGames.txt \\\n       -ef temp/Error_File_createFotballGames.txt \\\n       -dbg\n\n   Input:\n     temp/gbgfotboll_matches_2026-05-21_2026-05-22.txt\n     data/FootballFieldsCluster.txt\n\n   Output:\n     temp/footballGames.txt\n     temp/Error_File_createFotballGames.txt\n\n   Exempelrad i temp/footballGames.txt:\n     7;2026-05-21;19:00;133152;Division 6A Herr;2;4;6532596;4;/go-to/?fmid=6532596;Lekstorps IF;...;LP - Idrottspark A - plan;LP - Idrottspark;57.841028, 12.289142;LP Idrottspark, Sportvägen 7, 443 40 Gråbo;Y\n\n\n4) Endast skapa frontend-CSV: ersätter gamla createFootballGamesCsv.py\n   Konverterar intern matchfil till data/football_games.csv-formatet som frontend\n   läser.\n\n   Exempel:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode make-csv \\\n       -i temp/footballGames.txt \\\n       -o data/football_games.csv\n\n   Outputheader:\n     Serie_Match_AssId;Datum;Klockslag;SerieId;SerieNamn;SerieKönId;ÅldersKatId;MatchId;MatchStatus;MatchUrl;HemmalagNamn;HemmalagLogoUrl;HemmalagAssId;BortalagNamn;BortalagLogoUrl;BortalagAssId;MatchResultat;ArenaNamn;ArenaKluster;ArenaKlusterAdress;SäkerMapping;LS_Lat;LS_Long;LS_admin;LS_sport\n\n   Exempelrad:\n     7;2026-05-21;19:00;133152;Division 6A Herr;2;4;6532596;4;/go-to/?fmid=6532596;Lekstorps IF;https://staticcdn.svenskfotboll.se/img/teamssm/10760.png;7;Bellevue City FK;https://staticcdn.svenskfotboll.se/img/teamssm/13632.png;7;1-1;LP - Idrottspark A - plan;LP - Idrottspark;LP Idrottspark, Sportvägen 7, 443 40 Gråbo;Y;57.841028;12.289142;Göteborg;football\n\n\n5) Förbättra kluster med hemmalag/AssID: ersätter enhanceFotballArenaClusterWithHomeTeams_v8.py\n   Läser klusterfil och en eller flera hemmalagsfiler. Lägger till/uppdaterar\n   AssID och hemmalag i klusterfilen.\n\n   Exempel:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode enhance-clusters \\\n       -cf data/FootballFieldsCluster.txt \\\n       -hf data/HomeTeams_old.txt,data/HomeTeams_addition.txt \\\n       -of data/FootballFieldsCluster_enhanced.txt \\\n       -ot data/HomeTeams_merged.txt\n\n   För att skriva tillbaka resultatet till -cf:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode enhance-clusters \\\n       -cf data/FootballFieldsCluster.txt \\\n       -hf data/HomeTeams_merged.txt \\\n       -of data/FootballFieldsCluster_enhanced.txt \\\n       -ucf\n\n   Klusterfil, exempel:\n     7;Kviberg;57.737550, 12.038540;Luftvärnsvägen, 415 06 Göteborg;Kviberg|Kviberg 1 konstgräs|Kviberg 3:1 gräs 7M7;1,Utbynäs SK Gul|1,Qviding FIF\n     7,21;Gamla Ullevi;57.706411, 11.980905;Ullevigatan 5, 411 39 Göteborg;Gamla Ullevi;2,IFK Göteborg|2,GAIS\n\n   Hemmalagsfil, exempel:\n     1;7;Kviberg 3 Gräs;Utbynäs SK Gul\n     2;7;Gamla Ullevi;GAIS\n\n   Output:\n     uppdaterad klusterfil\n     optional mergad hemmalagsfil med -ot\n\n\n6) Analysera mappning / förslag för manuell klusterförbättring\n   Tänkt QA-läge för att hitta:\n     - nya hemmalag som bör läggas till på kluster\n     - nya planalias som bör läggas till på kluster\n     - matcher som inte kan placeras\n     - förslag till nya kluster\n\n   Exempel:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode analyze-mapping \\\n       -ef temp/Error_File_createFotballGames.txt \\\n       -ik data/FootballFieldsCluster.txt \\\n       -puf temp/ProposedFootballFieldsClusterUpdates.txt \\\n       -npc temp/NewProposedFootballArenaClusters.txt \\\n       -uht temp/UnmatchedHomeTeams.txt\n\n   Föreslagen output:\n     temp/ProposedFootballFieldsClusterUpdates.txt\n     temp/NewProposedFootballArenaClusters.txt\n     temp/UnmatchedHomeTeams.txt\n\n   Exempel ProposedFootballFieldsClusterUpdates.txt:\n     UPDATE_HOME_TEAM;Kviberg;ADD_HOME_TEAM;1,Utbynäs SK Gul\n     UPDATE_PLAN;Kviberg;ADD_PLAN;Kviberg 3 Gräs\n\n   Exempel NewProposedFootballArenaClusters.txt:\n     0;NYTT_KLUSTER_BEHÖVS;0,0;;Strandvallen 1, Unnaryd;1,Unnaryds GoIF\n\n\n7) State-fil för automatisk körning\n   När GitHub Action introduceras bör scriptet använda:\n     data/getCreateHandleFootballGames.state.json\n\n   Tanken:\n     Första körningen per dygn:\n       FULL_WINDOW_REFRESH, t.ex. dag -3 till dag +8\n     Senare körningar samma dygn:\n       TODAY_ONLY_REFRESH\n\n   Exempel state:\n     {"last_full_refresh_date":"2026-05-22","last_run_timestamp":"2026-05-22T14:33:11","runs_today":3}\n\n\nPARAMETRAR\n\nGemensamma:\n  --mode MODE\n      update-csv | fetch-raw | map-games | make-csv | enhance-clusters | analyze-mapping\n\n  -dbg\n      Skriv debug-information till stderr.\n\nDatum och associationer:\n  -dl DATE_LIST\n      Datum eller datumintervall.\n      Ex: "2026-05-21"\n      Ex: "2026-05-19-2026-05-30"\n      Ex: "2026-05-19,2026-05-21-2026-05-23"\n\n  -ail ASSOCIATION_ID_LIST\n      Ex: "1,7,8,21,28"\n\nMatch/kluster:\n  -ik FILE\n      Klusterfil för matchmappning.\n      Ex: data/FootballFieldsCluster.txt\n\n  -ef FILE\n      Error/diagnostikfil.\n      Ex: temp/Error_File_createFotballGames.txt\n\nCSV update:\n  -io FILE\n      Input/output samma fil. Ex: data/football_games.csv\n\n  -i FILE\n      Inputfil vid test/felsökning eller make-csv.\n\n  -o FILE\n      Outputfil vid test/felsökning eller make-csv.\n\nRå-/internfiler:\n  -of FILE\n      Outputfil för fetch-raw eller enhance-clusters.\n\n  -ig FILE\n      Input games, råfil från fetch-raw.\n\n  -og FILE\n      Output games, intern 22-kolumners matchfil.\n\nEnhance clusters:\n  -cf FILE\n      Cluster file.\n\n  -hf FILE[,FILE...]\n      En eller flera hemmalagsfiler.\n\n  -ot FILE\n      Optional output team file med mergade hemmalagsrader.\n\n  -ucf\n      Skriv tillbaka uppdaterad klusterfil till -cf.\n\nAnalyze mapping:\n  -puf FILE\n      ProposedFootballFieldsClusterUpdates.txt\n\n  -npc FILE\n      NewProposedFootballArenaClusters.txt\n\n  -uht FILE\n      UnmatchedHomeTeams.txt\n',
+        epilog='ANVÄNDNINGSFALL\n\n1) Normal drift / GitHub Action: uppdatera data/football_games.csv\n   Hämtar matcher online, mappar till fotbollskluster och ersätter alla matcher\n   för datumen i -dl i befintlig CSV.\n\n   Exempel:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode update-csv \\\n       -dbg \\\n       -dl "2026-05-19-2026-05-30" \\\n       -ail "1,7,8,21,28" \\\n       -ik data/FootballFieldsCluster.txt \\\n       -ef temp/Error_File_createFotballGames.txt \\\n       -io data/football_games.csv\n\n   Input:\n     data/football_games.csv\n     data/FootballFieldsCluster.txt\n\n   Output:\n     data/football_games.csv\n     temp/Error_File_createFotballGames.txt\n\n   Princip:\n     För varje datum i -dl tas gamla matcher för datumet bort och ersätts helt\n     av nya matcher.\n\n\n2) Endast hämta rå matcher: ersätter gamla getGbgFootball.py\n   Hämtar rå JSON från gbgfotboll.se och skriver:\n     datum;associationId;json-response\n\n   Exempel:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode fetch-raw \\\n       -dbg \\\n       -dl "2026-05-21-2026-05-22" \\\n       -ail "1,7,8,21,28" \\\n       -of temp/gbgfotboll_matches_2026-05-21_2026-05-22.txt\n\n   Outputformat:\n     2026-05-21;7;{"associationId":7,"date":"2026-05-21T00:00:00","competitions":[...]}\n     2026-05-21;8;{"associationId":8,"date":"2026-05-21T00:00:00","competitions":[...]}\n\n   Notera:\n     JSON-raderna kan vara mycket långa.\n\n\n3) Endast mappa rå matcher till intern matchfil: ersätter gamla createFootballGames.py\n   Läser råfilen från fetch-raw, mappar location till fotbollskluster och skriver\n   intern semikolonfil med 22 kolumner.\n\n   Exempel:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode map-games \\\n       -ig temp/gbgfotboll_matches_2026-05-21_2026-05-22.txt \\\n       -ik data/FootballFieldsCluster.txt \\\n       -og temp/footballGames.txt \\\n       -ef temp/Error_File_createFotballGames.txt \\\n       -dbg\n\n   Input:\n     temp/gbgfotboll_matches_2026-05-21_2026-05-22.txt\n     data/FootballFieldsCluster.txt\n\n   Output:\n     temp/footballGames.txt\n     temp/Error_File_createFotballGames.txt\n\n   Exempelrad i temp/footballGames.txt:\n     7;2026-05-21;19:00;133152;Division 6A Herr;2;4;6532596;4;/go-to/?fmid=6532596;Lekstorps IF;...;LP - Idrottspark A - plan;LP - Idrottspark;57.841028, 12.289142;LP Idrottspark, Sportvägen 7, 443 40 Gråbo;Y\n\n\n4) Endast skapa frontend-CSV: ersätter gamla createFootballGamesCsv.py\n   Konverterar intern matchfil till data/football_games.csv-formatet som frontend\n   läser.\n\n   Exempel:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode make-csv \\\n       -i temp/footballGames.txt \\\n       -o data/football_games.csv\n\n   Outputheader:\n     Serie_Match_AssId;Datum;Klockslag;SerieId;SerieNamn;SerieKönId;ÅldersKatId;MatchId;MatchStatus;MatchUrl;HemmalagNamn;HemmalagLogoUrl;HemmalagAssId;BortalagNamn;BortalagLogoUrl;BortalagAssId;MatchResultat;ArenaNamn;ArenaKluster;ArenaKlusterAdress;SäkerMapping;LS_Lat;LS_Long;LS_admin;LS_sport\n\n   Exempelrad:\n     7;2026-05-21;19:00;133152;Division 6A Herr;2;4;6532596;4;/go-to/?fmid=6532596;Lekstorps IF;https://staticcdn.svenskfotboll.se/img/teamssm/10760.png;7;Bellevue City FK;https://staticcdn.svenskfotboll.se/img/teamssm/13632.png;7;1-1;LP - Idrottspark A - plan;LP - Idrottspark;LP Idrottspark, Sportvägen 7, 443 40 Gråbo;Y;57.841028;12.289142;Göteborg;football\n\n\n5) Förbättra kluster med hemmalag/AssID: ersätter enhanceFotballArenaClusterWithHomeTeams_v8.py\n   Läser klusterfil och en eller flera hemmalagsfiler. Lägger till/uppdaterar\n   AssID och hemmalag i klusterfilen.\n\n   Exempel:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode enhance-clusters \\\n       -cf data/FootballFieldsCluster.txt \\\n       -hf data/HomeTeams_old.txt,data/HomeTeams_addition.txt \\\n       -of data/FootballFieldsCluster_enhanced.txt \\\n       -ot data/HomeTeams_merged.txt\n\n   För att skriva tillbaka resultatet till -cf:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode enhance-clusters \\\n       -cf data/FootballFieldsCluster.txt \\\n       -hf data/HomeTeams_merged.txt \\\n       -of data/FootballFieldsCluster_enhanced.txt \\\n       -ucf\n\n   Klusterfil, exempel:\n     7;Kviberg;57.737550, 12.038540;Luftvärnsvägen, 415 06 Göteborg;Kviberg|Kviberg 1 konstgräs|Kviberg 3:1 gräs 7M7;1,Utbynäs SK Gul|1,Qviding FIF\n     7,21;Gamla Ullevi;57.706411, 11.980905;Ullevigatan 5, 411 39 Göteborg;Gamla Ullevi;2,IFK Göteborg|2,GAIS\n\n   Hemmalagsfil, exempel:\n     1;7;Kviberg 3 Gräs;Utbynäs SK Gul\n     2;7;Gamla Ullevi;GAIS\n\n   Output:\n     uppdaterad klusterfil\n     optional mergad hemmalagsfil med -ot\n\n\n6) Analysera mappning / förslag för manuell klusterförbättring\n   Tänkt QA-läge för att hitta:\n     - nya hemmalag som bör läggas till på kluster\n     - nya planalias som bör läggas till på kluster\n     - matcher som inte kan placeras\n     - förslag till nya kluster\n\n   Exempel:\n     python3 scripts/getCreateHandleFootballGames.py \\\n       --mode analyze-mapping \\\n       -ef temp/Error_File_createFotballGames.txt \\\n       -ik data/FootballFieldsCluster.txt \\\n       -puf temp/ProposedFootballFieldsClusterUpdates.txt \\\n       -npc temp/NewProposedFootballArenaClusters.txt \\\n       -uht temp/UnmatchedHomeTeams.txt\n\n   Föreslagen output:\n     temp/ProposedFootballFieldsClusterUpdates.txt\n     temp/NewProposedFootballArenaClusters.txt\n     temp/UnmatchedHomeTeams.txt\n\n   Exempel ProposedFootballFieldsClusterUpdates.txt:\n     UPDATE_HOME_TEAM;Kviberg;ADD_HOME_TEAM;1,Utbynäs SK Gul\n     UPDATE_PLAN;Kviberg;ADD_PLAN;Kviberg 3 Gräs\n\n   Exempel NewProposedFootballArenaClusters.txt:\n     0;NYTT_KLUSTER_BEHÖVS;0,0;;Strandvallen 1, Unnaryd;1,Unnaryds GoIF\n\n\n7) State-fil för automatisk körning\n   När GitHub Action introduceras bör scriptet använda:\n     data/getCreateHandleFootballGames.state.json\n\n   Tanken:\n     Första körningen per dygn:\n       FULL_WINDOW_REFRESH, t.ex. dag -3 till dag +8\n     Senare körningar samma dygn:\n       TODAY_ONLY_REFRESH\n\n   Exempel state:\n     {"last_full_refresh_date":"2026-05-22","last_run_timestamp":"2026-05-22T14:33:11","runs_today":3}\n\n\nPARAMETRAR\n\nGemensamma:\n  --mode MODE\n      update-csv | fetch-raw | map-games | make-csv | enhance-clusters | analyze-mapping | generate-series-ranking\n\n  -dbg\n      Skriv debug-information till stderr.\n\nDatum och associationer:\n  -dl DATE_LIST\n      Datum eller datumintervall.\n      Ex: "2026-05-21"\n      Ex: "2026-05-19-2026-05-30"\n      Ex: "2026-05-19,2026-05-21-2026-05-23"\n\n  -ail ASSOCIATION_ID_LIST\n      Ex: "1,7,8,21,28"\n\nMatch/kluster:\n  -ik FILE\n      Klusterfil för matchmappning.\n      Ex: data/FootballFieldsCluster.txt\n\n  -ef FILE\n      Error/diagnostikfil.\n      Ex: temp/Error_File_createFotballGames.txt\n\nCSV update:\n  -io FILE\n      Input/output samma fil. Ex: data/football_games.csv\n\n  -i FILE\n      Inputfil vid test/felsökning eller make-csv.\n\n  -o FILE\n      Outputfil vid test/felsökning eller make-csv.\n\nRå-/internfiler:\n  -of FILE\n      Outputfil för fetch-raw eller enhance-clusters.\n\n  -ig FILE\n      Input games, råfil från fetch-raw.\n\n  -og FILE\n      Output games, intern 22-kolumners matchfil.\n\nEnhance clusters:\n  -cf FILE\n      Cluster file.\n\n  -hf FILE[,FILE...]\n      En eller flera hemmalagsfiler.\n\n  -ot FILE\n      Optional output team file med mergade hemmalagsrader.\n\n  -ucf\n      Skriv tillbaka uppdaterad klusterfil till -cf.\n\nAnalyze mapping:\n  -puf FILE\n      ProposedFootballFieldsClusterUpdates.txt\n\n  -npc FILE\n      NewProposedFootballArenaClusters.txt\n\n  -uht FILE\n      UnmatchedHomeTeams.txt\n',
     )
 
     parser.add_argument(
         "--mode",
-        choices=["update-csv", "fetch-raw", "map-games", "make-csv", "enhance-clusters", "analyze-mapping"],
+        choices=["update-csv", "fetch-raw", "map-games", "make-csv", "enhance-clusters", "analyze-mapping", "generate-series-ranking"],
         default="update-csv",
         help="Körläge. Default: update-csv.",
     )
@@ -295,6 +295,9 @@ def parse_args() -> argparse.Namespace:
 
     elif args.mode == "analyze-mapping":
         require("ef", "umf", "ik", "puf", "npc", "uht")
+
+    elif args.mode == "generate-series-ranking":
+        require("i", "old", "o")
 
     return args
 
@@ -1602,6 +1605,375 @@ def run_analyze_mapping(args: argparse.Namespace) -> int:
     return 0
 
 
+def series_gender_from(name: str, gender_id: str) -> str:
+    n = str(name or "").casefold()
+    if gender_id == "2":
+        return "Herr"
+    if gender_id == "3":
+        return "Dam"
+    if re.search(r"\bdam|damer|flick|f\d|f[0-9]", n):
+        return "Dam"
+    if re.search(r"\bherr|herrar|pojk|p\d|p[0-9]", n):
+        return "Herr"
+    return "Mix"
+
+
+def series_category_from(name: str, age_id: str) -> str:
+    n = str(name or "").casefold()
+    if "träning" in n or "träningsmatch" in n:
+        return "Övrigt"
+    if "motion" in n or "7m7" in n:
+        return "Motion"
+    if age_id == "4":
+        return "Senior"
+    if age_id == "5":
+        return "Motion"
+    if re.search(r"\b(p|f)\s?(16|17|18|19)\b", n) or "junior" in n or "p15-19" in n or "f15-19" in n:
+        return "Junior"
+    if re.search(r"\b(p|f)\s?(13|14|15)\b", n) or "13-14" in n or "15-16" in n or "16-17" in n:
+        return "Ungdom"
+    if age_id == "3":
+        return "Ungdom"
+    if age_id == "2":
+        return "Barn"
+    return "Övrigt"
+
+
+def series_level_from(name: str, ass_id: str, category: str) -> str:
+    n = str(name or "").casefold()
+    if ass_id == "1":
+        return "Nationell"
+    if category == "Övrigt" and "träningsmatch" not in n:
+        return "Övrigt"
+    if "regional" in n:
+        return "Regional"
+    if "dm" in n or "cup" in n:
+        return "Regional"
+    return "Regional"
+
+
+def series_rank_for(name: str, gender: str, category: str, level: str, ass_id: str) -> int:
+    n = str(name or "").casefold()
+
+    if re.match(r"^allsvenskan\b", n):
+        return 1000
+    if "svenska cupen" in n and gender == "Herr":
+        return 975
+    if "obos damallsvenskan" in n or re.match(r"^damallsvenskan\b", n):
+        return 950
+    if re.match(r"^superettan\b", n):
+        return 950
+    if "svenska cupen" in n and gender == "Dam":
+        return 925
+    if re.match(r"^ettan\b", n):
+        return 900
+    if re.match(r"^elitettan\b", n):
+        return 900
+
+    # Nationella träningsmatcher ska följa principen Nationell > Regional.
+    if "träningsmatch" in n or "träningsmatcher" in n:
+        if ass_id == "1":
+            if "elit" in n:
+                return 695
+            if "div. 1" in n or "div 1" in n:
+                return 685
+            return 680
+        if "elit" in n:
+            return 180
+        if "div. 1" in n or "div 1" in n:
+            return 160
+        return 100
+
+    if ass_id == "1" and category == "Senior":
+        if re.search(r"\bdiv\.?\s*1\b", n) and gender == "Dam":
+            return 850
+        if re.search(r"\bdiv\.?\s*2\b", n) and gender == "Herr":
+            return 840
+        if re.search(r"\bdiv\.?\s*2\b", n) and gender == "Dam":
+            return 830
+        if re.search(r"\bdiv\.?\s*3\b", n) and gender == "Herr":
+            return 820
+        if re.search(r"\bdiv\.?\s*3\b", n) and gender == "Dam":
+            return 810
+        if "ligacupen elit" in n:
+            return 600
+        return 800
+
+    if ass_id == "1" and category in ("Junior", "Ungdom"):
+        if "p19 allsvenskan" in n:
+            return 780
+        if "f19 allsvenskan" in n:
+            return 770
+        if "p17 allsvenskan" in n:
+            return 760
+        if "f17 allsvenskan" in n:
+            return 750
+        if "p16 allsvenskan" in n:
+            return 740
+        if "superettan" in n:
+            return 730
+        if re.search(r"p19.*div\.?\s*1", n):
+            return 720
+        if re.search(r"f19.*div\.?\s*1", n):
+            return 715
+        if re.search(r"p17.*div\.?\s*1", n):
+            return 710
+        if re.search(r"f17.*div\.?\s*1", n):
+            return 705
+        if re.search(r"p16.*div\.?\s*1", n):
+            return 700
+        if "ligacupen" in n:
+            return 600
+        return 690
+
+    if category == "Senior":
+        if "dm" in n and gender == "Herr":
+            return 620
+        if "dm" in n and gender == "Dam":
+            return 610
+        if "utveckling" in n and gender == "Dam":
+            return 450
+        if "utveckling" in n and gender == "Herr":
+            return 440
+        if "reserv elit" in n:
+            return 500
+        if "reservklass 1" in n:
+            return 430
+        if "reservklass 2" in n:
+            return 420
+        if "reservklass 3" in n:
+            return 410
+
+        m = re.search(r"\bdiv(?:ision|\.)?\s*([2-9])", n)
+        if m:
+            div = int(m.group(1))
+            base = {2: 740, 3: 700, 4: 660, 5: 620, 6: 580, 7: 540, 8: 500, 9: 460}.get(div, 430)
+            if gender == "Dam":
+                base -= 10
+            return base
+
+        if "nivå 2" in n:
+            return 620
+        if "nivå 3" in n:
+            return 580
+        return 550
+
+    if category == "Junior":
+        if "dm" in n:
+            return 560
+        if "regional" in n:
+            return 650
+        m = re.search(r"\bdiv(?:ision|\.)?\s*([1-9])", n)
+        if m:
+            div = int(m.group(1))
+            return max(430, 620 - (div - 1) * 35)
+        return 570
+
+    if category == "Ungdom":
+        if "regional" in n:
+            return 650
+        if "svår" in n:
+            return 520
+        if "medel" in n:
+            return 490
+        if "lätt" in n:
+            return 460
+        m = re.search(r"\bdiv(?:ision|\.)?\s*([1-9]|1[0-9])", n)
+        if m:
+            div = int(m.group(1))
+            return max(250, 520 - (div - 1) * 20)
+        if re.search(r"\b(p|f)\s?(16|17|18|19)\b", n):
+            return 540
+        if re.search(r"\b(p|f)\s?(13|14|15)\b", n):
+            return 500
+        return 470
+
+    if category == "Barn":
+        if "röd" in n:
+            return 360
+        if "blå" in n:
+            return 340
+        if "grön" in n:
+            return 320
+        if "vit" in n:
+            return 300
+        return 310
+
+    if category == "Motion":
+        if gender == "Herr":
+            return 240
+        if gender == "Dam":
+            return 230
+        return 220
+
+    return 100
+
+
+def collect_series_from_games_csv(path: Path, counter: Dict[Tuple[str, str, str, str], int]) -> None:
+    if not path.exists():
+        return
+
+    csv.field_size_limit(10**9)
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter=";")
+        for row in reader:
+            name = (row.get("SerieNamn") or "").strip()
+            gender_id = (row.get("SerieKönId") or "").strip()
+            age_id = (row.get("ÅldersKatId") or "").strip()
+            ass_id = (row.get("Serie_Match_AssId") or "").strip()
+
+            if not name or name == "SerieNamn":
+                continue
+
+            key = (name, gender_id, age_id, ass_id)
+            counter[key] = counter.get(key, 0) + 1
+
+
+
+def read_existing_series_ranking(path: Path) -> Dict[Tuple[str, str, str, str], Dict[str, str]]:
+    if not path.exists():
+        return {}
+
+    csv.field_size_limit(10**9)
+
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter=";")
+        result: Dict[Tuple[str, str, str, str], Dict[str, str]] = {}
+
+        for row in reader:
+            name = (row.get("SeriePattern") or "").strip()
+            gender_id = (row.get("SerieKönId") or "").strip()
+            age_id = (row.get("ÅldersKatId") or "").strip()
+            ass_id = (row.get("Serie_Match_AssId") or "").strip()
+
+            if not name:
+                continue
+
+            result[(name, gender_id, age_id, ass_id)] = {k: str(v or "") for k, v in row.items()}
+
+        return result
+
+
+def print_series_ranking_diff(
+    old_rows: Dict[Tuple[str, str, str, str], Dict[str, str]],
+    new_rows: List[Dict[str, object]],
+) -> None:
+    new_by_key: Dict[Tuple[str, str, str, str], Dict[str, str]] = {}
+
+    for row in new_rows:
+        key = (
+            str(row.get("SeriePattern", "")),
+            str(row.get("SerieKönId", "")),
+            str(row.get("ÅldersKatId", "")),
+            str(row.get("Serie_Match_AssId", "")),
+        )
+        new_by_key[key] = {k: str(v or "") for k, v in row.items()}
+
+    old_keys = set(old_rows)
+    new_keys = set(new_by_key)
+
+    added = sorted(new_keys - old_keys, key=lambda key: key[0].casefold())
+    removed = sorted(old_keys - new_keys, key=lambda key: key[0].casefold())
+
+    changed: List[Tuple[Tuple[str, str, str, str], Dict[str, str], Dict[str, str], List[str]]] = []
+
+    compare_fields = ["Rank", "Kategori", "Kön", "Nivå", "MatchCount"]
+
+    for key in sorted(old_keys & new_keys, key=lambda key: key[0].casefold()):
+        old = old_rows[key]
+        new = new_by_key[key]
+        changed_fields = [
+            field for field in compare_fields
+            if str(old.get(field, "")) != str(new.get(field, ""))
+        ]
+
+        if changed_fields:
+            changed.append((key, old, new, changed_fields))
+
+    unchanged = len(old_keys & new_keys) - len(changed)
+
+    print("DEBUG: FootballSeriesRanking diff", file=sys.stderr)
+    print(f"DEBUG:   Nya serier: {len(added)}", file=sys.stderr)
+    print(f"DEBUG:   Borttagna serier: {len(removed)}", file=sys.stderr)
+    print(f"DEBUG:   Ändrade serier: {len(changed)}", file=sys.stderr)
+    print(f"DEBUG:   Oförändrade serier: {unchanged}", file=sys.stderr)
+
+    if added:
+        print("DEBUG: Nya serier:", file=sys.stderr)
+        for key in added[:100]:
+            print(f"DEBUG:   + {key[0]} [{key[1]};{key[2]};{key[3]}]", file=sys.stderr)
+        if len(added) > 100:
+            print(f"DEBUG:   ... {len(added) - 100} fler", file=sys.stderr)
+
+    if removed:
+        print("DEBUG: Borttagna serier:", file=sys.stderr)
+        for key in removed[:100]:
+            print(f"DEBUG:   - {key[0]} [{key[1]};{key[2]};{key[3]}]", file=sys.stderr)
+        if len(removed) > 100:
+            print(f"DEBUG:   ... {len(removed) - 100} fler", file=sys.stderr)
+
+    if changed:
+        print("DEBUG: Ändrade serier:", file=sys.stderr)
+        for key, old, new, fields in changed[:100]:
+            print(f"DEBUG:   * {key[0]} [{key[1]};{key[2]};{key[3]}]", file=sys.stderr)
+            for field in fields:
+                print(f"DEBUG:       {field}: {old.get(field, '')} -> {new.get(field, '')}", file=sys.stderr)
+        if len(changed) > 100:
+            print(f"DEBUG:   ... {len(changed) - 100} fler", file=sys.stderr)
+
+
+def run_generate_series_ranking(args: argparse.Namespace) -> int:
+    current_file = Path(args.i)
+    old_file = Path(args.old)
+    output_file = Path(args.o)
+
+    counter: Dict[Tuple[str, str, str, str], int] = {}
+    collect_series_from_games_csv(current_file, counter)
+    collect_series_from_games_csv(old_file, counter)
+
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    old_ranking_rows = read_existing_series_ranking(output_file) if args.dbg else {}
+
+    rows: List[Dict[str, object]] = []
+    for (name, gender_id, age_id, ass_id), match_count in counter.items():
+        gender = series_gender_from(name, gender_id)
+        category = series_category_from(name, age_id)
+        level = series_level_from(name, ass_id, category)
+        rank = series_rank_for(name, gender, category, level, ass_id)
+
+        rows.append({
+            "SeriePattern": name,
+            "Rank": rank,
+            "Kategori": category,
+            "Kön": gender,
+            "Nivå": level,
+            "MatchCount": match_count,
+            "SerieKönId": gender_id,
+            "ÅldersKatId": age_id,
+            "Serie_Match_AssId": ass_id,
+        })
+
+    rows.sort(key=lambda row: (-int(row["Rank"]), str(row["Kategori"]), str(row["Kön"]), str(row["SeriePattern"]).casefold(), str(row["Serie_Match_AssId"])))
+
+    if args.dbg:
+        print_series_ranking_diff(old_ranking_rows, rows)
+
+    with output_file.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=["SeriePattern", "Rank", "Kategori", "Kön", "Nivå", "MatchCount", "SerieKönId", "ÅldersKatId", "Serie_Match_AssId"],
+            delimiter=";",
+        )
+        writer.writeheader()
+        writer.writerows(rows)
+
+    print(f"Skapade/uppdaterade {output_file}", file=sys.stderr)
+    print(f"Antal serier: {len(rows)}", file=sys.stderr)
+    print(f"Input current: {current_file}", file=sys.stderr)
+    print(f"Input old: {old_file}", file=sys.stderr)
+    return 0
+
+
 def main() -> int:
     args = parse_args()
 
@@ -1652,6 +2024,9 @@ def main() -> int:
 
     if args.mode == "analyze-mapping":
         return run_analyze_mapping(args)
+
+    if args.mode == "generate-series-ranking":
+        return run_generate_series_ranking(args)
 
     print(f"Fel: okänt mode {args.mode}", file=sys.stderr)
     return 2
