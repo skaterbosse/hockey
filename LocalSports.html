@@ -116,6 +116,7 @@ html,body{
 }
 .pill.on{background:#14532d;border-color:#22c55e;color:var(--accent);}
 .pill.lock{opacity:.65;}
+#sortPlaceBtn,#sortSeriesBtn{cursor:pointer;}
 
 body.map-view .map-wrap{top:calc(var(--logo-h) + var(--topbar-h) + var(--hint-h));}
 body.map-view #groupSlot{display:none;}
@@ -355,6 +356,78 @@ body.map-view .map-wrap{
   white-space:nowrap;
 }
 .settings-card input{margin-right:7px;}
+.series-settings{
+  border-top:1px solid var(--hair);
+  margin-top:12px;
+  padding-top:10px;
+}
+.series-tree{
+  max-height:230px;
+  overflow-y:scroll;
+  scrollbar-gutter:stable;
+  border:1px solid var(--hair);
+  border-radius:10px;
+  padding:8px;
+  background:rgba(15,23,42,.55);
+  scrollbar-width:auto;
+  scrollbar-color:#d7f379 #1f2937;
+}
+.series-tree::-webkit-scrollbar{
+  width:12px;
+}
+.series-tree::-webkit-scrollbar-track{
+  background:#1f2937;
+  border-radius:10px;
+}
+.series-tree::-webkit-scrollbar-thumb{
+  background:#d7f379;
+  border-radius:10px;
+}
+.series-node{
+  margin:4px 0;
+  font-weight:700;
+}
+.series-node.level-1{margin-left:0;}
+.series-node.level-2{margin-left:14px;}
+.series-node.level-3{margin-left:28px;}
+.series-node.level-4{margin-left:42px;font-weight:500;}
+.series-node label{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin:0;
+  white-space:nowrap;
+}
+.series-node.hidden{display:none;}
+.series-expand{
+  border:1px solid var(--hair);
+  background:var(--panel2);
+  color:var(--text);
+  border-radius:6px;
+  width:22px;
+  height:22px;
+  font-weight:800;
+  line-height:18px;
+  cursor:pointer;
+  flex:0 0 auto;
+}
+.series-node input{margin-right:0;}
+.series-tree{
+  position:relative;
+  padding-right:18px;
+}
+.series-tree::after{
+  content:"";
+  position:absolute;
+  top:8px;
+  right:6px;
+  width:6px;
+  height:calc(100% - 16px);
+  border-radius:999px;
+  background:#d7f379;
+  opacity:.9;
+  pointer-events:none;
+}
 
 
 /* header2 fixed-only correction */
@@ -903,8 +976,8 @@ body.map-view .group-slot{
       <div class="sort-stack">
         <div class="sort-top">Sortering</div>
         <div class="sort-bottom">
-          <span class="pill on">Plats</span>
-          <span class="pill lock">Avst</span>
+          <span class="pill on" id="sortPlaceBtn">Plats</span>
+          <span class="pill" id="sortSeriesBtn">Serie</span>
         </div>
       </div>
       <button class="icon-btn" id="settingsBtn" title="Inställningar">⚙️</button>
@@ -924,7 +997,7 @@ body.map-view .group-slot{
       <option value="__map__">Välj plats på kartan</option>
     </select>
 
-    <div class="settings-label">Maxavstånd till fotbollskluster</div>
+    <div class="settings-label">Maxavstånd till Arena</div>
     <label><input type="radio" name="maxDistanceKm" value="2"> 2 km</label>
     <label><input type="radio" name="maxDistanceKm" value="5"> 5 km</label>
     <label><input type="radio" name="maxDistanceKm" value="10"> 10 km</label>
@@ -932,6 +1005,11 @@ body.map-view .group-slot{
     <label><input type="radio" name="maxDistanceKm" value="50"> 50 km</label>
     <label><input type="radio" name="maxDistanceKm" value="100"> 100 km</label>
     <label><input type="radio" name="maxDistanceKm" value="999999"> Obegränsat</label>
+
+    <div class="series-settings">
+      <div class="settings-label">Serier</div>
+      <div id="seriesSettingsTree" class="series-tree"></div>
+    </div>
   </div>
 </div>
 
@@ -991,6 +1069,7 @@ setTimeout(updateDynamicHeaderLayout, 1200);
 <script>
 const DATA_URL = "./data/football_games.csv";
 const CLUSTER_URL = "./data/FootballClustersEnhanced.csv";
+const SERIES_RANKING_URL = "./data/FootballSeriesRanking.csv";
 
 // Default aktuell plats: Gamla Ullevi
 const CURRENT_LOCATION = {
@@ -1002,8 +1081,11 @@ const CURRENT_LOCATION = {
 const REQUIRED = {
   date: "Datum",
   time: "Klockslag",
+  seriesMatchAssId: "Serie_Match_AssId",
   series: "SerieNamn",
   seriesId: "SerieId",
+  seriesGenderId: "SerieKönId",
+  seriesAgeId: "ÅldersKatId",
   matchId: "MatchId",
   status: "MatchStatus",
   matchUrl: "MatchUrl",
@@ -1022,6 +1104,12 @@ const REQUIRED = {
 
 let allGames = [];
 let allDates = [];
+let sortMode = "place";
+let seriesRanking = new Map();
+let seriesRankingByName = new Map();
+const SETTINGS_SERIES_FILTER_KEY = "localsport_football_series_filter_v1";
+let seriesFilterOff = new Set();
+let seriesExpanded = new Set();
 let selectedDate = "";
 let currentArena = "";
 let map = null;
@@ -1048,6 +1136,10 @@ function distanceAllowed(game){
 
 function visibleGamesForSelectedDate(){
   return allGames.filter(g => g.date === selectedDate && distanceAllowed(g));
+}
+
+function gameDistanceKm(game){
+  return haversineKm(CURRENT_LOCATION.lat, CURRENT_LOCATION.lon, game.lat, game.lon);
 }
 
 function syncSettingsPanel(){
@@ -1405,6 +1497,290 @@ function parseCSV(text){
   return rows;
 }
 
+function seriesRankKeyFromValues(series, genderId, ageId, assId){
+  return [
+    String(series || "").trim(),
+    String(genderId || "").trim(),
+    String(ageId || "").trim(),
+    String(assId || "").trim()
+  ].join(";");
+}
+
+function seriesRankKey(game){
+  return seriesRankKeyFromValues(game.series, game.seriesGenderId, game.seriesAgeId, game.seriesMatchAssId);
+}
+
+async function loadSeriesRanking(){
+  seriesRanking = new Map();
+  seriesRankingByName = new Map();
+
+  try{
+    const response = await fetch(SERIES_RANKING_URL, { cache:"no-store" });
+    if(!response.ok){
+      console.warn(`[LocalSport] Kunde inte läsa ${SERIES_RANKING_URL}: ${response.status}`);
+      return;
+    }
+
+    const text = await response.text();
+    const rows = parseCSV(text);
+    if(!rows.length) return;
+
+    const header = rows[0].map(h => h.trim());
+    const index = Object.fromEntries(header.map((h,i) => [h,i]));
+
+    function col(row, name){
+      const i = index[name];
+      return i === undefined ? "" : (row[i] || "").trim();
+    }
+
+    for(const row of rows.slice(1)){
+      const series = col(row, "SeriePattern");
+      if(!series) continue;
+
+      const item = {
+        series,
+        rank: Number(col(row, "Rank") || "0"),
+        category: col(row, "Kategori"),
+        gender: col(row, "Kön"),
+        level: col(row, "Nivå"),
+        genderId: col(row, "SerieKönId"),
+        ageId: col(row, "ÅldersKatId"),
+        assId: col(row, "Serie_Match_AssId")
+      };
+
+      seriesRanking.set(seriesRankKeyFromValues(series, item.genderId, item.ageId, item.assId), item);
+
+      if(!seriesRankingByName.has(series) || item.rank > seriesRankingByName.get(series).rank){
+        seriesRankingByName.set(series, item);
+      }
+    }
+
+    console.info(`[LocalSport] Läste ${seriesRanking.size} serierankningar från ${SERIES_RANKING_URL}`);
+  } catch(err){
+    console.warn(`[LocalSport] Kunde inte läsa ${SERIES_RANKING_URL}`, err);
+  }
+}
+
+function getSeriesRanking(game){
+  return seriesRanking.get(seriesRankKey(game)) ||
+         seriesRankingByName.get(game.series) ||
+         { rank: 0, category: "", gender: "", level: "" };
+}
+
+function groupBySeries(games){
+  const map = new Map();
+
+  for(const game of games){
+    const ranking = getSeriesRanking(game);
+    const key = game.series || "Okänd serie";
+
+    if(!map.has(key)){
+      map.set(key, {
+        name: key,
+        rank: Number(ranking.rank || 0),
+        meta: [ranking.category, ranking.gender, ranking.level].filter(Boolean).join(" · "),
+        games: []
+      });
+    }
+
+    map.get(key).games.push(game);
+  }
+
+  return [...map.values()]
+    .sort((a,b) => b.rank - a.rank || a.name.localeCompare(b.name, "sv"));
+}
+
+function updateSortPills(){
+  document.getElementById("sortPlaceBtn")?.classList.toggle("on", sortMode === "place");
+  document.getElementById("sortSeriesBtn")?.classList.toggle("on", sortMode === "series");
+}
+
+function seriesUiCategory(category){
+  if(category === "Motion" || category === "Övrigt") return "Rekreation";
+  return category || "Övrigt";
+}
+
+function seriesUiGender(gender){
+  if(gender === "Herr") return "Man/Pojk";
+  if(gender === "Dam") return "Dam/Flick";
+  return gender || "Mix";
+}
+
+function loadSeriesFilterSettings(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_SERIES_FILTER_KEY) || "{}");
+    seriesFilterOff = new Set(Array.isArray(saved.off) ? saved.off : []);
+  } catch(_err){
+    seriesFilterOff = new Set();
+  }
+}
+
+function saveSeriesFilterSettings(){
+  localStorage.setItem(SETTINGS_SERIES_FILTER_KEY, JSON.stringify({
+    off: [...seriesFilterOff].sort()
+  }));
+}
+
+function pathKey(parts){
+  return parts.filter(Boolean).join("/");
+}
+
+function isSeriesPathEnabled(parts){
+  for(let i=1; i<=parts.length; i++){
+    if(seriesFilterOff.has(pathKey(parts.slice(0,i)))) return false;
+  }
+  return true;
+}
+
+function removeSeriesOffPathAndChildren(key){
+  for(const item of [...seriesFilterOff]){
+    if(item === key || item.startsWith(`${key}/`)){
+      seriesFilterOff.delete(item);
+    }
+  }
+}
+
+function setSeriesPathEnabled(parts, enabled){
+  const key = pathKey(parts);
+  if(!key) return;
+
+  if(enabled){
+    removeSeriesOffPathAndChildren(key);
+  } else {
+    removeSeriesOffPathAndChildren(key);
+    seriesFilterOff.add(key);
+  }
+
+  saveSeriesFilterSettings();
+  buildSeriesSettingsTree();
+  render();
+}
+
+function seriesFilterPartsForRanking(ranking){
+  return [
+    ranking.level || "Övrigt",
+    seriesUiCategory(ranking.category),
+    seriesUiGender(ranking.gender)
+  ];
+}
+
+function seriesFilterAllowsGame(game){
+  const ranking = getSeriesRanking(game);
+  const parts = [
+    ...seriesFilterPartsForRanking(ranking),
+    game.series || "Okänd serie"
+  ];
+  return isSeriesPathEnabled(parts);
+}
+
+function buildSeriesSettingsTree(){
+  const root = document.getElementById("seriesSettingsTree");
+  if(!root) return;
+
+  const firstBuild = seriesExpanded.size === 0;
+  const tree = new Map();
+
+  for(const item of seriesRanking.values()){
+    const parts = seriesFilterPartsForRanking(item);
+    const [level, category, gender] = parts;
+
+    if(!tree.has(level)) tree.set(level, new Map());
+    if(!tree.get(level).has(category)) tree.get(level).set(category, new Map());
+    if(!tree.get(level).get(category).has(gender)) tree.get(level).get(category).set(gender, new Set());
+    tree.get(level).get(category).get(gender).add(item.series);
+  }
+
+  const levelOrder = ["Nationell", "Regional", "Lokal", "Övrigt"];
+  const categoryOrder = ["Senior", "Junior", "Ungdom", "Barn", "Rekreation", "Övrigt"];
+  const genderOrder = ["Man/Pojk", "Dam/Flick", "Mix"];
+
+  function sortByOrder(values, order){
+    return [...values].sort((a,b) => {
+      const ia = order.indexOf(a);
+      const ib = order.indexOf(b);
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib) || a.localeCompare(b, "sv");
+    });
+  }
+
+  if(firstBuild){
+    for(const level of tree.keys()){
+      seriesExpanded.add(pathKey([level]));
+      for(const category of tree.get(level).keys()){
+        seriesExpanded.add(pathKey([level, category]));
+      }
+    }
+  }
+
+  const htmlParts = [];
+
+  for(const level of sortByOrder(tree.keys(), levelOrder)){
+    const levelParts = [level];
+    htmlParts.push(seriesTreeNodeHtml(levelParts, level, 1, "", true));
+
+    for(const category of sortByOrder(tree.get(level).keys(), categoryOrder)){
+      const categoryParts = [level, category];
+      htmlParts.push(seriesTreeNodeHtml(categoryParts, category, 2, pathKey(levelParts), true));
+
+      for(const gender of sortByOrder(tree.get(level).get(category).keys(), genderOrder)){
+        const genderParts = [level, category, gender];
+        htmlParts.push(seriesTreeNodeHtml(genderParts, gender, 3, pathKey(categoryParts), true));
+
+        const seriesList = [...tree.get(level).get(category).get(gender)]
+          .sort((a,b) => a.localeCompare(b, "sv"));
+
+        for(const series of seriesList){
+          const seriesParts = [level, category, gender, series];
+          htmlParts.push(seriesTreeNodeHtml(seriesParts, series, 4, pathKey(genderParts), false));
+        }
+      }
+    }
+  }
+
+  root.innerHTML = htmlParts.join("");
+
+  root.querySelectorAll("input[data-series-path]").forEach(input => {
+    input.addEventListener("change", () => {
+      setSeriesPathEnabled(input.dataset.seriesPath.split("/"), input.checked);
+    });
+  });
+
+  root.querySelectorAll("button[data-expand-path]").forEach(button => {
+    button.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      const key = button.dataset.expandPath;
+      if(seriesExpanded.has(key)){
+        seriesExpanded.delete(key);
+      } else {
+        seriesExpanded.add(key);
+      }
+
+      buildSeriesSettingsTree();
+    });
+  });
+}
+
+function seriesTreeNodeHtml(parts, label, level, parentKey="", hasChildren=false){
+  const enabled = isSeriesPathEnabled(parts);
+  const key = pathKey(parts);
+  const hidden = parentKey && !seriesExpanded.has(parentKey);
+  const expanded = seriesExpanded.has(key);
+  const expandBtn = hasChildren
+    ? `<button type="button" class="series-expand" data-expand-path="${escapeHtml(key)}">${expanded ? "−" : "+"}</button>`
+    : "";
+
+  return `
+    <div class="series-node level-${level}${hidden ? " hidden" : ""}" data-parent-path="${escapeHtml(parentKey)}">
+      <label>
+        <input type="checkbox" data-series-path="${escapeHtml(key)}" ${enabled ? "checked" : ""}>
+        ${expandBtn}
+        <span>${escapeHtml(label)}</span>
+      </label>
+    </div>
+  `;
+}
+
 function haversineKm(lat1, lon1, lat2, lon2){
   const R = 6371;
   const dLat = (lat2-lat1) * Math.PI/180;
@@ -1510,18 +1886,26 @@ function render(){
   dateRelLabel.classList.toggle("long", relText.length > 6);
   document.getElementById("dateLabel").textContent = main;
   document.getElementById("dateSubLabel").textContent = sub;
+  updateSortPills();
 
   const games = visibleGamesForSelectedDate()
-    .sort((a,b) => {
-      const da = haversineKm(CURRENT_LOCATION.lat, CURRENT_LOCATION.lon, a.lat, a.lon);
-      const db = haversineKm(CURRENT_LOCATION.lat, CURRENT_LOCATION.lon, b.lat, b.lon);
-      return da - db || a.time.localeCompare(b.time);
-    });
+    .sort((a,b) => gameDistanceKm(a) - gameDistanceKm(b) || a.time.localeCompare(b.time));
 
-  const arenas = groupByArena(games);
-  renderList(arenas);
+  const displayGames = sortMode === "series"
+    ? games.filter(seriesFilterAllowsGame)
+    : games;
+
+  const arenas = groupByArena(displayGames);
+
+  if(sortMode === "series"){
+    const seriesGroups = groupBySeries(displayGames);
+    renderSeriesList(seriesGroups);
+  } else {
+    renderList(arenas);
+  }
+
   renderMap(arenas);
-  updateHint(games, arenas);
+  updateHint(displayGames, arenas);
 }
 
 
@@ -1618,6 +2002,80 @@ function renderList(arenas){
   lastScrollTop = 0;
 }
 
+
+function renderSeriesList(seriesGroups){
+  scroll.innerHTML = "";
+
+  if(!seriesGroups.length){
+    slot.querySelector(".group-title").textContent = "Inga matcher";
+    slot.querySelector(".group-sub").textContent = "";
+    scroll.innerHTML = `<div class="empty">Inga fotbollsmatcher hittades för valt datum.</div>`;
+    arenaHeaders = [];
+    return;
+  }
+
+  currentArena = seriesGroups[0].name;
+  slot.querySelector(".group-title").textContent = currentArena;
+  slot.querySelector(".group-sub").textContent = `${seriesGroups[0].games.length} matcher`;
+
+  const frag = document.createDocumentFragment();
+
+  for(const group of seriesGroups){
+    const header = document.createElement("div");
+    header.className = "arena-header";
+    header.dataset.arenaHeader = group.name;
+    header.innerHTML = `
+      <div>${escapeHtml(group.name)}<small>${escapeHtml(group.meta || "")}</small></div>
+      <div>${group.games.length} matcher</div>
+    `;
+    frag.appendChild(header);
+
+    group.games.sort((a,b) => a.time.localeCompare(b.time) || gameDistanceKm(a) - gameDistanceKm(b));
+
+    for(const game of group.games){
+      const article = document.createElement("article");
+      article.className = "game";
+      article.dataset.arena = group.name;
+      article.dataset.time = game.time;
+
+      const resultText = displayResult(game.result);
+      const resultClass = (game.matchUrl ? "result link" : "result") + (game.status === "4" ? " status-4" : "");
+      const resultHtml = game.matchUrl
+        ? `<a href="${escapeHtml(absoluteUrl(game.matchUrl))}" style="color:var(--link);text-decoration:none;">${escapeHtml(resultText)}</a>`
+        : escapeHtml(resultText);
+
+      const arenaText = `${game.cluster || game.arenaName || ""} · ${fmtKm(gameDistanceKm(game))}`;
+
+      article.innerHTML = `
+        <div class="game-top">
+          <div class="game-time">${escapeHtml(game.time)}</div>
+          <div class="game-series">${escapeHtml(arenaText)}</div>
+        </div>
+        <div class="game-bottom">
+          <div class="team home">
+            <span class="team-name">${escapeHtml(game.homeName)}</span>
+            ${logo(game.homeLogo)}
+          </div>
+          <div class="${resultClass}">${resultHtml}</div>
+          <div class="team">
+            ${logo(game.awayLogo)}
+            <span class="team-name">${escapeHtml(game.awayName)}</span>
+          </div>
+        </div>
+      `;
+      frag.appendChild(article);
+    }
+
+    const divider = document.createElement("div");
+    divider.className = "divider";
+    frag.appendChild(divider);
+  }
+
+  scroll.appendChild(frag);
+  arenaHeaders = [...scroll.querySelectorAll(".arena-header")];
+  lastScrollTop = 0;
+}
+
 function updateHint(games, arenas){
   const hint = document.getElementById("hint");
   const locationName = CURRENT_LOCATION.name || "vald plats";
@@ -1625,7 +2083,8 @@ function updateHint(games, arenas){
   if(!games.length){
     hint.textContent = `Inga fotbollsmatcher för valt datum och inom valt maxavstånd till ${locationName}`;
   } else {
-    hint.textContent = `Visar ${games.length} matcher på ${arenas.length} arenor, sorterat på avstånd till ${locationName}`;
+    const sortText = sortMode === "series" ? "serie" : `avstånd till ${locationName}`;
+    hint.textContent = `Visar ${games.length} matcher på ${arenas.length} arenor, sorterat på ${sortText}`;
   }
 }
 
@@ -1812,8 +2271,11 @@ async function loadGames(){
     return {
       date: col(row, REQUIRED.date),
       time: col(row, REQUIRED.time),
+      seriesMatchAssId: col(row, REQUIRED.seriesMatchAssId),
       series: col(row, REQUIRED.series),
       seriesId: col(row, REQUIRED.seriesId),
+      seriesGenderId: col(row, REQUIRED.seriesGenderId),
+      seriesAgeId: col(row, REQUIRED.seriesAgeId),
       matchId: col(row, REQUIRED.matchId),
       status: col(row, REQUIRED.status),
       matchUrl: col(row, REQUIRED.matchUrl),
@@ -1846,6 +2308,17 @@ async function loadGames(){
     throw new Error("Inga matcher med datum hittades");
   }
 }
+
+
+document.getElementById("sortPlaceBtn").addEventListener("click", () => {
+  sortMode = "place";
+  render();
+});
+
+document.getElementById("sortSeriesBtn").addEventListener("click", () => {
+  sortMode = "series";
+  render();
+});
 
 document.getElementById("prevDay").addEventListener("click", () => {
   const idx = allDates.indexOf(selectedDate);
@@ -1996,6 +2469,9 @@ scroll.addEventListener("scroll", updateStickyArena, { passive:true });
   try{
     initMap();
     await loadGames();
+    await loadSeriesRanking();
+    loadSeriesFilterSettings();
+    buildSeriesSettingsTree();
     await buildLocationOptions();
     render();
   } catch(err){
