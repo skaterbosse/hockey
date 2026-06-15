@@ -2025,7 +2025,7 @@ function renderSeriesList(seriesGroups){
     header.className = "arena-header";
     header.dataset.arenaHeader = group.name;
     header.innerHTML = `
-      <div>${escapeHtml(group.name)}<small>${escapeHtml(group.meta || "")}</small></div>
+      <div><a href="https://www.gbgfotboll.se/go-to/?ftid=${encodeURIComponent(group.games[0]?.seriesId || "")}" target="_blank" style="color:var(--link);text-decoration:none;">${escapeHtml(group.name)}</a><small>${escapeHtml(group.meta || "")}</small></div>
       <div>${group.games.length} matcher</div>
     `;
     frag.appendChild(header);
