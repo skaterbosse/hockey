@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vad hände inatt? – Svenska insatser i NHL och AHL | LocalSport</title>
+<style>
+:root{color-scheme:light;font-family:system-ui,-apple-system,Arial,sans-serif;background:#101b2b;color:#eef5ff}*{box-sizing:border-box}body{margin:0}main{max-width:1100px;margin:auto;padding:18px 14px 55px}h1{font-size:1.35rem;margin:0 0 4px}header{margin-bottom:18px}.sub{font-size:.78rem;color:#a6bdd7}.datebar{display:grid;grid-template-columns:56px 1fr 56px;gap:8px;margin:15px 0 9px}.datebar button,.tabs button,.today{background:#203550;color:#eef5ff;border:1px solid #38516e;border-radius:9px;cursor:pointer}.datebar button{font-size:1.6rem;min-height:66px}.datebar button:disabled{opacity:.32;cursor:not-allowed}.datebox{background:#1b2d45;border:1px solid #38516e;border-radius:9px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:3px}.datebox strong{font-size:1.13rem}.datebox small{color:#b6c9e0}.tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin-bottom:15px}.tabs button{padding:13px 6px;font-size:1rem;font-weight:650}.tabs button.active{background:#315c8c;border-color:#6396ce}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:15px 0}.toolbar label{cursor:pointer;font-weight:600}.toolbar input{accent-color:#5f9bdc;width:18px;height:18px;vertical-align:middle}.today{padding:8px 12px}.status{color:#a6bdd7;font-size:.84rem;margin:12px 0}.tablewrap{overflow-x:auto}.table{width:100%;border-collapse:collapse;min-width:650px}.table th{font-size:.72rem;color:#a8bdd6;text-align:left;white-space:nowrap;padding:11px 9px;border-bottom:1px solid #38516e}.table td{padding:12px 9px;border-bottom:1px solid #2d425b;vertical-align:top;font-size:.89rem}.table .name{font-weight:650}.table .secondary{color:#9bb8d8;font-size:.76rem;margin-top:4px}.table .icons{text-align:right;white-space:nowrap;letter-spacing:1px}.table th.icons{text-align:right}.table .stat{font-variant-numeric:tabular-nums;white-space:nowrap}.matchrow{cursor:pointer}.matchrow:hover{background:#1c2d44}.detail td{background:#1b2d45;padding:14px}.goal{display:grid;grid-template-columns:40px 37px 43px 32px minmax(0,1fr);gap:8px;margin:7px 0;line-height:1.45}.periodheading{color:#a8d3ff;font-size:.79rem;font-weight:750;margin:15px 0 8px}.goal .goal-time{color:#b6c9e0;font-variant-numeric:tabular-nums}.goal .score{font-variant-numeric:tabular-nums;font-weight:650}.goal .goal-desc{overflow-wrap:anywhere}.matchrow:focus-visible{outline:2px solid #8ac3ff}.loadinggoals{color:#b6c9e0;font-size:.85rem}.goal .abbr{color:#a8d3ff;font-weight:700}.empty{padding:22px;background:#1b2d45;border-radius:9px;color:#b4c9e2}.filetools{margin-top:30px;border-top:1px solid #304660;padding-top:12px}.filetools summary{cursor:pointer;color:#a6bdd7;font-size:.85rem}.filetools input{margin:8px 0;max-width:100%;font-size:.8rem}.filetools p{font-size:.78rem;color:#a6bdd7}.badge{color:#a8d3ff;font-size:.75rem}.sortbtn{background:none;border:0;color:inherit;cursor:pointer;padding:0;text-align:left;font:inherit}button:focus-visible,input:focus-visible{outline:2px solid #8ac3ff;outline-offset:2px}@media(max-width:650px){main{padding:14px 10px}.table{min-width:620px}.table td{padding:10px 6px}.goal{grid-template-columns:36px 32px 36px 28px minmax(0,1fr);gap:5px;font-size:.8rem}}
+.team-logo{width:23px;height:23px;object-fit:contain;vertical-align:middle;display:inline-block;margin:0 3px;background:transparent}.player-team{display:inline-flex;align-items:center;gap:3px;margin-left:8px;font-weight:500;font-size:.85em;color:#b6d2f0}.match-label{line-height:1.8}.match-dash{padding:0 2px}@media(max-width:650px){.team-logo{width:19px;height:19px}.player-team{margin-left:5px}}
+
+/* Index_v13 – ljust dagläge, utan ändringar i data eller funktionalitet */
+:root{background:#f5f7fb;color:#17263b}
+body{background:#f5f7fb;color:#17263b}
+.sub,.status,.filetools summary,.filetools p{color:#50647b}
+.datebar button,.tabs button,.today{background:#ffffff;color:#19314d;border-color:#cbd6e3}
+.datebox{background:#ffffff;border-color:#cbd6e3}
+.datebox small,.goal .goal-time,.loadinggoals{color:#51667d}
+.tabs button.active{background:#dbeaff;color:#133e75;border-color:#7fa9d9}
+.toolbar input{accent-color:#2563a9}
+.table th{color:#465e78;border-bottom-color:#cbd6e3}
+.table td{border-bottom-color:#dce4ed}
+.table .secondary{color:#526a83}
+.matchrow:hover{background:#e8f1fb}
+.detail td,.empty{background:#eaf0f7}
+.periodheading,.goal .abbr,.badge{color:#185a9e}
+.empty{color:#415b75}
+.filetools{border-top-color:#cbd6e3}
+.player-team{color:#345c83}
+button:focus-visible,input:focus-visible,.matchrow:focus-visible{outline-color:#2369ba}
+.team-logo{background:transparent}
+
+/* v14: vertikal centrering och tätare spelarposter, oförändrade storlekar */
+.table td{padding-top:7px;padding-bottom:7px;line-height:1.35}
+.table .name{display:flex;align-items:center;flex-wrap:wrap;column-gap:0;row-gap:2px}
+.table .name .player-team{vertical-align:middle;align-items:center}
+.table .secondary{margin-top:1px;line-height:1.35}
+@media(max-width:650px){.table td{padding-top:7px;padding-bottom:7px}}
+
+.status:empty{display:none}
+
+/* v18: matchlistan (SWE av) har en gemensam centrerad resultatkolumn. */
+.games-table{min-width:0;table-layout:fixed}
+.games-table th:nth-child(1),.games-table td:nth-child(1){width:70px}
+.games-table th:nth-child(2),.games-table td:nth-child(2){width:75px;text-align:center}
+.games-table th:nth-child(4),.games-table .matchrow td:nth-child(4){width:30px;text-align:center}
+.games-table .matchrow td{vertical-align:middle}
+.games-table .matchrow td.name{display:table-cell;min-width:0}
+.compact-match{display:grid;grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr);align-items:center;width:100%;min-width:0;gap:0;line-height:1.3}
+.compact-home,.compact-away{display:flex;align-items:center;min-width:0;gap:3px}
+.compact-home{justify-content:flex-end;text-align:right}
+.compact-away{justify-content:flex-start;text-align:left}
+.compact-team-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.compact-match .team-logo{flex:0 0 auto;margin:0}
+.compact-score{text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700}
+.games-table .detail td{display:table-cell}
+@media(max-width:650px){
+ main{padding-left:7px;padding-right:7px}
+ .games-table{width:100%;min-width:0}
+ .games-table th,.games-table td{padding-left:3px;padding-right:3px}
+ .games-table th:nth-child(1),.games-table td:nth-child(1){width:47px}
+ .games-table th:nth-child(2),.games-table td:nth-child(2){width:42px;padding-left:2px;padding-right:2px;font-size:.68rem;text-align:center}
+ .games-table th:nth-child(4),.games-table .matchrow td:nth-child(4){width:19px}
+ .games-table th:nth-child(3){font-size:.62rem;white-space:normal}
+ .games-table .matchrow td{font-size:.79rem}
+ .compact-match{grid-template-columns:minmax(0,1fr) 53px minmax(0,1fr)}
+ .compact-home,.compact-away{gap:2px}
+ .compact-match .team-logo{width:17px;height:17px}
+ .games-table .detail td{padding:9px 5px}
+}
+/* v21: beräkna en gemensam, så smal hemmalagskolumn som behövs.
+   Hela matchgridden börjar vid vänsterkanten; resultatet har fast bredd. */
+.games-table .compact-match{
+ width:100%;
+ grid-template-columns:minmax(0,var(--home-col,190px)) 78px minmax(0,1fr);
+}
+@media(max-width:650px){
+ .games-table .compact-match{
+  grid-template-columns:minmax(0,var(--home-col,120px)) 53px minmax(0,1fr);
+ }
+}
+/* v19: särskild kolumn för OT/GWS, utan resultattext efter klubbnamn. */
+.games-table .decision{font-weight:700;color:#345c83;white-space:nowrap;vertical-align:middle}
+@media(max-width:650px){.games-table th:nth-child(2){font-size:.6rem}.games-table .decision{font-size:.7rem}}
+.goal .goal-person{display:block}
+.goal .goal-assist{padding-left:2ch}
+/* v23: visa hela klubbnamn; låt matchkolumnen växa och rulla i sidled endast vid behov. */
+.games-table .compact-team-name{overflow:visible;text-overflow:clip;white-space:nowrap;flex-shrink:0}
+.games-table .compact-match{grid-template-columns:var(--home-col,190px) 78px minmax(var(--away-col,190px),1fr)}
+@media(max-width:650px){.games-table .compact-match{grid-template-columns:var(--home-col,120px) 53px minmax(var(--away-col,120px),1fr)}}
+/* v25: utan tabellrubriker; detaljrubriken börjar vid vänsterkanten. */
+.games-table .detail-match-heading{display:block;text-align:left;font-weight:700;line-height:1.5}
+.games-table .detail-match-heading .match-label{display:inline;white-space:normal}
+/* v26: statusmarkering efter matchresultatet, även i expanderad rubrik. */
+.match-indicator{display:inline-block;margin-left:1.2ch;font-weight:700;color:#345c83;white-space:nowrap}.match-indicator.live{color:#087a4c;background:#d7f5e6;border-radius:5px;padding:2px 6px}
+
+/* v30: diskreta länkar till EliteProspects utan att ändra radlayouten */
+a.ep-player{color:inherit;text-decoration:none;border-bottom:1px dotted #7991a8}
+a.ep-player:hover,a.ep-player:focus{color:#165a9b;border-bottom-style:solid}
+
+/* v40: matchdetaljer direkt under svensk spelarpost */
+.swe-match-toggle{display:inline-flex;align-items:center;gap:7px;cursor:pointer;background:none;border:0;padding:2px 0;color:inherit;font:inherit;text-align:left;max-width:100%;border-radius:3px}
+.swe-match-toggle:hover .match-label,.swe-match-toggle:focus-visible .match-label{text-decoration:underline;text-decoration-color:#6486ac}
+.swe-match-toggle:focus-visible{outline:2px solid #2369ba;outline-offset:2px}
+.swe-match-chevron{color:#185a9e;font-weight:700;flex-shrink:0}
+.swe-detail-row>td{padding:10px 14px 16px!important;background:#e9f0f8}
+.swe-detail-inner{max-width:100%;overflow-x:auto}
+/* Hockey Daily v38: dedicated play column between score and scorer */
+.goal-video{display:inline-flex;vertical-align:middle;align-items:center;justify-content:center;margin:0;padding:3px;border:0;background:transparent;cursor:pointer;border-radius:6px}
+.goal-video img{width:23px;height:23px;display:block}
+.goal-play{display:flex;align-items:flex-start;justify-content:center;min-height:27px}
+/* v39: tighter play column and optical vertical alignment with scorer line */
+.goal{grid-template-columns:40px 37px 43px 24px minmax(0,1fr);column-gap:5px}
+.goal-play{min-height:0;align-items:flex-start;position:relative;top:-3px}
+.goal-video{padding:0;width:24px;height:26px}
+.goal-video img{width:21px;height:21px}
+@media(max-width:650px){.goal{grid-template-columns:36px 32px 36px 22px minmax(0,1fr);column-gap:4px}.goal-video{width:22px;height:24px}.goal-video img{width:20px;height:20px}}
+.goal-video:hover,.goal-video:focus-visible{background:#315c8c;outline:2px solid #6396ce}
+.video-overlay[hidden]{display:none}.video-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:15px}
+.video-panel{background:#15263a;border:1px solid #4a6684;border-radius:12px;width:min(950px,100%);padding:14px;color:#fff}
+.video-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.video-close{background:#304a68;color:white;border:0;border-radius:7px;padding:8px 13px;cursor:pointer}
+.video-frame{width:100%;aspect-ratio:16/9;border:0;background:#05080d}.video-help{font-size:.84rem;color:#b9cbe0;margin-top:10px}.video-help a{color:#8dc3ff}
+
+/* v41: hela SWE-spelarraden öppnar matchen; EP-länken är separat. */
+.swe-player-row[data-match]{cursor:pointer;transition:background-color .12s ease}
+.swe-player-row[data-match]:hover{background:#e2edf9}
+.swe-player-row[data-match]:focus-visible{outline:2px solid #2369ba;outline-offset:-2px;background:#e2edf9}
+.swe-player-row[data-match][aria-expanded="true"]{background:#e5effa}
+.swe-player-row .swe-match-label{display:inline-flex;align-items:center;gap:7px;max-width:100%}
+.swe-player-row .swe-match-chevron{margin-left:3px}
+.swe-player-row a.ep-player{position:relative;z-index:1;cursor:pointer}
+/* v42: LocalSport – design inspirerad av SeriesAndTeams och Highlights */
+:root{color-scheme:light;background:#000;color:#151515;font-family:Arial,sans-serif}
+body{background:#000;color:#151515}
+.localsport-brand{background:#000;width:100%;display:flex;justify-content:center;align-items:center;overflow:hidden;border-bottom:1px solid #17210d}
+.localsport-brand a{display:block;width:100%;line-height:0}
+.localsport-brand img{display:block;width:100%;height:auto;max-height:280px;object-fit:contain;object-position:center}
+main{max-width:1200px;margin:0 auto;padding:0 14px 60px;background:#000}
+main>header{margin:0 0 12px}
+.datebar{margin:0;padding:12px 0;background:#000;grid-template-columns:56px 1fr 56px;gap:9px}
+.datebar button{background:#161b12;color:#d6f379;border:1px solid #769746;border-radius:8px;min-height:55px}
+.datebar button:hover{background:#27351b}
+.datebox{background:#10170b;border:1px solid #769746;border-radius:8px;color:#d6f379}
+.datebox strong{font-size:1.25rem}.datebox small{color:#fff}
+.tabs{display:flex;gap:0;flex-wrap:wrap;margin:0 0 12px;background:#000;border-bottom:1px solid #263319}
+.tabs button{flex:0 0 auto;min-width:110px;background:transparent;border:0;border-bottom:5px solid transparent;border-radius:0;color:#fff;padding:13px 20px 10px;font-size:1.3rem;font-weight:700}
+.tabs button.active{background:transparent;color:#d6f379;border-color:#d6f379}
+.tabs button:hover{color:#d6f379;background:#121a0e}
+.toolbar{background:#000;color:#fff;margin:0;padding:10px 2px 14px}
+.toolbar label{font-size:1.05rem}.toolbar input{accent-color:#769746}
+.today{background:#141c10;color:#d6f379;border:1px solid #769746;padding:9px 15px}
+.today:hover{background:#26361a}
+.status{color:#d6f379}
+#content{background:#000}
+.tablewrap{background:#efefef;border:1px solid #cfcfcf;border-radius:10px;overflow:auto;max-height:70vh;overscroll-behavior:contain;scrollbar-color:#769746 #e7e7e7}
+.table{color:#171717;background:#efefef}
+.table th{background:#e5ebdb;color:#25371b;border-bottom:2px solid #769746;position:sticky;top:0;z-index:2}
+.table td{border-bottom:1px solid #d3d3d3}
+.table .secondary{color:#525c4b}.player-team{color:#405f2a}
+.matchrow:hover,.swe-player-row[data-match]:hover{background:#e2eecb}
+.matchrow[aria-expanded="true"],.swe-player-row[data-match][aria-expanded="true"]{background:#dcebbd}
+.detail td,.swe-detail-row>td{background:#f6f9ef!important;border-bottom:2px solid #769746}
+.periodheading,.goal .abbr,.swe-match-chevron,.badge{color:#496b25}
+.goal .goal-time{color:#525c4b}
+.goal-video:hover,.goal-video:focus-visible{background:#d6f379;outline:2px solid #769746}
+a.ep-player:hover,a.ep-player:focus{color:#496b25;border-bottom-color:#769746}
+.empty{background:#efefef;color:#242424;border:1px solid #cfcfcf}
+button:focus-visible,input:focus-visible,.matchrow:focus-visible,.swe-player-row[data-match]:focus-visible{outline-color:#769746}
+/* v45: separat, tydligt avgränsad målvaktsrubrik i scrollområdet. */
+#content h2.goalies-heading{display:block!important;box-sizing:border-box;background:#000!important;color:#d6f379!important;font-size:2.65rem!important;line-height:1.2!important;font-weight:800!important;margin:0!important;padding:32px 14px 26px!important;border:0!important;text-align:left!important;}
+@media(max-width:650px){main{padding:0 7px 40px}.localsport-brand img{max-height:160px}.tabs button{font-size:1.05rem;min-width:90px;padding:11px 16px 8px}.tablewrap{max-height:72vh}.datebar{grid-template-columns:45px 1fr 45px}.datebar button{min-height:52px}}
+/* v43: only the player/match area scrolls; all controls remain visible. */
+html,body{height:100%;overflow:hidden}
+body{display:flex;flex-direction:column;min-height:0}
+.localsport-brand{flex:0 0 auto}
+main{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;width:100%;padding-bottom:0}
+main>header,.toolbar,.status{flex:0 0 auto}
+#content{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:auto;overscroll-behavior:contain;scrollbar-color:#769746 #111;padding-bottom:12px}
+#content .tablewrap{max-height:none;overflow:visible}
+@media(max-width:650px){main{padding-bottom:0}}
+.goalie-tablewrap{margin-top:26px!important;border-radius:10px!important;overflow:visible!important;background:#efefef!important}
+#content .goalie-tablewrap .goalies-section-title{display:block!important;background:#000!important;color:#D6F379!important;font-family:Arial,sans-serif!important;font-size:42px!important;line-height:1.2!important;font-weight:800!important;text-align:left!important;padding:28px 16px 26px!important;margin:0!important;box-sizing:border-box!important}
+.goalie-tablewrap .table{border-radius:0 0 10px 10px}
+</style></head><body><div class="localsport-brand"><a href="index.html" aria-label="LocalSport startsida"><img src="icons/local_sport_full_logo_night_mode_vad_hande_inatt.svg" alt="LocalSport – Vad hände inatt?"></a></div><main><header><div class="datebar"><button id="prev" aria-label="Föregående dag">‹</button><div class="datebox"><strong id="relative">Idag</strong><small id="dateLabel"></small></div><button id="next" aria-label="Nästa dag">›</button></div><nav class="tabs" aria-label="Välj liga"><button data-league="NHL" class="active">NHL</button><button data-league="AHL">AHL</button></nav></header>
+<div class="toolbar"><label><input type="checkbox" id="swe" checked> SWE</label><button class="today" id="today">Till idag</button></div><div class="status" id="status" aria-live="polite"></div><section id="content"></section>
+
+</main><script>
+'use strict';
+const $=id=>document.getElementById(id), days=['Sön','Mån','Tis','Ons','Tors','Fre','Lör'],months=['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
+const dateKey=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+const parseDate=s=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return null;const [y,m,d]=s.split('-').map(Number),x=new Date(y,m-1,d,12);return dateKey(x)===s?x:null};
+const todayDate=()=>{let d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate(),12)};
+// Datum är inte begränsade till en fast lista. CSV-filer hämtas efter valt datum.
+const requested=parseDate(new URLSearchParams(location.search).get('date'));
+const initial=requested||todayDate();
+let selected=initial,league='NHL',swe=true,sort='goals',data={games:[],players:[],goals:[],shootout:[]},opened=new Set(),loadToken=0,rawCache=new Map(),rawPending=new Map();
+// Sökvägar för utveckling respektive publicering i LocalSports webbrot.
+const CONFIG={logosPath:'logos/',teamsPath:'highlights/'};
+const teamLogos=new Map();
+const epProfiles=new Map();
+function epNameKey(s){return String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'')}
+function epLinkName(name){
+ const url=epProfiles.get(epNameKey(name));
+ const safe=escapeHtml(name);
+ return url?`<a class="ep-player" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="Visa ${safe} på EliteProspects" onclick="event.stopPropagation()">${safe}</a>`:safe;
+}
+function epLinkLine(line){
+ const m=String(line||'').match(/^(\d+\.\s*)?(.+?)(\s+\([^)]*\)|\s+\[[^\]]*\]|\s+—.*|$)/);
+ if(!m)return escapeHtml(line);
+ const prefix=m[1]||'',name=m[2],suffix=String(line).slice(prefix.length+name.length);
+ return escapeHtml(prefix)+epLinkName(name)+escapeHtml(suffix);
+}
+
+// NHL:s Games-CSV använder ofta stadsnamn. Lagkoden skiljer t.ex. NYR/NYI åt.
+const NHL_CITY_CODES={ana:'ana',boston:'bos',buffalo:'buf',carolina:'car',columbus:'cbj',calgary:'cgy',chicago:'chi',colorado:'col',dallas:'dal',detroit:'det',edmonton:'edm',florida:'fla',losangeles:'lak',minnesota:'min',montreal:'mtl',newjersey:'njd',nashville:'nsh',ottawa:'ott',philadelphia:'phi',pittsburgh:'pit',seattle:'sea',sanjose:'sjs',stlouis:'stl',tampabay:'tbl',toronto:'tor',utah:'uta',vancouver:'van',vegas:'vgk',winnipeg:'wpg',washington:'wsh'};
+const NHL_ABBREV={anah:'ana',bos:'bos',buf:'buf',car:'car',cbj:'cbj',cgy:'cgy',chi:'chi',col:'col',dal:'dal',det:'det',edm:'edm',fla:'fla',lak:'lak',min:'min',mtl:'mtl',njd:'njd',nsh:'nsh',nyi:'nyi',nyr:'nyr',ott:'ott',phi:'phi',pit:'pit',sea:'sea',sjs:'sjs',stl:'stl',tbl:'tbl',tor:'tor',uta:'uta',van:'van',vgk:'vgk',wpg:'wpg',wsh:'wsh'};
+
+async function loadTeamLogos(){
+ await Promise.all(['NHL','AHL'].map(async lg=>{
+  try{
+   const response=await fetch(CONFIG.teamsPath+lg+'_Teams.txt',{cache:'no-store'});
+   if(!response.ok)return;
+   const text=await response.text();
+   for(const line of text.split(/\r?\n/)){
+    const parts=line.trim().split(';');
+    if(parts.length<3)continue;
+    const short=parts[0].trim(),full=parts[1].trim(),file=parts[2].trim();
+    if(full&&file&&!file.includes('/')&&!file.includes('\\')&&!file.includes('..')){
+      teamLogos.set(lg+':'+norm(full),file);
+      if(short)teamLogos.set(lg+':'+norm(short),file);
+    }
+   }
+  }catch(e){console.warn('Lagregister saknas:',lg,e)}
+ }));
+ render();
+}
+function teamLogo(lg,team,code=''){
+ let filename=teamLogos.get(lg+':'+norm(code))||teamLogos.get(lg+':'+norm(team));
+ if(!filename&&lg==='NHL'){
+  const n=norm(team),c=norm(code);
+  const key=NHL_ABBREV[c]||NHL_ABBREV[n]||NHL_CITY_CODES[n];
+  if(key)filename=teamLogos.get('NHL:'+key);
+ }
+ if(!filename&&lg==='NHL'&&norm(team)==='newyork'){
+  console.warn('NHL-logotyp: New York kräver lagkod NYR eller NYI');
+ }
+ if(!filename)return '';
+ return `<img class="team-logo" src="${escapeHtml(CONFIG.logosPath+encodeURIComponent(filename))}" alt="" loading="lazy" onerror="this.style.display='none'">`;
+}
+function compactMatchHtml(g){
+ if(!g)return 'Matchuppgift saknas';
+ const lg=leagueOf(g),h=teamHome(g)||'?',a=teamAway(g)||'?';
+ const shown=displayScore(g),hs=shown?.[0]??'',as=shown?.[1]??'';
+ const score=hs!==''&&as!==''?`${escapeHtml(hs)} <span class="match-dash">–</span> ${escapeHtml(as)}`:'–';
+ return `<span class="compact-match"><span class="compact-home"><span class="compact-team-name" title="${escapeHtml(h)}">${escapeHtml(h)}</span>${teamLogo(lg,h,get(g,'HomeCode','homeAbbrev','homeTeamCode'))}</span><span class="compact-score">${score}</span><span class="compact-away">${teamLogo(lg,a,get(g,'AwayCode','awayAbbrev','awayTeamCode'))}<span class="compact-team-name" title="${escapeHtml(a)}">${escapeHtml(a)}</span></span></span>`;
+}
+function matchDescriptionHtml(g){
+ if(!g)return 'Matchuppgift saknas';
+ const lg=leagueOf(g),h=teamHome(g)||'?',a=teamAway(g)||'?';
+ const shown=displayScore(g),hs=shown?.[0]??'',as=shown?.[1]??'',score=hs!==''&&as!==''?`${escapeHtml(hs)} <span class="match-dash">–</span> ${escapeHtml(as)}`:'<span class="match-dash">–</span>';
+  return `<span class="match-label">${escapeHtml(h)} ${teamLogo(lg,h,get(g,'HomeCode','homeAbbrev','homeTeamCode'))} ${score} ${teamLogo(lg,a,get(g,'AwayCode','awayAbbrev','awayTeamCode'))} ${escapeHtml(a)}</span>`;
+}
+const escapeHtml=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=x=>String(x??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+const get=(r,...keys)=>{for(const k of keys){const target=norm(k);for(const [key,value] of Object.entries(r||{}))if(norm(key)===target&&value!==''&&value!=null)return String(value).trim()}return ''};
+const num=v=>{const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)?n:0};
+function csv(text){text=text.replace(/^\uFEFF/,'');const rows=[];let row=[],field='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){field+='"';i++}else if(c==='"')quoted=false;else field+=c}else if(c==='"')quoted=true;else if(c===';'||c===','){row.push(field);field=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(field);if(row.some(x=>x!==''))rows.push(row);row=[];field=''}else field+=c}row.push(field);if(row.some(x=>x!==''))rows.push(row);if(!rows.length)return[];const header=rows.shift().map(x=>x.trim());return rows.map(cols=>Object.fromEntries(header.map((h,i)=>[h,(cols[i]??'').trim()]))) }
+function teamHome(r){return get(r,'HomeTeam','homeTeamName','home_team','home','homeName','Home Team')}
+function teamAway(r){return get(r,'AwayTeam','awayTeamName','away_team','away','visitingTeam','visitorTeam','Away Team')}
+function gameId(r){return get(r,'gameId','GameID','game_id','id','GamePk')}
+function leagueOf(r){return get(r,'League','leagueName','Competition','competition','liga').toUpperCase()}
+function gameDate(r){return get(r,'GameDate','gameDate','date','StartDate','game_date')}
+function gameTime(r){return get(r,'StartUTC','StartTime','GameTime','startTime','gameStart','start','time','GameStartTime')}
+function scoreHome(r){return get(r,'HomeGoals','HomeScore','homeTeamScore','home_score','homeGoals','Home Goals')}
+function scoreAway(r){return get(r,'AwayGoals','AwayScore','awayTeamScore','away_score','awayGoals','Away Goals')}
+function resultText(r){const a=scoreHome(r),b=scoreAway(r);return a!==''&&b!==''?`${a}–${b}`:'–'}
+function extra(r){let v=get(r,'GameTypeResult','Decision','ResultType','Overtime','OTGWS','Ending','GameEndType','ExtraTime','Status','GameStatus','StatusText','GameStatusText').toUpperCase();if(/GWS|SO|SHOOTOUT/.test(v))return 'GWS';if(/OT|OVERTIME/.test(v))return 'OT';return ''}
+// Matchstatus från Games-CSV. Endast explicit LIVE/CRIT etc räknas som pågående.
+function isOngoing(g){
+ if(!g)return false;
+ const status=get(g,'Status','GameStatus','gameState','game_status').toUpperCase();
+ const original=get(g,'SourceStatus').toUpperCase();
+ if(/^(FINAL|OFF|POSTPONED|CANCELLED|CANCELED|SCHEDULED|FUT|PRE|UNKNOWN)$/.test(status))return false;
+ if(/^(LIVE|CRIT|IN_PROGRESS|IN PROGRESS|INTERMISSION)$/.test(status))return true;
+ if(/^(LIVE|CRIT|IN_PROGRESS|IN PROGRESS|INTERMISSION)$/.test(original))return true;
+ return /^(?:PERIOD\s*\d+|\d+(?:ST|ND|RD|TH)\s+PERIOD)$/.test(original);
+}
+// Status ska komma från datakällan, aldrig enbart från klockan eller 0–0.
+function gamePhase(g){
+ if(!g)return 'unknown';
+ const status=get(g,'Status','GameStatus','gameState','game_status').toUpperCase();
+ const source=get(g,'SourceStatus').toUpperCase();
+ const raw=rawCache.get(rawPath(g,leagueOf(g)==='AHL'?'gameSummary':'boxscore'));
+ const rawStatus=String(raw?.details?.status||raw?.game?.statusString||raw?.game?.gameState||'').toUpperCase();
+ const values=[status,source,rawStatus].filter(Boolean);
+ if(values.some(v=>/FINAL|FINISHED|COMPLETE|^OFF$|GAME OVER/.test(v)))return 'final';
+ if(values.some(v=>/POSTPON|CANCEL|SUSPEND/.test(v)))return 'other';
+ if(values.some(v=>/LIVE|CRIT|IN.PROGRESS|INTERMISSION|INTERVAL|^P[1234]$|PERIOD\s*[1-9]|[1-9](ST|ND|RD|TH)\s+PERIOD/.test(v)))return 'live';
+ // HockeyTech kan använda numeriska statuskoder; okända koder är INTE bevis på live.
+ return 'scheduled';
+}
+function matchIndicator(g){const phase=gamePhase(g);return phase==='live'?'Pågående':phase==='final'?outcome(g):''}
+function matchIndicatorHtml(g){const value=matchIndicator(g);return value?`<span class="match-indicator ${gamePhase(g)==='live'?'live':''}">${escapeHtml(value)}</span>`:''}
+function displayScore(g){
+ const phase=gamePhase(g),h=scoreHome(g),a=scoreAway(g);
+ if(phase==='scheduled'||phase==='unknown'||phase==='other')return null;
+ if(h===''||a==='')return null;
+ return [h,a];
+}
+function playerName(r){return get(r,'PlayerName','FullName','Name','player_name','playerName','Player','skaterName')}
+function playerTeam(r){return get(r,'Team','TeamName','team_name','playerTeam','teamAbbrev','teamAbbreviation')}
+function isSwede(r){const n=norm(get(r,'Nationality','Country','Nation','nationalityCode','countryCode','NationCode'));return ['swe','sweden','svensk','se'].includes(n)}
+function isGoalie(r){const pos=norm(get(r,'Position','PositionCode','Pos','playerPosition'));return pos==='g'||pos==='goalie'||pos==='goalkeeper'||pos==='mv'}
+function points(r){return num(get(r,'Goals','G'))+num(get(r,'Assists','A'))}
+function plusminus(r){return get(r,'PlusMinus','plus_minus','+/-','Plus/Minus','PM')||'–'}
+function toi(r){return get(r,'TOI','TimeOnIce','Time On Ice','toiMinutes','iceTime')||'–'}
+function matchForPlayer(p){const id=gameId(p);if(id){const match=data.games.find(g=>gameId(g)===id);if(match)return match}return data.games.find(g=>{const t=norm(playerTeam(p));return t&&(norm(teamHome(g))===t||norm(teamAway(g))===t)})}
+function matchDescription(g){return g?`${teamHome(g)||'?'} – ${teamAway(g)||'?'}: ${resultText(g)}`:'Matchuppgift saknas'}
+function jersey(r){return get(r,'JerseyNumber','SweaterNumber','Jersey','Sweater','ShirtNumber','UniformNumber','PlayerNumber','jerseyNum','number')}
+function position(r){return get(r,'Position','PositionCode','Pos','playerPosition','positionAbbrev')}
+function rawPlayerInfo(r){
+ const match=matchForPlayer(r);if(!match)return {};
+ const id=get(r,'PlayerID','PlayerId','player_id','NHLPlayerID','AHLPlayerID');
+ const name=norm(playerName(r)), team=norm(playerTeam(r));
+ const raw=rawCache.get(rawPath(match,leagueOf(match)==='NHL'?'boxscore':'gameSummary'));
+ if(!raw)return {};
+ if(leagueOf(match)==='NHL'){
+   const pb=rawCache.get(rawPath(match,'play-by-play'));const spots=[...(raw.rosterSpots||[]),...(pb?.rosterSpots||[])];
+   const spot=spots.find(x=>id&&String(x.playerId)===id)||spots.find(x=>norm([x.firstName?.default||x.firstName,x.lastName?.default||x.lastName].filter(Boolean).join(' '))===name);
+   if(spot)return {number:spot.sweaterNumber??spot.jerseyNumber,position:spot.positionCode||spot.position};
+ }
+ const sides=[raw.homeTeam,raw.visitingTeam,raw.awayTeam,raw.game?.homeTeam,raw.game?.visitingTeam].filter(Boolean);
+ for(const side of sides){
+   const candidates=[...(side.skaters||[]),...(side.goalies||[]),...(side.players||[])];
+   const found=candidates.find(x=>{const i=x.info||x.player||x;const nm=norm(i.fullName||i.name||[i.firstName,i.lastName].filter(Boolean).join(' '));return id&&String(i.id||i.playerId||i.player_id||'')===id||nm&&nm===name});
+   if(found){const i=found.info||found.player||found;return {number:i.jerseyNumber??i.sweaterNumber??i.jersey??i.number,position:i.positionCode||i.position||i.pos}}
+ }
+ return {};
+}
+function displayPosition(p){const v=String(p||'').toUpperCase();return ({L:'LW',R:'RW'}[v]||p||'')}
+function playerHeading(r){const raw=rawPlayerInfo(r),number=jersey(r)||raw.number, pos=displayPosition(position(r)||raw.position);return `${number!==undefined&&number!==null&&String(number)!==''?String(number)+'. ':''}${playerName(r)||'Okänd spelare'}${pos?' ('+pos+')':''}`}
+// Saknade TOI- och +/-värden sorteras efter spelare med registrerade värden.
+function toiSeconds(r){const v=get(r,'TOI','TimeOnIce','Time On Ice','toiMinutes','iceTime');if(!v||v==='–'||v==='-')return null;const parts=v.split(':');if(parts.length>1){const nums=parts.map(Number);return nums.every(Number.isFinite)?nums.reduce((acc,n)=>acc*60+n,0):null}const n=Number(v.replace(',','.'));return Number.isFinite(n)?n*60:null}
+function compareOptionalDesc(a,b){if(a===null&&b===null)return 0;if(a===null)return 1;if(b===null)return -1;return b-a}
+function compareTOI(a,b){return compareOptionalDesc(toiSeconds(a),toiSeconds(b))}
+function comparePlusMinus(a,b){const parse=r=>{const v=get(r,'PlusMinus','plus_minus','+/-','Plus/Minus','PM');if(!v||v==='–'||v==='-')return null;const n=Number(v);return Number.isFinite(n)?n:null};return compareOptionalDesc(parse(a),parse(b))}
+function goalieStat(r,key){const v=get(r,key);return v===''?'–':escapeHtml(v)}
+function goaliePct(r){const shots=Number(get(r,'ShotsAgainst')),saves=Number(get(r,'Saves'));if(!get(r,'ShotsAgainst')||!Number.isFinite(shots)||shots<=0)return '–';const raw=get(r,'SavePct');let pct=raw!==''?Number(String(raw).replace(',','.')):NaN;if(!Number.isFinite(pct)){pct=Number.isFinite(saves)?100*saves/shots:NaN}else if(pct<=1)pct*=100;return Number.isFinite(pct)?pct.toFixed(2).replace('.',',')+' %':'–'}
+function goaliePctValue(r){const shots=Number(get(r,'ShotsAgainst'));if(!get(r,'ShotsAgainst')||!Number.isFinite(shots)||shots<=0)return null;const saves=Number(get(r,'Saves'));const raw=get(r,'SavePct');let pct=raw!==''?Number(String(raw).replace(',','.')):NaN;if(!Number.isFinite(pct)){pct=Number.isFinite(saves)&&get(r,'Saves')!==''?100*saves/shots:NaN}else if(pct<=1)pct*=100;return Number.isFinite(pct)?pct:null}
+function renderPlayers(){let rows=data.players.filter(r=>(!swe||isSwede(r))&&(league==='ALL'||leagueOf(r)===league));rows.sort((a,b)=>sort==='name'?playerName(a).localeCompare(playerName(b),'sv'):num(get(b,'Goals','G'))-num(get(a,'Goals','G'))||num(get(b,'Assists','A'))-num(get(a,'Assists','A'))||compareTOI(a,b)||comparePlusMinus(a,b)||playerTeam(a).localeCompare(playerTeam(b),'sv')||playerName(a).localeCompare(playerName(b),'sv'));const skaters=rows.filter(r=>!isGoalie(r)),goalies=rows.filter(isGoalie).sort((a,b)=>compareOptionalDesc(goaliePctValue(a),goaliePctValue(b))||compareTOI(a,b)||playerName(a).localeCompare(playerName(b),'sv')),showTOI=true;let html=`<div class="tablewrap"><table class="table"><thead><tr><th><button class="sortbtn" data-sort="name">NAMN ↕</button></th><th class="icons"><button class="sortbtn" data-sort="goals">MÅL / ASS ↕</button></th><th style="text-align:right">+/-</th>${showTOI?'<th>TOI</th>':''}</tr></thead><tbody>`;for(const r of skaters){const g=num(get(r,'Goals','G')),a=num(get(r,'Assists','A')),match=matchForPlayer(r),team=playerTeam(r),lg=leagueOf(r)||leagueOf(match||{});const symbols='🎯'.repeat(Math.min(g,20))+'🍏'.repeat(Math.min(a,20));const playerCode=match?(norm(team)===norm(teamHome(match))?get(match,'HomeCode'):norm(team)===norm(teamAway(match))?get(match,'AwayCode'):''):'';html+=`<tr class="swe-player-row" ${match?`data-match="${escapeHtml(gameId(match))}" tabindex="0" role="button" aria-expanded="${opened.has(gameId(match))}" aria-label="Visa eller dölj matchdetaljer för ${escapeHtml(playerName(r))}"`:""}><td><div class="name">${epLinkLine(playerHeading(r))}<span class="player-team">${teamLogo(lg,team,playerCode)}${escapeHtml(team)}</span></div><div class="secondary">${match?`<span class="swe-match-label">${matchDescriptionHtml(match)}${matchIndicatorHtml(match)}<span class="swe-match-chevron" aria-hidden="true">${opened.has(gameId(match))?'⌃':'⌄'}</span></span>`:'Matchuppgift saknas'}</div></td><td class="icons" title="${g} mål, ${a} assist">${symbols}</td><td class="stat" style="text-align:right">${escapeHtml(plusminus(r))}</td>${showTOI?`<td class="stat">${lg==='AHL'?'':escapeHtml(toi(r))}</td>`:''}</tr>`;if(match&&opened.has(gameId(match))){const cached=leagueOf(match)==='NHL'?rawCache.get(rawPath(match,'play-by-play')):null;html+=`<tr class="swe-detail-row"><td colspan="${showTOI?4:3}"><div class="swe-detail-inner"><div class="detail-match-heading">${matchDescriptionHtml(match)}${matchIndicatorHtml(match)}</div><div style="margin-top:10px">${gameGoalDetails(match,cached)}</div></div></td></tr>`}}html+='</tbody></table></div';if(goalies.length){html+=`<div class="tablewrap goalie-tablewrap" style="margin-top:28px!important;overflow:visible!important"><div class="goalies-section-title" style="display:block!important;position:relative!important;box-sizing:border-box!important;width:100%!important;min-height:74px!important;margin:0!important;padding:10px 18px 10px!important;background-color:#000000!important;color:#D6F379!important;font-family:Arial,sans-serif!important;font-size:42px!important;line-height:54px!important;font-weight:800!important;text-align:left!important;border:0!important">Målvakter</div><table class="table"><thead><tr><th>NAMN</th><th>LIGA</th><th>GA</th><th>SHOTS</th><th>SAVES</th><th>SV%</th><th>TOI</th></tr></thead><tbody>`;for(const r of goalies)html+=`<tr><td><div class="name">${epLinkLine(playerHeading(r))}<span class="player-team">${teamLogo(leagueOf(r),playerTeam(r),(()=>{const m=matchForPlayer(r),t=playerTeam(r);return m?(norm(t)===norm(teamHome(m))?get(m,'HomeCode'):norm(t)===norm(teamAway(m))?get(m,'AwayCode'):''):''})())}${escapeHtml(playerTeam(r))}</span></div><div class="secondary">${matchDescriptionHtml(matchForPlayer(r))}${matchIndicatorHtml(matchForPlayer(r))}</div></td><td>${escapeHtml(leagueOf(r))}</td><td class="stat">${goalieStat(r,'GoalsAgainst')}</td><td class="stat">${goalieStat(r,'ShotsAgainst')}</td><td class="stat">${goalieStat(r,'Saves')}</td><td class="stat">${goaliePct(r)}</td><td class="stat">${escapeHtml(toi(r))}</td></tr>`;html+='</tbody></table></div>'}if(!rows.length)html='<div class="empty">Ingen spelarstatistik tillgänglig för valt datum och filter.</div>';return html}
+function shootoutGame(g){const id=gameId(g);return (data.shootout||[]).filter(x=>id&&gameId(x)===id&&leagueOf(x)===leagueOf(g)).slice().sort((a,b)=>num(get(a,'Attempt'))-num(get(b,'Attempt')))}
+function goalGame(g){const id=gameId(g);return data.goals.filter(x=>id&&gameId(x)===id)}
+function goalText(r){
+ const scorer=get(r,'Scorer','GoalScorer','Goalscorer','ScorerName','playerName','Player','Name'),count=get(r,'ScorerSeasonGoals','SeasonGoals','GoalNumber','GoalCount','ScorerGoals'),type=get(r,'GoalType','Strength','StrengthCode','Situation','Type'),a1=get(r,'Assist1','PrimaryAssist','FirstAssist','Assist1Name'),a2=get(r,'Assist2','SecondaryAssist','SecondAssist','Assist2Name');
+ const numberFor=(field,idField)=>{
+   const csvNumber=get(r,field);if(csvNumber)return csvNumber;
+   const id=get(r,idField);if(!id)return '';
+   const matchId=gameId(r),lg=leagueOf(r);
+   const player=data.players.find(p=>leagueOf(p)===lg&&gameId(p)===matchId&&get(p,'PlayerID','player_id')===id);
+   return player?jersey(player):'';
+ };
+ const label=(name,number)=>name?(number?number+'. ':'')+name:'';
+ const scorerLine=label(scorer,numberFor('ScorerJerseyNumber','ScorerID'))+(count?' ('+count+')':'')+(type?' ['+type.replace(/^\[|\]$/g,'')+']':'');
+ return [scorerLine,label(a1,numberFor('Assist1JerseyNumber','Assist1ID')),label(a2,numberFor('Assist2JerseyNumber','Assist2ID'))].filter(Boolean).join('\u001f');
+}
+function rawPath(g,file){return `statsByDate/data/raw/games/${leagueOf(g)==='AHL'?'AHL':'NHL'}/${encodeURIComponent(gameId(g))}/${file}.json`}
+async function fetchRaw(g,file){if(!gameId(g))return null;const key=rawPath(g,file);if(rawCache.has(key))return rawCache.get(key);if(rawPending.has(key))return rawPending.get(key);const task=fetch(key).then(async r=>r.ok?await r.json():null).catch(()=>null).then(obj=>{rawCache.set(key,obj);rawPending.delete(key);return obj});rawPending.set(key,task);return task}
+function outcome(g){
+  const explicit=extra(g);
+  if(explicit)return explicit;
+  const lg=leagueOf(g);
+  if(lg==='NHL'){
+    const pb=rawCache.get(rawPath(g,'play-by-play')),box=rawCache.get(rawPath(g,'boxscore'));
+    const v=pb?.gameOutcome?.lastPeriodType||box?.gameOutcome?.lastPeriodType||box?.periodDescriptor?.periodType||'';
+    if(v==='SO'||v==='OT')return v==='SO'?'GWS':v;
+  }
+  if(lg==='AHL'){
+    const raw=rawCache.get(rawPath(g,'gameSummary'));
+    // AHL:s gameSummary anger slutstatus under details.status ("Final SO").
+    // Även Shootout-CSV är ett tillförlitligt tecken på avgjord straffläggning.
+    if(raw?.hasShootout===true || /(?:^|\s)(?:SO|SHOOTOUT)(?:\s|$)/i.test(String(raw?.details?.status||'')) || shootoutGame(g).length)return 'GWS';
+    const metadata=[raw?.game?.status,raw?.game?.statusString,raw?.game?.gameStatus,raw?.game?.gameState,raw?.game?.result,raw?.game?.periodType,raw?.game?.period,raw?.game?.periodNumber,raw?.game?.statusText,raw?.status,raw?.gameStatus,raw?.game?.finalStatus].filter(x=>x!=null).join(' ').toUpperCase();
+    if(/SHOOTOUT|\bSO\b|\bSOL\b/.test(metadata))return 'GWS';
+    if(/OVERTIME|\bOT\b|\bOTL\b/.test(metadata))return 'OT';
+    const goalPeriods=goalGame(g).map(x=>({period:num(get(x,'Period','PeriodNumber')),type:get(x,'PeriodType','PeriodName','GoalType').toUpperCase()}));
+    if(goalPeriods.some(x=>/SO|SHOOTOUT|GWS/.test(x.type)||x.period>=5))return 'GWS';
+    if(goalPeriods.some(x=>/\bOT\b|OVERTIME/.test(x.type)||x.period===4))return 'OT';
+    const periods=raw?.periods||raw?.game?.periods||[];
+    if(Array.isArray(periods)){
+      if(periods.some(x=>/SO|SHOOTOUT/i.test(String(x.periodType||x.name||x.label||''))))return 'GWS';
+      if(periods.some(x=>/OT|OVERTIME/i.test(String(x.periodType||x.name||x.label||''))||Number(x.periodNumber||x.number||0)===4 && (x.goals||[]).length))return 'OT';
+    }
+  }
+  return '';
+}
+function goalSort(a,b){const ap=num(get(a,'Period','PeriodNumber')),bp=num(get(b,'Period','PeriodNumber'));if(ap!==bp)return ap-bp;const t=r=>{const v=get(r,'Time','PeriodTime','TimeInPeriod');const parts=v.split(':').map(Number);return parts.length===2?parts[0]*60+parts[1]:0};return t(a)-t(b)}
+const LOCALSPORT_PLAY_ICON='icons/localsport_play_symbol.svg';
+function videoButton(url,title){
+ if(!/^https:\/\/(?:www\.)?nhl\.com\/video\/[a-z0-9-]+$/i.test(String(url||'')))return '';
+ return `<button class="goal-video" type="button" data-video-url="${escapeHtml(url)}" data-video-title="${escapeHtml(title||'Målvideo')}" aria-label="Spela målvideo" title="Spela målvideo"><img src="${LOCALSPORT_PLAY_ICON}" alt="▶" onerror="this.style.display='none';this.parentNode.textContent='▶'"></button>`;
+}
+function goalRow(abbr,time,score,desc,videoUrl=''){
+ const lines=String(desc||'–').split('\u001f');
+ const description=lines.map((line,i)=>`<span class="goal-person${i?' goal-assist':''}">${epLinkLine(line)}</span>`).join('');
+ return `<div class="goal"><span class="goal-time">${escapeHtml(time||'–')}</span><span class="abbr">${escapeHtml(abbr||'–')}</span><span class="score">${escapeHtml(score||'–')}</span><span class="goal-play">${videoButton(videoUrl,`${abbr} ${time} ${score}`)}</span><span class="goal-desc">${description}</span></div>`;
+}
+function shootoutDetails(g){
+ const attempts=shootoutGame(g);
+ if(!attempts.length)return '';
+ let html='<div class="periodheading">SO / Straffläggning</div>';
+ for(const r of attempts){
+  const number=get(r,'JerseyNumber'),name=get(r,'Player')||('Spelare '+get(r,'PlayerID'));
+  const label=(number?number+'. ':'')+name;
+  const result=get(r,'Result').toLowerCase()==='scored'?'Scored':'Missed';
+  html+=goalRow(get(r,'TeamCode','Team'),get(r,'Attempt'),'',label+' — '+result);
+ }
+ // Sista raden: matchavgörande straff som en vanlig målrad, med GWS i tidskolumnen.
+ // Lägg bara till när matchen är avslutad och straffläggningen har en vinnare.
+ const homeCode=get(g,'HomeCode','HomeAbbrev'),awayCode=get(g,'AwayCode','AwayAbbrev');
+ const home=attempts.filter(r=>get(r,'TeamCode')===homeCode&&get(r,'Result').toLowerCase()==='scored').length;
+ const away=attempts.filter(r=>get(r,'TeamCode')===awayCode&&get(r,'Result').toLowerCase()==='scored').length;
+ const status=get(g,'Status','GameStatus','GameState').toUpperCase();
+ const complete=/^(OFF|FINAL|FINAL_OT|FINAL_SO|FINISHED|COMPLETED)$/.test(status)||outcome(g)==='GWS'&&/^(OFF|FINAL)/.test(status);
+ if(complete&&home!==away){
+  const winnerCode=home>away?homeCode:awayCode;
+  const winningGoals=Math.min(home,away)+1;
+  const winningAttempt=attempts.filter(r=>get(r,'TeamCode')===winnerCode&&get(r,'Result').toLowerCase()==='scored')[winningGoals-1];
+  if(winningAttempt){
+   const number=get(winningAttempt,'JerseyNumber'),name=get(winningAttempt,'Player');
+   const label=(number?number+'. ':'')+name;
+   const score=scoreHome(g)+'–'+scoreAway(g);
+   html+=goalRow(winnerCode,'GWS',score,label);
+  }
+ }
+ return html;
+}
+function gameGoalDetails(g,cached){
+ const shootout=shootoutDetails(g);
+ if(cached?.plays){
+  // Visa endast ordinarie mål och OT-mål från NHL:s play-by-play.
+  // Straffläggningen kommer separat från Shootout CSV (inklusive missar).
+  return rawGoalDetails(g,cached)+shootout;
+ }
+ return goalDetailsCsv(g)+shootout;
+}
+function goalDetailsCsv(g){
+ const goals=goalGame(g).filter(r=>!(/SO|GWS/i.test(get(r,'PeriodType'))||num(get(r,'Period'))>=5)).slice().sort(goalSort);
+ if(!goals.length)return shootoutGame(g).length?'':'<div class="secondary">Målhändelser saknas eller kan ännu inte matchas mot denna match.</div>';
+ let lastPeriod='',html='',home=0,away=0;
+ const homeAliases=[get(g,'HomeCode','HomeAbbrev'),teamHome(g)].map(norm).filter(Boolean);
+ const awayAliases=[get(g,'AwayCode','AwayAbbrev'),teamAway(g)].map(norm).filter(Boolean);
+ for(const r of goals){
+  const period=get(r,'Period','PeriodNumber'),periodType=get(r,'PeriodType'),title=/SO|GWS/i.test(periodType)?'SO':/OT/i.test(periodType)||Number(period)===4?'OT':period?`Period ${period}`:'Målhändelser';
+  if(title!==lastPeriod){html+=`<div class="periodheading">${escapeHtml(title)}</div>`;lastPeriod=title}
+  const abbr=get(r,'ScoringTeamAbbrev','TeamCode','TeamAbbrev','Team','ScoringTeam');
+  const explicitHome=get(r,'HomeScore','HomeGoals','HomeScoreAfterGoal'),explicitAway=get(r,'AwayScore','AwayGoals','AwayScoreAfterGoal');
+  let score='';
+  if(explicitHome!==''&&explicitAway!==''){
+    home=num(explicitHome);away=num(explicitAway);score=`${home}–${away}`;
+  }else{
+    const alias=norm(abbr);
+    const isHome=homeAliases.includes(alias),isAway=awayAliases.includes(alias);
+    const isShootout=title==='SO';
+    if(!isShootout&&isHome!==isAway){if(isHome)home++;else away++;score=`${home}–${away}`}
+    else if(!isShootout){
+      const direct=get(r,'ScoreAfterGoal','GameScore','Score');
+      const m=direct.match(/^(\d+)\s*[-–:]\s*(\d+)$/);
+      if(m){home=Number(m[1]);away=Number(m[2]);score=`${home}–${away}`}
+    }
+  }
+  html+=goalRow(abbr,get(r,'Time','PeriodTime','TimeInPeriod'),score||'–',goalText(r),get(r,'VideoURL'));
+ }
+ return html;
+}
+function playerLabel(id,roster){const p=roster.get(String(id));if(!p)return id?`Spelare ${id}`:'';const name=[p.firstName?.default||p.firstName,p.lastName?.default||p.lastName].filter(Boolean).join(' ');const n=p.sweaterNumber??p.jerseyNumber;return `${n!=null&&String(n)!==''?n+'. ':''}${name}`}
+// NHL situationCode: [hemmamålvakt, hemmautespelare, bortautespelare, bortamålvakt].
+// Visa ENG vid mål i tom bur; annars 6on5/6on4 när målskyttens lag
+// har plockat ut målvakten. Övriga mål får EQ/PP/SH.
+function nhlGoalStrength(goal,isHome){
+  const d=goal.details||{}, code=String(goal.situationCode||'');
+  if(goal.periodDescriptor?.periodType==='SO')return 'SO';
+  const valid=/^[01][0-6][0-6][01]$/.test(code);
+  const ownGoalie=valid?code[isHome?0:3]:null;
+  const oppGoalie=valid?code[isHome?3:0]:null;
+  const own=valid?Number(code[isHome?1:2]):null;
+  const opp=valid?Number(code[isHome?2:1]):null;
+  const flaggedENG=d.emptyNet===true||d.emptyNet===1||String(d.emptyNet).toLowerCase()==='true';
+  if(flaggedENG||(valid&&oppGoalie==='0'))return 'ENG';
+  if(!valid)return '';
+  if(ownGoalie==='0')return `${own}on${opp}`;
+  const diff=own-opp;
+  return diff===0?'EQ':diff>0?'PP'+diff:'SH'+(-diff);
+}
+function rawGoalDetails(g,obj){if(!obj?.plays)return goalDetailsCsv(g);const box=rawCache.get(rawPath(g,'boxscore'));const roster=new Map([...(box?.rosterSpots||[]),...(obj.rosterSpots||[])].map(p=>[String(p.playerId),p]));const homeId=String(obj.homeTeam?.id||''),homeCode=obj.homeTeam?.abbrev||get(g,'HomeCode'),awayCode=obj.awayTeam?.abbrev||get(g,'AwayCode');const goals=obj.plays.filter(x=>x.typeDescKey==='goal'&&x.details&&x.periodDescriptor?.periodType!=='SO').sort((a,b)=>(a.periodDescriptor?.number||0)-(b.periodDescriptor?.number||0)||num(a.sortOrder)-num(b.sortOrder));if(!goals.length)return goalDetailsCsv(g);let html='',last='';for(const goal of goals){const d=goal.details,period=goal.periodDescriptor||{},title=period.periodType==='OT'?'OT':period.periodType==='SO'?'SO':`Period ${period.number}`;if(title!==last){html+=`<div class="periodheading">${escapeHtml(title)}</div>`;last=title}const abbr=String(d.eventOwnerTeamId)===homeId?homeCode:awayCode,scorer=playerLabel(d.scoringPlayerId,roster),season=d.scoringPlayerTotal!=null?` (${d.scoringPlayerTotal})`:'',assists=[1,2].map(n=>d[`assist${n}PlayerId`]?`${playerLabel(d[`assist${n}PlayerId`],roster)}${d[`assist${n}PlayerTotal`]!=null?` (${d[`assist${n}PlayerTotal`]})`:''}`:'').filter(Boolean);const strength=nhlGoalStrength(goal,String(d.eventOwnerTeamId)===homeId);const strengthLabel=strength?' ['+strength+']':'';const score=d.homeScore!=null&&d.awayScore!=null?`${d.homeScore}–${d.awayScore}`:'';const clip=goalGame(g).find(r=>String(get(r,'Period'))===String(period.number)&&get(r,'Time')===goal.timeInPeriod&&String(get(r,'ScorerID'))===String(d.scoringPlayerId));html+=goalRow(abbr,goal.timeInPeriod,score,[`${scorer}${season}${strengthLabel}`,...assists].join('\u001f'),clip?get(clip,'VideoURL'):'')}return html}
+function matchTimestamp(g){const t=gameTime(g);const iso=Date.parse(t);if(Number.isFinite(iso))return iso;const time=t.match(/(\d{1,2}):(\d{2})/);return time?Number(time[1])*60+Number(time[2]):Number.MAX_SAFE_INTEGER}
+function timeSweden(g){const t=gameTime(g);const parsed=Date.parse(t);if(Number.isFinite(parsed))return new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Stockholm',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(parsed));return t.match(/\b\d{1,2}:\d{2}\b/)?.[0]||'–'}
+function renderGames(){
+ let rows=data.games.filter(r=>leagueOf(r)===league);
+ rows.sort((a,b)=>matchTimestamp(a)-matchTimestamp(b));
+ if(!rows.length)return '<div class="empty">Inga matcher tillgängliga för valt datum och filter.</div>';
+ // Mät bredaste hemmalagsnamnet i aktuell liga. Samma bredd på alla rader
+ // ger ett rakt resultatstreck utan onödigt tomrum till vänster.
+ const measure=document.createElement('canvas').getContext('2d');
+ measure.font='700 14.24px system-ui, -apple-system, Arial, sans-serif';
+ const widest=Math.max(0,...rows.map(r=>measure.measureText(teamHome(r)||'').width));
+ const mobile=window.matchMedia('(max-width:650px)').matches;
+ // Räkna på båda lagnamnen. Ingen kapning: om skärmen är smalare än
+ // hela matchraden tillåts horisontell scrollning i tabellen.
+ const awayWidest=Math.max(0,...rows.map(r=>measure.measureText(teamAway(r)||'').width));
+ const homeWidth=Math.ceil(widest+(mobile?25:31)+10);
+ const awayWidth=Math.ceil(awayWidest+(mobile?25:31)+10);
+ const scoreWidth=mobile?53:78;
+ const fixedWidth=mobile?47+42+19+30:70+75+30+42;
+ const minTableWidth=Math.ceil(fixedWidth+homeWidth+scoreWidth+awayWidth);
+ let html='<div class="tablewrap games-wrap"><table class="table games-table" style="--home-col:'+homeWidth+'px;--away-col:'+awayWidth+'px;min-width:'+minTableWidth+'px"><tbody>';
+ rows.forEach((r,i)=>{
+  const key=gameId(r)||'row'+i,isOpen=opened.has(key),cached=leagueOf(r)==='NHL'?rawCache.get(rawPath(r,'play-by-play')):null;
+  const decision=matchIndicator(r);
+  html+=`<tr class="matchrow" data-match="${escapeHtml(key)}" tabindex="0" role="button" aria-expanded="${isOpen}"><td class="stat">${escapeHtml(timeSweden(r))}</td><td class="decision">${escapeHtml(decision)}</td><td class="name">${compactMatchHtml(r)}</td><td>${isOpen?'⌃':'⌄'}</td></tr>`;
+  if(isOpen)html+=`<tr class="detail"><td colspan="4"><div class="detail-match-heading">${matchDescriptionHtml(r)}${matchIndicatorHtml(r)}</div><div style="margin-top:10px">${gameGoalDetails(r,cached)}</div></td></tr>`;
+ });
+ return html+'</tbody></table></div>';
+}
+async function hydrateOutcomes(games,token){await Promise.all(games.map(g=>fetchRaw(g,leagueOf(g)==='AHL'?'gameSummary':'boxscore')));if(token===loadToken)render()}
+async function expandRaw(g,token){await fetchRaw(g,leagueOf(g)==='AHL'?'gameSummary':'play-by-play');if(token===loadToken)render()}
+// v24: uppdatera kolumnbredder efter faktisk layout, utan sidomladdning.
+let matchLayoutFrame=0;
+function scheduleMatchLayout(){
+ cancelAnimationFrame(matchLayoutFrame);
+ matchLayoutFrame=requestAnimationFrame(updateMatchLayout);
+}
+function updateMatchLayout(){
+ const table=document.querySelector('.games-table');
+ if(!table)return;
+ const homeNames=[...table.querySelectorAll('.matchrow .compact-home .compact-team-name')];
+ const awayNames=[...table.querySelectorAll('.matchrow .compact-away .compact-team-name')];
+ if(!homeNames.length)return;
+ const textWidth=el=>{
+  const canvas=updateMatchLayout.canvas||(updateMatchLayout.canvas=document.createElement('canvas'));
+  const ctx=canvas.getContext('2d');
+  const style=getComputedStyle(el);
+  ctx.font=style.font;
+  return ctx.measureText(el.textContent||'').width;
+ };
+ const mobile=matchMedia('(max-width:650px)').matches;
+ const logoWidth=mobile?17:23;
+ const homeWidth=Math.ceil(Math.max(...homeNames.map(textWidth))+logoWidth+18);
+ const awayWidth=Math.ceil(Math.max(...awayNames.map(textWidth))+logoWidth+18);
+ table.style.setProperty('--home-col',homeWidth+'px');
+ table.style.setProperty('--away-col',awayWidth+'px');
+ const scoreWidth=mobile?53:78;
+ const fixedWidth=mobile?47+42+19+30:70+75+30+42;
+ table.style.minWidth=Math.ceil(fixedWidth+homeWidth+scoreWidth+awayWidth)+'px';
+}
+function render(){const today=todayDate(),diff=Math.round((selected-today)/86400000);$('relative').textContent=diff===0?'Idag':diff===-1?'Igår':diff===1?'Imorgon':`Dag ${diff>0?'+':''}${diff}`;$('prev').disabled=false;$('next').disabled=false;$('dateLabel').textContent=`${days[selected.getDay()]} / ${selected.getDate()} ${months[selected.getMonth()]}`;document.querySelectorAll('[data-league]').forEach(b=>{b.classList.toggle('active',b.dataset.league===league);b.setAttribute('aria-pressed',String(b.dataset.league===league))});$('swe').checked=swe;$('content').innerHTML=swe?renderPlayers():renderGames();if(!swe)scheduleMatchLayout();}
+async function fetchCsv(path){const response=await fetch(path,{cache:'no-store'});if(!response.ok)throw Error(response.status);return csv(await response.text())}
+async function loadEpProfiles(){
+ try{
+  const rows=await fetchCsv('statsByDate/data/ep/EP_profiles.csv');
+  epProfiles.clear();
+  for(const r of rows)if(r.NameKey&&/^https:\/\/www\.eliteprospects\.com\/player\/\d+\/[a-z0-9-]+$/.test(r.EPProfile||''))epProfiles.set(r.NameKey,r.EPProfile);
+  render();
+ }catch(e){console.warn('EliteProspects-länkar saknas:',e)}
+}
+async function load(){const token=++loadToken,key=dateKey(selected);opened.clear();data={games:[],players:[],goals:[],shootout:[]};$('status').textContent='Läser statistik för '+key+' …';render();const names={games:`statsByDate/data/games/Games_${key}.csv`,players:`statsByDate/data/playerstats/PlayerStats_${key}.csv`,goals:`statsByDate/data/playerstats/Goals_${key}.csv`,shootout:`statsByDate/data/playerstats/Shootout_${key}.csv`};const results=await Promise.allSettled(Object.entries(names).map(async([type,path])=>[type,await fetchCsv(path)]));if(token!==loadToken)return;let loaded=[];for(const result of results)if(result.status==='fulfilled'){const [type,rows]=result.value;data[type]=rows;loaded.push(type)}$('status').textContent=loaded.length?'':`${key} · Inga CSV-filer hittades för detta datum. Kontrollera att Games_${key}.csv, PlayerStats_${key}.csv och Goals_${key}.csv har genererats i data/games respektive data/playerstats.`;render();if(data.games.length)hydrateOutcomes(data.games,token)}
+function move(days){const candidate=new Date(selected.getFullYear(),selected.getMonth(),selected.getDate()+days,12);selected=candidate;const u=new URL(location.href);u.searchParams.set('date',dateKey(selected));history.replaceState(null,'',u);load()}
+$('prev').onclick=()=>move(-1);$('next').onclick=()=>move(1);$('today').onclick=()=>{selected=todayDate();const u=new URL(location.href);u.searchParams.delete('date');history.replaceState(null,'',u);load()};$('swe').onchange=e=>{swe=e.target.checked;render()};document.querySelectorAll('[data-league]').forEach(b=>b.onclick=()=>{league=b.dataset.league;render()});$('content').addEventListener('click',e=>{const sortButton=e.target.closest('[data-sort]');if(sortButton){sort=sortButton.dataset.sort;render();return}if(e.target.closest('a,button'))return;const tr=e.target.closest('[data-match]');if(tr){const key=tr.dataset.match;opened.has(key)?opened.delete(key):opened.add(key);render();if(opened.has(key)){const match=data.games.find(g=>gameId(g)===key);if(match)expandRaw(match,loadToken)}}});$('content').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-match]')){e.preventDefault();e.target.click()}});window.addEventListener('resize',scheduleMatchLayout,{passive:true});if(document.fonts){document.fonts.ready.then(scheduleMatchLayout);document.fonts.addEventListener?.('loadingdone',scheduleMatchLayout)}loadEpProfiles();
+load();loadTeamLogos().then(scheduleMatchLayout);
+
+// NHL's cookie consent can loop inside a cross-site iframe.
+// Open the goal clip as a top-level NHL page in a separate tab instead.
+document.addEventListener('click',event=>{
+ const play=event.target.closest('[data-video-url]');
+ if(!play)return;
+ event.preventDefault();event.stopPropagation();
+ const url=play.dataset.videoUrl;
+ if(!/^https:\/\/(?:www\.)?nhl\.com\/video\/[a-z0-9-]+$/i.test(url))return;
+ window.open(url,'_blank','noopener,noreferrer');
+});
+</script></body></html>
