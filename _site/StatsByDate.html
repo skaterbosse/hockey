@@ -193,8 +193,8 @@ main>header,.toolbar,.status{flex:0 0 auto}
 }
 
 /* v47: bred rubrikbakgrund, tätare målvaktskolumner och plats för Pågående. */
-#content .tablewrap:not(.goalie-tablewrap){position:relative}
-#content .tablewrap:not(.goalie-tablewrap)::before{content:"";position:absolute;left:0;right:0;top:0;height:41px;background:#e5ebdb;border-bottom:2px solid #769746;pointer-events:none}
+#content .tablewrap:not(.goalie-tablewrap):not(.games-wrap){position:relative}
+#content .tablewrap:not(.goalie-tablewrap):not(.games-wrap)::before{content:"";position:absolute;left:0;right:0;top:0;height:41px;background:#e5ebdb;border-bottom:2px solid #769746;pointer-events:none}
 #content .skaters-table{position:relative;z-index:1}
 /* Namnkolumnen behöver även rymma matchradens statusetikett. */
 .skaters-table th:first-child,.skaters-table td:first-child{min-width:330px}
@@ -212,7 +212,7 @@ main>header,.toolbar,.status{flex:0 0 auto}
 #content .skaters-table,#content .goalies-table{width:100%;min-width:0;table-layout:auto}
 #content .skaters-table thead tr,#content .goalies-table thead tr{height:40px}
 #content .skaters-table thead th,#content .goalies-table thead th{height:40px;padding-top:0;padding-bottom:0;vertical-align:middle}
-#content .tablewrap:not(.goalie-tablewrap)::before{height:40px}
+#content .tablewrap:not(.goalie-tablewrap):not(.games-wrap)::before{height:40px}
 /* Kompaktare inbördes avstånd i spelarnas matchrad, utan att ändra laglogotypernas storlek. */
 .swe-player-row .swe-match-label{gap:0}
 .swe-player-row .match-label{word-spacing:-1px}
@@ -347,7 +347,7 @@ function matchDescriptionHtml(g){
  if(!g)return 'Matchuppgift saknas';
  const lg=leagueOf(g),h=teamHome(g)||'?',a=teamAway(g)||'?';
  const shown=displayScore(g),hs=shown?.[0]??'',as=shown?.[1]??'',score=hs!==''&&as!==''?`${escapeHtml(hs)} <span class="match-dash">–</span> ${escapeHtml(as)}`:'<span class="match-dash">–</span>';
-  return `<span class="match-label">${escapeHtml(h)} ${teamLogo(lg,h,get(g,'HomeCode','homeAbbrev','homeTeamCode'))} ${score} ${teamLogo(lg,a,get(g,'AwayCode','awayAbbrev','awayTeamCode'))} ${escapeHtml(displayTeamName(lg,a))}</span>`;
+  return `<span class="match-label">${escapeHtml(displayTeamName(lg,h))} ${teamLogo(lg,h,get(g,'HomeCode','homeAbbrev','homeTeamCode'))} ${score} ${teamLogo(lg,a,get(g,'AwayCode','awayAbbrev','awayTeamCode'))} ${escapeHtml(displayTeamName(lg,a))}</span>`;
 }
 const escapeHtml=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=x=>String(x??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
