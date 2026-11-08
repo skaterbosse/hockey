@@ -129,6 +129,33 @@ jobs:
             cp OS_Milano_2026_TV-tider.html _site/OS_Milano_2026_TV-tider.html
           fi
 
+      - name: Include StatsByDate in Pages
+        shell: bash
+        run: |
+          set -e
+
+          mkdir -p _site/statsByDate/data
+
+          cp StatsByDate.html _site/StatsByDate.html
+
+          for folder in games playerstats ep raw/games; do
+            if [ -d "statsByDate/data/$folder" ]; then
+              mkdir -p "_site/statsByDate/data/$folder"
+              cp -R "statsByDate/data/$folder/." \
+                    "_site/statsByDate/data/$folder/"
+            fi
+          done
+
+          mkdir -p _site/highlights
+          for file in NHL_Teams.txt AHL_Teams.txt; do
+            if [ -f "highlights/$file" ]; then
+              cp "highlights/$file" "_site/highlights/$file"
+            fi
+          done
+
+          echo "StatsByDate publication contents:"
+          find _site/statsByDate -type f | sort
+
       - name: Upload Pages artifact
         if: steps.decide.outputs.html_changed == 'true'
         uses: actions/upload-pages-artifact@v4
