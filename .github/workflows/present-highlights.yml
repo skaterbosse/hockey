@@ -110,7 +110,8 @@ jobs:
           fi
 
           if [[ -d icons ]]; then
-            cp -R icons _site/icons
+            mkdir -p _site/icons
+            cp -R icons/. _site/icons/
           fi
 
           if [[ -d logos ]]; then
