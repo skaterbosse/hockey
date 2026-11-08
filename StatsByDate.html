@@ -176,6 +176,21 @@ main>header,.toolbar,.status{flex:0 0 auto}
 .goalie-tablewrap{margin-top:26px!important;border-radius:10px!important;overflow:visible!important;background:#efefef!important}
 #content .goalie-tablewrap .goalies-section-title{display:block!important;background:#000!important;color:#D6F379!important;font-family:Arial,sans-serif!important;font-size:42px!important;line-height:1.2!important;font-weight:800!important;text-align:left!important;padding:28px 16px 26px!important;margin:0!important;box-sizing:border-box!important}
 .goalie-tablewrap .table{border-radius:0 0 10px 10px}
+
+/* v46: iPhone-kompakt läge; endast visning, ingen ändring av data eller klickfunktion. */
+.skaters-table{width:max-content;min-width:0;table-layout:auto}
+.skaters-table th,.skaters-table td{padding-left:5px;padding-right:5px}
+.skaters-table th:first-child,.skaters-table td:first-child{white-space:nowrap}
+.games-table th:nth-child(1),.games-table .matchrow td:nth-child(1){width:56px}
+.games-table th:nth-child(2),.games-table .matchrow td:nth-child(2){width:42px;padding-left:2px;padding-right:2px}
+.games-table .compact-match{grid-template-columns:var(--home-col,190px) 78px minmax(var(--away-col,190px),1fr)}
+@media(max-width:650px){
+ .skaters-table th,.skaters-table td{padding-left:4px;padding-right:4px}
+ .games-table .matchrow td{padding-left:2px;padding-right:2px}
+ .games-table .matchrow td:nth-child(1){width:36px}
+ .games-table .matchrow td:nth-child(2){width:22px;font-size:.62rem;padding-left:1px;padding-right:1px}
+ .games-table .compact-match{grid-template-columns:var(--home-col,120px) 53px minmax(var(--away-col,120px),1fr)}
+}
 </style></head><body><div class="localsport-brand"><a href="index.html" aria-label="LocalSport startsida"><img src="icons/local_sport_full_logo_night_mode_vad_hande_inatt.svg" alt="LocalSport – Vad hände inatt?"></a></div><main><header><div class="datebar"><button id="prev" aria-label="Föregående dag">‹</button><div class="datebox"><strong id="relative">Idag</strong><small id="dateLabel"></small></div><button id="next" aria-label="Nästa dag">›</button></div><nav class="tabs" aria-label="Välj liga"><button data-league="NHL" class="active">NHL</button><button data-league="AHL">AHL</button></nav></header>
 <div class="toolbar"><label><input type="checkbox" id="swe" checked> SWE</label><button class="today" id="today">Till idag</button></div><div class="status" id="status" aria-live="polite"></div><section id="content"></section>
 
@@ -242,18 +257,27 @@ function teamLogo(lg,team,code=''){
  if(!filename)return '';
  return `<img class="team-logo" src="${escapeHtml(CONFIG.logosPath+encodeURIComponent(filename))}" alt="" loading="lazy" onerror="this.style.display='none'">`;
 }
+// Endast presentationsnamn: behåll fullständiga AHL-namn i CSV, logotypuppslag och title.
+const AHL_TEAM_SUFFIXES=['Wolf Pack','Thunderbirds','Silver Knights','Barracuda','IceHogs','Checkers','Admirals','Senators','Bruins','Canucks','Reign','Penguins','Hammers','Phantoms','Moose','Marlies','Wild','Stars','Wranglers','Comets','Americans','Monsters','Condors','Firebirds','Griffins','Gulls','Crunch','Bears','Roadrunners','Eagles','Rockets','Islanders'];
+function displayTeamName(lg,full){
+ if(lg!=='AHL')return full;
+ for(const suffix of AHL_TEAM_SUFFIXES){
+  if(full.endsWith(' '+suffix))return full.slice(0,-suffix.length-1);
+ }
+ return full;
+}
 function compactMatchHtml(g){
  if(!g)return 'Matchuppgift saknas';
  const lg=leagueOf(g),h=teamHome(g)||'?',a=teamAway(g)||'?';
  const shown=displayScore(g),hs=shown?.[0]??'',as=shown?.[1]??'';
  const score=hs!==''&&as!==''?`${escapeHtml(hs)} <span class="match-dash">–</span> ${escapeHtml(as)}`:'–';
- return `<span class="compact-match"><span class="compact-home"><span class="compact-team-name" title="${escapeHtml(h)}">${escapeHtml(h)}</span>${teamLogo(lg,h,get(g,'HomeCode','homeAbbrev','homeTeamCode'))}</span><span class="compact-score">${score}</span><span class="compact-away">${teamLogo(lg,a,get(g,'AwayCode','awayAbbrev','awayTeamCode'))}<span class="compact-team-name" title="${escapeHtml(a)}">${escapeHtml(a)}</span></span></span>`;
+ return `<span class="compact-match"><span class="compact-home"><span class="compact-team-name" title="${escapeHtml(h)}">${escapeHtml(displayTeamName(lg,h))}</span>${teamLogo(lg,h,get(g,'HomeCode','homeAbbrev','homeTeamCode'))}</span><span class="compact-score">${score}</span><span class="compact-away">${teamLogo(lg,a,get(g,'AwayCode','awayAbbrev','awayTeamCode'))}<span class="compact-team-name" title="${escapeHtml(a)}">${escapeHtml(displayTeamName(lg,a))}</span></span></span>`;
 }
 function matchDescriptionHtml(g){
  if(!g)return 'Matchuppgift saknas';
  const lg=leagueOf(g),h=teamHome(g)||'?',a=teamAway(g)||'?';
  const shown=displayScore(g),hs=shown?.[0]??'',as=shown?.[1]??'',score=hs!==''&&as!==''?`${escapeHtml(hs)} <span class="match-dash">–</span> ${escapeHtml(as)}`:'<span class="match-dash">–</span>';
-  return `<span class="match-label">${escapeHtml(h)} ${teamLogo(lg,h,get(g,'HomeCode','homeAbbrev','homeTeamCode'))} ${score} ${teamLogo(lg,a,get(g,'AwayCode','awayAbbrev','awayTeamCode'))} ${escapeHtml(a)}</span>`;
+  return `<span class="match-label">${escapeHtml(h)} ${teamLogo(lg,h,get(g,'HomeCode','homeAbbrev','homeTeamCode'))} ${score} ${teamLogo(lg,a,get(g,'AwayCode','awayAbbrev','awayTeamCode'))} ${escapeHtml(displayTeamName(lg,a))}</span>`;
 }
 const escapeHtml=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=x=>String(x??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
@@ -342,7 +366,7 @@ function comparePlusMinus(a,b){const parse=r=>{const v=get(r,'PlusMinus','plus_m
 function goalieStat(r,key){const v=get(r,key);return v===''?'–':escapeHtml(v)}
 function goaliePct(r){const shots=Number(get(r,'ShotsAgainst')),saves=Number(get(r,'Saves'));if(!get(r,'ShotsAgainst')||!Number.isFinite(shots)||shots<=0)return '–';const raw=get(r,'SavePct');let pct=raw!==''?Number(String(raw).replace(',','.')):NaN;if(!Number.isFinite(pct)){pct=Number.isFinite(saves)?100*saves/shots:NaN}else if(pct<=1)pct*=100;return Number.isFinite(pct)?pct.toFixed(2).replace('.',',')+' %':'–'}
 function goaliePctValue(r){const shots=Number(get(r,'ShotsAgainst'));if(!get(r,'ShotsAgainst')||!Number.isFinite(shots)||shots<=0)return null;const saves=Number(get(r,'Saves'));const raw=get(r,'SavePct');let pct=raw!==''?Number(String(raw).replace(',','.')):NaN;if(!Number.isFinite(pct)){pct=Number.isFinite(saves)&&get(r,'Saves')!==''?100*saves/shots:NaN}else if(pct<=1)pct*=100;return Number.isFinite(pct)?pct:null}
-function renderPlayers(){let rows=data.players.filter(r=>(!swe||isSwede(r))&&(league==='ALL'||leagueOf(r)===league));rows.sort((a,b)=>sort==='name'?playerName(a).localeCompare(playerName(b),'sv'):num(get(b,'Goals','G'))-num(get(a,'Goals','G'))||num(get(b,'Assists','A'))-num(get(a,'Assists','A'))||compareTOI(a,b)||comparePlusMinus(a,b)||playerTeam(a).localeCompare(playerTeam(b),'sv')||playerName(a).localeCompare(playerName(b),'sv'));const skaters=rows.filter(r=>!isGoalie(r)),goalies=rows.filter(isGoalie).sort((a,b)=>compareOptionalDesc(goaliePctValue(a),goaliePctValue(b))||compareTOI(a,b)||playerName(a).localeCompare(playerName(b),'sv')),showTOI=true;let html=`<div class="tablewrap"><table class="table"><thead><tr><th><button class="sortbtn" data-sort="name">NAMN ↕</button></th><th class="icons"><button class="sortbtn" data-sort="goals">MÅL / ASS ↕</button></th><th style="text-align:right">+/-</th>${showTOI?'<th>TOI</th>':''}</tr></thead><tbody>`;for(const r of skaters){const g=num(get(r,'Goals','G')),a=num(get(r,'Assists','A')),match=matchForPlayer(r),team=playerTeam(r),lg=leagueOf(r)||leagueOf(match||{});const symbols='🎯'.repeat(Math.min(g,20))+'🍏'.repeat(Math.min(a,20));const playerCode=match?(norm(team)===norm(teamHome(match))?get(match,'HomeCode'):norm(team)===norm(teamAway(match))?get(match,'AwayCode'):''):'';html+=`<tr class="swe-player-row" ${match?`data-match="${escapeHtml(gameId(match))}" tabindex="0" role="button" aria-expanded="${opened.has(gameId(match))}" aria-label="Visa eller dölj matchdetaljer för ${escapeHtml(playerName(r))}"`:""}><td><div class="name">${epLinkLine(playerHeading(r))}<span class="player-team">${teamLogo(lg,team,playerCode)}${escapeHtml(team)}</span></div><div class="secondary">${match?`<span class="swe-match-label">${matchDescriptionHtml(match)}${matchIndicatorHtml(match)}<span class="swe-match-chevron" aria-hidden="true">${opened.has(gameId(match))?'⌃':'⌄'}</span></span>`:'Matchuppgift saknas'}</div></td><td class="icons" title="${g} mål, ${a} assist">${symbols}</td><td class="stat" style="text-align:right">${escapeHtml(plusminus(r))}</td>${showTOI?`<td class="stat">${lg==='AHL'?'':escapeHtml(toi(r))}</td>`:''}</tr>`;if(match&&opened.has(gameId(match))){const cached=leagueOf(match)==='NHL'?rawCache.get(rawPath(match,'play-by-play')):null;html+=`<tr class="swe-detail-row"><td colspan="${showTOI?4:3}"><div class="swe-detail-inner"><div class="detail-match-heading">${matchDescriptionHtml(match)}${matchIndicatorHtml(match)}</div><div style="margin-top:10px">${gameGoalDetails(match,cached)}</div></div></td></tr>`}}html+='</tbody></table></div';if(goalies.length){html+=`<div class="tablewrap goalie-tablewrap" style="margin-top:28px!important;overflow:visible!important"><div class="goalies-section-title" style="display:block!important;position:relative!important;box-sizing:border-box!important;width:100%!important;min-height:74px!important;margin:0!important;padding:10px 18px 10px!important;background-color:#000000!important;color:#D6F379!important;font-family:Arial,sans-serif!important;font-size:42px!important;line-height:54px!important;font-weight:800!important;text-align:left!important;border:0!important">Målvakter</div><table class="table"><thead><tr><th>NAMN</th><th>LIGA</th><th>GA</th><th>SHOTS</th><th>SAVES</th><th>SV%</th><th>TOI</th></tr></thead><tbody>`;for(const r of goalies)html+=`<tr><td><div class="name">${epLinkLine(playerHeading(r))}<span class="player-team">${teamLogo(leagueOf(r),playerTeam(r),(()=>{const m=matchForPlayer(r),t=playerTeam(r);return m?(norm(t)===norm(teamHome(m))?get(m,'HomeCode'):norm(t)===norm(teamAway(m))?get(m,'AwayCode'):''):''})())}${escapeHtml(playerTeam(r))}</span></div><div class="secondary">${matchDescriptionHtml(matchForPlayer(r))}${matchIndicatorHtml(matchForPlayer(r))}</div></td><td>${escapeHtml(leagueOf(r))}</td><td class="stat">${goalieStat(r,'GoalsAgainst')}</td><td class="stat">${goalieStat(r,'ShotsAgainst')}</td><td class="stat">${goalieStat(r,'Saves')}</td><td class="stat">${goaliePct(r)}</td><td class="stat">${escapeHtml(toi(r))}</td></tr>`;html+='</tbody></table></div>'}if(!rows.length)html='<div class="empty">Ingen spelarstatistik tillgänglig för valt datum och filter.</div>';return html}
+function renderPlayers(){let rows=data.players.filter(r=>(!swe||isSwede(r))&&(league==='ALL'||leagueOf(r)===league));rows.sort((a,b)=>sort==='name'?playerName(a).localeCompare(playerName(b),'sv'):num(get(b,'Goals','G'))-num(get(a,'Goals','G'))||num(get(b,'Assists','A'))-num(get(a,'Assists','A'))||compareTOI(a,b)||comparePlusMinus(a,b)||playerTeam(a).localeCompare(playerTeam(b),'sv')||playerName(a).localeCompare(playerName(b),'sv'));const skaters=rows.filter(r=>!isGoalie(r)),goalies=rows.filter(isGoalie).sort((a,b)=>compareOptionalDesc(goaliePctValue(a),goaliePctValue(b))||compareTOI(a,b)||playerName(a).localeCompare(playerName(b),'sv')),showTOI=true;let html=`<div class="tablewrap"><table class="table skaters-table"><thead><tr><th><button class="sortbtn" data-sort="name">NAMN ↕</button></th><th class="icons"><button class="sortbtn" data-sort="goals">MÅL / ASS ↕</button></th><th style="text-align:right">+/-</th>${showTOI?'<th>TOI</th>':''}</tr></thead><tbody>`;for(const r of skaters){const g=num(get(r,'Goals','G')),a=num(get(r,'Assists','A')),match=matchForPlayer(r),team=playerTeam(r),lg=leagueOf(r)||leagueOf(match||{});const symbols='🎯'.repeat(Math.min(g,20))+'🍏'.repeat(Math.min(a,20));const playerCode=match?(norm(team)===norm(teamHome(match))?get(match,'HomeCode'):norm(team)===norm(teamAway(match))?get(match,'AwayCode'):''):'';html+=`<tr class="swe-player-row" ${match?`data-match="${escapeHtml(gameId(match))}" tabindex="0" role="button" aria-expanded="${opened.has(gameId(match))}" aria-label="Visa eller dölj matchdetaljer för ${escapeHtml(playerName(r))}"`:""}><td><div class="name">${epLinkLine(playerHeading(r))}<span class="player-team">${teamLogo(lg,team,playerCode)}${escapeHtml(team)}</span></div><div class="secondary">${match?`<span class="swe-match-label">${matchDescriptionHtml(match)}${matchIndicatorHtml(match)}<span class="swe-match-chevron" aria-hidden="true">${opened.has(gameId(match))?'⌃':'⌄'}</span></span>`:'Matchuppgift saknas'}</div></td><td class="icons" title="${g} mål, ${a} assist">${symbols}</td><td class="stat" style="text-align:right">${escapeHtml(plusminus(r))}</td>${showTOI?`<td class="stat">${lg==='AHL'?'':escapeHtml(toi(r))}</td>`:''}</tr>`;if(match&&opened.has(gameId(match))){const cached=leagueOf(match)==='NHL'?rawCache.get(rawPath(match,'play-by-play')):null;html+=`<tr class="swe-detail-row"><td colspan="${showTOI?4:3}"><div class="swe-detail-inner"><div class="detail-match-heading">${matchDescriptionHtml(match)}${matchIndicatorHtml(match)}</div><div style="margin-top:10px">${gameGoalDetails(match,cached)}</div></div></td></tr>`}}html+='</tbody></table></div';if(goalies.length){html+=`<div class="tablewrap goalie-tablewrap" style="margin-top:28px!important;overflow:visible!important"><div class="goalies-section-title" style="display:block!important;position:relative!important;box-sizing:border-box!important;width:100%!important;min-height:74px!important;margin:0!important;padding:10px 18px 10px!important;background-color:#000000!important;color:#D6F379!important;font-family:Arial,sans-serif!important;font-size:42px!important;line-height:54px!important;font-weight:800!important;text-align:left!important;border:0!important">Målvakter</div><table class="table"><thead><tr><th>NAMN</th><th>LIGA</th><th>GA</th><th>SHOTS</th><th>SAVES</th><th>SV%</th><th>TOI</th></tr></thead><tbody>`;for(const r of goalies)html+=`<tr><td><div class="name">${epLinkLine(playerHeading(r))}<span class="player-team">${teamLogo(leagueOf(r),playerTeam(r),(()=>{const m=matchForPlayer(r),t=playerTeam(r);return m?(norm(t)===norm(teamHome(m))?get(m,'HomeCode'):norm(t)===norm(teamAway(m))?get(m,'AwayCode'):''):''})())}${escapeHtml(playerTeam(r))}</span></div><div class="secondary">${matchDescriptionHtml(matchForPlayer(r))}${matchIndicatorHtml(matchForPlayer(r))}</div></td><td>${escapeHtml(leagueOf(r))}</td><td class="stat">${goalieStat(r,'GoalsAgainst')}</td><td class="stat">${goalieStat(r,'ShotsAgainst')}</td><td class="stat">${goalieStat(r,'Saves')}</td><td class="stat">${goaliePct(r)}</td><td class="stat">${escapeHtml(toi(r))}</td></tr>`;html+='</tbody></table></div>'}if(!rows.length)html='<div class="empty">Ingen spelarstatistik tillgänglig för valt datum och filter.</div>';return html}
 function shootoutGame(g){const id=gameId(g);return (data.shootout||[]).filter(x=>id&&gameId(x)===id&&leagueOf(x)===leagueOf(g)).slice().sort((a,b)=>num(get(a,'Attempt'))-num(get(b,'Attempt')))}
 function goalGame(g){const id=gameId(g);return data.goals.filter(x=>id&&gameId(x)===id)}
 function goalText(r){
@@ -497,22 +521,22 @@ function renderGames(){
  // ger ett rakt resultatstreck utan onödigt tomrum till vänster.
  const measure=document.createElement('canvas').getContext('2d');
  measure.font='700 14.24px system-ui, -apple-system, Arial, sans-serif';
- const widest=Math.max(0,...rows.map(r=>measure.measureText(teamHome(r)||'').width));
+ const widest=Math.max(0,...rows.map(r=>measure.measureText(displayTeamName(league,teamHome(r)||'')).width));
  const mobile=window.matchMedia('(max-width:650px)').matches;
  // Räkna på båda lagnamnen. Ingen kapning: om skärmen är smalare än
  // hela matchraden tillåts horisontell scrollning i tabellen.
- const awayWidest=Math.max(0,...rows.map(r=>measure.measureText(teamAway(r)||'').width));
- const homeWidth=Math.ceil(widest+(mobile?25:31)+10);
- const awayWidth=Math.ceil(awayWidest+(mobile?25:31)+10);
+ const awayWidest=Math.max(0,...rows.map(r=>measure.measureText(displayTeamName(league,teamAway(r)||'')).width));
+ const homeWidth=Math.ceil(widest+(mobile?17:23)+7);
+ const awayWidth=Math.ceil(awayWidest+(mobile?17:23)+7);
  const scoreWidth=mobile?53:78;
- const fixedWidth=mobile?47+42+19+30:70+75+30+42;
+ const fixedWidth=mobile?36+22+12:56+42+18;
  const minTableWidth=Math.ceil(fixedWidth+homeWidth+scoreWidth+awayWidth);
  let html='<div class="tablewrap games-wrap"><table class="table games-table" style="--home-col:'+homeWidth+'px;--away-col:'+awayWidth+'px;min-width:'+minTableWidth+'px"><tbody>';
  rows.forEach((r,i)=>{
   const key=gameId(r)||'row'+i,isOpen=opened.has(key),cached=leagueOf(r)==='NHL'?rawCache.get(rawPath(r,'play-by-play')):null;
   const decision=matchIndicator(r);
-  html+=`<tr class="matchrow" data-match="${escapeHtml(key)}" tabindex="0" role="button" aria-expanded="${isOpen}"><td class="stat">${escapeHtml(timeSweden(r))}</td><td class="decision">${escapeHtml(decision)}</td><td class="name">${compactMatchHtml(r)}</td><td>${isOpen?'⌃':'⌄'}</td></tr>`;
-  if(isOpen)html+=`<tr class="detail"><td colspan="4"><div class="detail-match-heading">${matchDescriptionHtml(r)}${matchIndicatorHtml(r)}</div><div style="margin-top:10px">${gameGoalDetails(r,cached)}</div></td></tr>`;
+  html+=`<tr class="matchrow" data-match="${escapeHtml(key)}" tabindex="0" role="button" aria-expanded="${isOpen}"><td class="stat">${escapeHtml(timeSweden(r))}</td><td class="decision">${escapeHtml(decision)}</td><td class="name">${compactMatchHtml(r)}</td></tr>`;
+  if(isOpen)html+=`<tr class="detail"><td colspan="3"><div class="detail-match-heading">${matchDescriptionHtml(r)}${matchIndicatorHtml(r)}</div><div style="margin-top:10px">${gameGoalDetails(r,cached)}</div></td></tr>`;
  });
  return html+'</tbody></table></div>';
 }
@@ -539,12 +563,12 @@ function updateMatchLayout(){
  };
  const mobile=matchMedia('(max-width:650px)').matches;
  const logoWidth=mobile?17:23;
- const homeWidth=Math.ceil(Math.max(...homeNames.map(textWidth))+logoWidth+18);
- const awayWidth=Math.ceil(Math.max(...awayNames.map(textWidth))+logoWidth+18);
+ const homeWidth=Math.ceil(Math.max(...homeNames.map(textWidth))+logoWidth+7);
+ const awayWidth=Math.ceil(Math.max(...awayNames.map(textWidth))+logoWidth+7);
  table.style.setProperty('--home-col',homeWidth+'px');
  table.style.setProperty('--away-col',awayWidth+'px');
  const scoreWidth=mobile?53:78;
- const fixedWidth=mobile?47+42+19+30:70+75+30+42;
+ const fixedWidth=mobile?36+22+12:56+42+18;
  table.style.minWidth=Math.ceil(fixedWidth+homeWidth+scoreWidth+awayWidth)+'px';
 }
 function render(){const today=todayDate(),diff=Math.round((selected-today)/86400000);$('relative').textContent=diff===0?'Idag':diff===-1?'Igår':diff===1?'Imorgon':`Dag ${diff>0?'+':''}${diff}`;$('prev').disabled=false;$('next').disabled=false;$('dateLabel').textContent=`${days[selected.getDay()]} / ${selected.getDate()} ${months[selected.getMonth()]}`;document.querySelectorAll('[data-league]').forEach(b=>{b.classList.toggle('active',b.dataset.league===league);b.setAttribute('aria-pressed',String(b.dataset.league===league))});$('swe').checked=swe;$('content').innerHTML=swe?renderPlayers():renderGames();if(!swe)scheduleMatchLayout();}
