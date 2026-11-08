@@ -1,0 +1,89 @@
+name: StatsByDate automatic updates
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "regular or daily"
+        required: true
+        type: choice
+        options:
+          - regular
+          - daily
+  schedule:
+    # UTC triggers; the gate below uses Europe/Stockholm to handle DST.
+    - cron: '15,30,45 3-8 * * *'
+    - cron: '0 * * * *'
+    - cron: '50 2,3 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: statsbydate-publish
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide run mode in Swedish time
+        id: schedule
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          INPUT_MODE: ${{ inputs.mode }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+          now = datetime.now(ZoneInfo('Europe/Stockholm'))
+          event = os.environ['EVENT_NAME']
+          if event == 'workflow_dispatch':
+              mode = os.environ['INPUT_MODE']
+          elif now.hour == 4 and now.minute == 50:
+              mode = 'daily'
+          elif (5 <= now.hour <= 9 and now.minute in (0,15,30,45)) or (now.hour >= 19 or now.hour <= 4) and now.minute == 0:
+              mode = 'regular'
+          else:
+              mode = ''
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f'mode={mode}\n')
+          print(f'Swedish time: {now:%Y-%m-%d %H:%M %Z}; mode: {mode or "skip"}')
+          PY
+
+      - uses: actions/checkout@v4
+        if: steps.schedule.outputs.mode != ''
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        if: steps.schedule.outputs.mode != ''
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        if: steps.schedule.outputs.mode != ''
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f statsByDate/requirements.txt ]; then
+            python -m pip install -r statsByDate/requirements.txt
+          elif [ -f requirements.txt ]; then
+            python -m pip install -r requirements.txt
+          else
+            python -m pip install requests pandas beautifulsoup4
+          fi
+
+      - name: Fetch schedules and statistics
+        if: steps.schedule.outputs.mode != ''
+        run: python statsByDate/scripts/updateHockeyDaily.py --mode "${{ steps.schedule.outputs.mode }}"
+
+      - name: Commit and push rolling data
+        if: steps.schedule.outputs.mode != ''
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python statsByDate/scripts/publishStatsByDate.py --mode "${{ steps.schedule.outputs.mode }}" --commit --push
