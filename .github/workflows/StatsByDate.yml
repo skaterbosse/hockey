@@ -26,6 +26,8 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.schedule.outputs.mode }}
     steps:
       - name: Decide run mode in Swedish time
         id: schedule
@@ -106,3 +108,13 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           python statsByDate/scripts/publishStatsByDate.py --mode "${{ steps.schedule.outputs.mode }}" --commit --push
+
+  deploy:
+    name: Deploy updated StatsByDate
+    needs: update
+    if: ${{ needs.update.result == 'success' && needs.update.outputs.mode != '' }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/DeployPagesOnly.yml
