@@ -33,25 +33,44 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           EVENT_SCHEDULE: ${{ github.event.schedule }}
           INPUT_MODE: ${{ inputs.mode }}
-        shell: bash
         run: |
           python3 - <<'PY'
           import os
           from datetime import datetime
           from zoneinfo import ZoneInfo
-          now = datetime.now(ZoneInfo('Europe/Stockholm'))
-          event = os.environ['EVENT_NAME']
-          if event == 'workflow_dispatch':
-              mode = os.environ['INPUT_MODE']
-          elif now.hour == 4 and now.minute == 50:
-              mode = 'daily'
-          elif (5 <= now.hour <= 9 and now.minute in (0,15,30,45)) or (now.hour >= 19 or now.hour <= 4) and now.minute == 0:
-              mode = 'regular'
-          else:
-              mode = ''
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
-              out.write(f'mode={mode}\n')
-          print(f'Swedish time: {now:%Y-%m-%d %H:%M %Z}; mode: {mode or "skip"}')
+
+          now = datetime.now(ZoneInfo("Europe/Stockholm"))
+          event = os.environ.get("EVENT_NAME", "")
+          schedule = os.environ.get("EVENT_SCHEDULE", "")
+          requested = os.environ.get("INPUT_MODE", "")
+
+          mode = ""
+
+          if event == "workflow_dispatch":
+              mode = requested or "regular"
+
+          elif event == "schedule":
+              if schedule == "50 2,3 * * *":
+                  # En daglig körning omkring 04:50 svensk tid.
+                  # UTC-timmen varierar med sommar-/vintertid.
+                  if now.hour == 4:
+                      mode = "daily"
+
+              elif schedule == "15,30,45 3-8 * * *":
+                  if 5 <= now.hour <= 9:
+                      mode = "regular"
+
+              elif schedule == "0 * * * *":
+                  if now.hour >= 19 or now.hour <= 9:
+                      mode = "regular"
+
+          print(
+              f"Swedish time: {now:%Y-%m-%d %H:%M %Z}; "
+              f"schedule: {schedule}; mode: {mode or 'skip'}"
+          )
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              print(f"mode={mode}", file=output)
           PY
 
       - uses: actions/checkout@v4
