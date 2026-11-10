@@ -12,8 +12,10 @@ on:
           - daily
   schedule:
     # UTC triggers; the gate below uses Europe/Stockholm to handle DST.
-    - cron: '15,30,45 3-8 * * *'
-    - cron: '0 * * * *'
+    # Regular: 19:00-04:59 Swedish time twice/hour; 05:00-09:59 six/hour.
+    # UTC windows cover both CET and CEST; local-time gate below filters extras.
+    - cron: '0,30 0-2,17-23 * * *'
+    - cron: '0,10,20,30,40,50 3-8 * * *'
     - cron: '50 2,3 * * *'
 
 permissions:
@@ -58,13 +60,18 @@ jobs:
                   if now.hour == 4:
                       mode = "daily"
 
-              elif schedule == "15,30,45 3-8 * * *":
-                  if 5 <= now.hour <= 9:
+              elif schedule in (
+                  "0,30 0-2,17-23 * * *",
+                  "0,10,20,30,40,50 3-8 * * *",
+              ):
+                  # All intervals are evaluated in Swedish local time.
+                  # A 10-minute UTC trigger can occur during the local 04:00 hour
+                  # in winter; accept only the 00/30 slots there.
+                  if 5 <= now.hour < 10:
                       mode = "regular"
-
-              elif schedule == "0 * * * *":
-                  if now.hour >= 19 or now.hour <= 9:
-                      mode = "regular"
+                  elif now.hour >= 19 or now.hour < 5:
+                      if now.minute // 10 in (0, 3):
+                          mode = "regular"
 
           print(
               f"Swedish time: {now:%Y-%m-%d %H:%M %Z}; "
