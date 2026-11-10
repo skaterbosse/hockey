@@ -38,7 +38,8 @@ jobs:
           fi
 
           if [[ -d logos ]]; then
-            cp -R logos _site/logos
+            mkdir -p _site/logos
+            cp -R logos/. _site/logos/
           fi
 
           if [[ -f LocalSports.html ]]; then
