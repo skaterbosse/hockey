@@ -460,7 +460,10 @@ function outcome(g){
   const lg=leagueOf(g);
   if(lg==='NHL'){
     const pb=rawCache.get(rawPath(g,'play-by-play')),box=rawCache.get(rawPath(g,'boxscore'));
-    const v=pb?.gameOutcome?.lastPeriodType||box?.gameOutcome?.lastPeriodType||box?.periodDescriptor?.periodType||'';
+    // Boxscore är primär källa: en äldre play-by-play får inte överstyra
+    // ett senare slutresultat (t.ex. OT -> GWS).
+    const v=String(box?.gameOutcome?.lastPeriodType||box?.periodDescriptor?.periodType||
+      pb?.gameOutcome?.lastPeriodType||pb?.periodDescriptor?.periodType||'').toUpperCase();
     if(v==='SO'||v==='OT')return v==='SO'?'GWS':v;
   }
   if(lg==='AHL'){

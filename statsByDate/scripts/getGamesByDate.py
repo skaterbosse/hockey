@@ -24,7 +24,7 @@ PROJECT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_DIR / 'data'
 
 FIELDS = ['League','Date','GameID','Season','GameType','Status','AwayTeam','AwayCode','AwayTeamID',
-          'HomeTeam','HomeCode','HomeTeamID','AwayScore','HomeScore','StartUTC','Source','SourceStatus']
+          'HomeTeam','HomeCode','HomeTeamID','AwayScore','HomeScore','StartUTC','Source','SourceStatus','Decision']
 
 
 def get_json(url, params=None):
@@ -107,6 +107,21 @@ def normalized_status(league, raw, game=None):
     return 'UNKNOWN'
 
 
+def nhl_decision(game):
+    """Read an explicit NHL decision; never infer OT from an unfinished period."""
+    if normalized_status('NHL', game.get('gameState')) != 'FINAL':
+        return ''
+    outcome = game.get('gameOutcome') or {}
+    period = str(outcome.get('lastPeriodType') or '').upper()
+    if period == 'SO':
+        return 'GWS'
+    if period == 'OT':
+        return 'OT'
+    if period == 'REG':
+        return 'REG'
+    return ''
+
+
 def ahl_start_utc(game):
     """HockeyTech supplies an offset-aware GameDateISO8601; convert to UTC."""
     local_iso = str(getv(game, 'GameDateISO8601', 'gameDateISO8601')).strip()
@@ -140,7 +155,7 @@ def nhl_games(day, cache_dir, refresh):
                 HomeTeam=label(home.get('placeName')) or label(home.get('commonName')),
                 HomeCode=home.get('abbrev',''), HomeTeamID=home.get('id',''),
                 AwayScore=away.get('score',''), HomeScore=home.get('score',''),
-                StartUTC=g.get('startTimeUTC',''), Source='NHL_API'))
+                StartUTC=g.get('startTimeUTC',''), Source='NHL_API', Decision=nhl_decision(g)))
     return result, cached
 
 
@@ -211,7 +226,7 @@ def ahl_games(start, end, cache_dir, refresh, key, season_ids):
                 HomeTeam=home_name,HomeCode=home_code,HomeTeamID=home_id,
                 AwayScore=getv(g,'visiting_goal_count','visiting_team_score','away_score','visitor_score'),
                 HomeScore=getv(g,'home_goal_count','home_team_score','home_score'),
-                StartUTC=ahl_start_utc(g),Source='AHL_HOCKEYTECH'))
+                StartUTC=ahl_start_utc(g),Source='AHL_HOCKEYTECH',Decision=''))
             added+=1
         print(f'INFO AHL season {season_id}: {len(games)} schedule rows, {added} in range'+(' (cached)' if cached else ''))
     return rows
