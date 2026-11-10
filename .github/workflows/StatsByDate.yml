@@ -11,11 +11,12 @@ on:
           - regular
           - daily
   schedule:
-    # UTC triggers; the gate below uses Europe/Stockholm to handle DST.
-    # Regular: 19:00-04:59 Swedish time twice/hour; 05:00-09:59 six/hour.
-    # UTC windows cover both CET and CEST; local-time gate below filters extras.
-    - cron: '0,30 0-2,17-23 * * *'
-    - cron: '0,10,20,30,40,50 3-8 * * *'
+    # GitHub Actions cron uses UTC. The Python gate below uses Europe/Stockholm.
+    # :00 and :30 every hour, filtered to 19:00-04:59 and 05:00-09:59 local.
+    - cron: '0,30 * * * *'
+    # Extra ten-minute slots covering 05:00-09:59 in both CET and CEST.
+    - cron: '10,20,40,50 3-8 * * *'
+    # One daily schedule refresh at approximately 04:50 Swedish time.
     - cron: '50 2,3 * * *'
 
 permissions:
@@ -47,37 +48,28 @@ jobs:
           event = os.environ.get("EVENT_NAME", "")
           schedule = os.environ.get("EVENT_SCHEDULE", "")
           requested = os.environ.get("INPUT_MODE", "")
-
           mode = ""
 
           if event == "workflow_dispatch":
               mode = requested or "regular"
-
           elif event == "schedule":
               if schedule == "50 2,3 * * *":
-                  # En daglig körning omkring 04:50 svensk tid.
-                  # UTC-timmen varierar med sommar-/vintertid.
+                  # One of these two UTC hours is 04:50 in Sweden.
                   if now.hour == 4:
                       mode = "daily"
-
-              elif schedule in (
-                  "0,30 0-2,17-23 * * *",
-                  "0,10,20,30,40,50 3-8 * * *",
-              ):
-                  # All intervals are evaluated in Swedish local time.
-                  # A 10-minute UTC trigger can occur during the local 04:00 hour
-                  # in winter; accept only the 00/30 slots there.
+              elif schedule == "0,30 * * * *":
+                  # Half-hour slots in the evening/night and morning.
+                  if now.hour >= 19 or now.hour < 10:
+                      mode = "regular"
+              elif schedule == "10,20,40,50 3-8 * * *":
+                  # Additional ten-minute slots in the Swedish morning.
                   if 5 <= now.hour < 10:
                       mode = "regular"
-                  elif now.hour >= 19 or now.hour < 5:
-                      if now.minute // 10 in (0, 3):
-                          mode = "regular"
 
           print(
               f"Swedish time: {now:%Y-%m-%d %H:%M %Z}; "
               f"schedule: {schedule}; mode: {mode or 'skip'}"
           )
-
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
               print(f"mode={mode}", file=output)
           PY
@@ -107,7 +99,7 @@ jobs:
 
       - name: Fetch schedules and statistics
         if: steps.schedule.outputs.mode != ''
-        run: python statsByDate/scripts/updateHockeyDaily.py --mode "${{ steps.schedule.outputs.mode }}" --refresh-stats
+        run: python statsByDate/scripts/updateHockeyDaily.py --mode "${{ steps.schedule.outputs.mode }}"
 
       - name: Commit and push rolling data
         if: steps.schedule.outputs.mode != ''
