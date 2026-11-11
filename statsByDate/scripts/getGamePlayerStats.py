@@ -542,6 +542,19 @@ def main():
             if league=='NHL':
                 box,state1=cached(base/'boxscore.json',f'{NHL_URL}/{gid}/boxscore',None,refresh_game)
                 pbp,state2=cached(base/'play-by-play.json',f'{NHL_URL}/{gid}/play-by-play',None,refresh_game)
+                # A final OT game must contain every goal, including the winner in period 4.
+                # Older cached play-by-play can be a snapshot taken before that goal.
+                last_period=str((box.get('gameOutcome') or {}).get('lastPeriodType') or
+                                (box.get('periodDescriptor') or {}).get('periodType') or '').upper()
+                if not refresh_game and last_period=='OT':
+                    expected=sum(int((box.get(side+'Team') or {}).get('score') or 0)
+                                 for side in ('home','away'))
+                    actual=sum(e.get('typeDescKey')=='goal' and
+                               (e.get('periodDescriptor') or {}).get('periodType')!='SO'
+                               for e in pbp.get('plays',[]))
+                    if actual<expected:
+                        print(f'INFO NHL {gid}: incomplete cached OT goals ({actual}/{expected}); refreshing play-by-play')
+                        pbp,state2=cached(base/'play-by-play.json',f'{NHL_URL}/{gid}/play-by-play',None,True)
                 p=nhl_players(g,box,lookups);sc=nhl_goals(g,pbp);so=nhl_shootout(g,pbp)
                 try:
                     landing,landing_state=cached(base/'landing.json',f'{NHL_URL}/{gid}/landing',None,refresh_game)

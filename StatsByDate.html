@@ -529,8 +529,11 @@ function shootoutDetails(g){
 function gameGoalDetails(g,cached){
  const shootout=shootoutDetails(g);
  if(cached?.plays){
-  // Visa endast ordinarie mål och OT-mål från NHL:s play-by-play.
-  // Straffläggningen kommer separat från Shootout CSV (inklusive missar).
+  // En cachad play-by-play kan vara hämtad innan OT-målet registrerades.
+  // Använd den fullständigare CSV-listan om den innehåller fler mål.
+  const rawCount=cached.plays.filter(e=>e.typeDescKey==='goal'&&e.periodDescriptor?.periodType!=='SO').length;
+  const csvCount=goalGame(g).filter(r=>!(/SO|GWS/i.test(get(r,'PeriodType'))||num(get(r,'Period'))>=5)).length;
+  if(csvCount>rawCount)return goalDetailsCsv(g)+shootout;
   return rawGoalDetails(g,cached)+shootout;
  }
  return goalDetailsCsv(g)+shootout;
