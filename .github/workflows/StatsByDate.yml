@@ -99,7 +99,13 @@ jobs:
 
       - name: Fetch schedules and statistics
         if: steps.schedule.outputs.mode != ''
-        run: python statsByDate/scripts/updateHockeyDaily.py --mode "${{ steps.schedule.outputs.mode }}"
+        run: |
+          mode="${{ steps.schedule.outputs.mode }}"
+          if [ "$mode" = "regular" ]; then
+            python statsByDate/scripts/updateHockeyDaily.py --mode "$mode" --refresh-stats
+          else
+            python statsByDate/scripts/updateHockeyDaily.py --mode "$mode"
+          fi
 
       - name: Commit and push rolling data
         if: steps.schedule.outputs.mode != ''
