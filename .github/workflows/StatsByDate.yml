@@ -11,20 +11,27 @@ on:
           - regular
           - daily
   schedule:
-    # GitHub Actions cron uses UTC. The Python gate below uses Europe/Stockholm.
-    # :00 and :30 every hour, filtered to 19:00-04:59 and 05:00-09:59 local.
-    - cron: '0,30 * * * *'
-    # Extra ten-minute slots covering 05:00-09:59 in both CET and CEST.
-    - cron: '10,20,40,50 3-8 * * *'
-    # One daily schedule refresh at approximately 04:50 Swedish time.
-    - cron: '50 2,3 * * *'
+    # Swedish local time (CET/CEST), with minutes away from :00.
+    # Regular: 19:07-04:37, every 30 minutes.
+    - cron: '7,37 19-23,0-4 * * *'
+      timezone: Europe/Stockholm
+    # Regular: 05:07-09:57, every 10 minutes.
+    - cron: '7,17,27,37,47,57 5-9 * * *'
+      timezone: Europe/Stockholm
+    # Daily: refresh future schedules at 04:49.
+    - cron: '49 4 * * *'
+      timezone: Europe/Stockholm
 
 permissions:
   contents: write
 
+# One complete fetch -> git push -> Pages deployment at a time.
+# Queue all runs so a pending daily run is never replaced by regular.
+# GitHub's queue limit is 100; GitHub may also drop cron triggers before queueing.
 concurrency:
   group: statsbydate-publish
   cancel-in-progress: false
+  queue: max
 
 jobs:
   update:
@@ -32,61 +39,42 @@ jobs:
     outputs:
       mode: ${{ steps.schedule.outputs.mode }}
     steps:
-      - name: Decide run mode in Swedish time
+      - name: Select mode from triggering schedule (not actual start time)
         id: schedule
         env:
           EVENT_NAME: ${{ github.event_name }}
           EVENT_SCHEDULE: ${{ github.event.schedule }}
           INPUT_MODE: ${{ inputs.mode }}
+        shell: bash
         run: |
           python3 - <<'PY'
           import os
           from datetime import datetime
           from zoneinfo import ZoneInfo
 
-          now = datetime.now(ZoneInfo("Europe/Stockholm"))
-          event = os.environ.get("EVENT_NAME", "")
-          schedule = os.environ.get("EVENT_SCHEDULE", "")
-          requested = os.environ.get("INPUT_MODE", "")
-          mode = ""
-
-          if event == "workflow_dispatch":
-              mode = requested or "regular"
-          elif event == "schedule":
-              if schedule == "50 2,3 * * *":
-                  # One of these two UTC hours is 04:50 in Sweden.
-                  if now.hour == 4:
-                      mode = "daily"
-              elif schedule == "0,30 * * * *":
-                  # Half-hour slots in the evening/night and morning.
-                  if now.hour >= 19 or now.hour < 10:
-                      mode = "regular"
-              elif schedule == "10,20,40,50 3-8 * * *":
-                  # Additional ten-minute slots in the Swedish morning.
-                  if 5 <= now.hour < 10:
-                      mode = "regular"
-
-          print(
-              f"Swedish time: {now:%Y-%m-%d %H:%M %Z}; "
-              f"schedule: {schedule}; mode: {mode or 'skip'}"
-          )
-          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              print(f"mode={mode}", file=output)
+          schedule = os.environ.get('EVENT_SCHEDULE', '')
+          if os.environ.get('EVENT_NAME') == 'workflow_dispatch':
+              mode = os.environ.get('INPUT_MODE') or 'regular'
+          elif schedule == '49 4 * * *':
+              mode = 'daily'
+          else:
+              mode = 'regular'
+          now = datetime.now(ZoneInfo('Europe/Stockholm'))
+          print(f'Swedish time: {now:%Y-%m-%d %H:%M %Z}; schedule: {schedule}; mode: {mode}')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              print(f'mode={mode}', file=output)
           PY
 
       - uses: actions/checkout@v4
-        if: steps.schedule.outputs.mode != ''
         with:
           fetch-depth: 0
           persist-credentials: true
 
       - uses: actions/setup-python@v5
-        if: steps.schedule.outputs.mode != ''
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        if: steps.schedule.outputs.mode != ''
         run: |
           python -m pip install --upgrade pip
           if [ -f statsByDate/requirements.txt ]; then
@@ -98,7 +86,7 @@ jobs:
           fi
 
       - name: Fetch schedules and statistics
-        if: steps.schedule.outputs.mode != ''
+        shell: bash
         run: |
           mode="${{ steps.schedule.outputs.mode }}"
           if [ "$mode" = "regular" ]; then
@@ -108,7 +96,6 @@ jobs:
           fi
 
       - name: Commit and push rolling data
-        if: steps.schedule.outputs.mode != ''
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -117,7 +104,7 @@ jobs:
   deploy:
     name: Deploy updated StatsByDate
     needs: update
-    if: ${{ needs.update.result == 'success' && needs.update.outputs.mode != '' }}
+    if: ${{ needs.update.result == 'success' }}
     permissions:
       contents: read
       pages: write
