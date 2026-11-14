@@ -15,8 +15,8 @@
   "venueUTCOffset": "-08:00",
   "venueTimezone": "US/Pacific",
   "periodDescriptor": {
-    "number": 3,
-    "periodType": "REG",
+    "number": 5,
+    "periodType": "SO",
     "maxRegulationPeriods": 3
   },
   "tvBroadcasts": [
@@ -35,7 +35,7 @@
       "sequenceNumber": 657
     }
   ],
-  "gameState": "CRIT",
+  "gameState": "OFF",
   "gameScheduleState": "OK",
   "awayTeam": {
     "id": 18,
@@ -50,11 +50,10 @@
       "default": "Nashville",
       "fr": "de Nashville"
     },
-    "score": 2,
-    "sog": 28,
+    "score": 3,
+    "sog": 32,
     "logo": "https://assets.nhle.com/logos/nhl/svg/NSH_light.svg",
-    "darkLogo": "https://assets.nhle.com/logos/nhl/svg/NSH_dark.svg",
-    "radioLink": "https://d2igy0yla8zi0u.cloudfront.net/nsh/20262027/nsh-radio.m3u8"
+    "darkLogo": "https://assets.nhle.com/logos/nhl/svg/NSH_dark.svg"
   },
   "homeTeam": {
     "id": 54,
@@ -70,10 +69,9 @@
       "fr": "de Vegas"
     },
     "score": 2,
-    "sog": 41,
+    "sog": 42,
     "logo": "https://assets.nhle.com/logos/nhl/svg/VGK_light.svg",
-    "darkLogo": "https://assets.nhle.com/logos/nhl/svg/VGK_dark.svg",
-    "radioLink": "https://d2igy0yla8zi0u.cloudfront.net/vgk/20262027/vgk-radio.m3u8"
+    "darkLogo": "https://assets.nhle.com/logos/nhl/svg/VGK_dark.svg"
   },
   "shootoutInUse": true,
   "maxPeriods": 5,
@@ -81,20 +79,6 @@
   "otInUse": true,
   "tiesInUse": false,
   "summary": {
-    "iceSurface": {
-      "awayTeam": {
-        "forwards": [],
-        "defensemen": [],
-        "goalies": [],
-        "penaltyBox": []
-      },
-      "homeTeam": {
-        "forwards": [],
-        "defensemen": [],
-        "goalies": [],
-        "penaltyBox": []
-      }
-    },
     "scoring": [
       {
         "periodDescriptor": {
@@ -399,9 +383,282 @@
             "isHome": false
           }
         ]
+      },
+      {
+        "periodDescriptor": {
+          "number": 4,
+          "periodType": "OT",
+          "maxRegulationPeriods": 3
+        },
+        "goals": []
+      },
+      {
+        "periodDescriptor": {
+          "number": 5,
+          "periodType": "SO",
+          "maxRegulationPeriods": 3
+        },
+        "goals": [
+          {
+            "situationCode": "0101",
+            "eventId": 219,
+            "strength": "ev",
+            "playerId": 8474600,
+            "firstName": {
+              "default": "Roman"
+            },
+            "lastName": {
+              "default": "Josi"
+            },
+            "name": {
+              "default": "R. Josi"
+            },
+            "teamAbbrev": {
+              "default": "NSH"
+            },
+            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/NSH/8474600.png",
+            "highlightClipSharingUrl": "https://nhl.com/video/josi-scores-shootout-winner-against-knights-6408370932112",
+            "highlightClipSharingUrlFr": "https://nhl.com/fr/video/josi-marque-le-but-decisif-en-tir-de-barrage-contre-les-go-lden-knights-6408368889112",
+            "highlightClip": 6408370932112,
+            "highlightClipFr": 6408368889112,
+            "discreteClip": 6408369673112,
+            "discreteClipFr": 6408369286112,
+            "awayScore": 3,
+            "homeScore": 2,
+            "leadingTeamAbbrev": {
+              "default": "NSH"
+            },
+            "timeInPeriod": "00:00",
+            "shotType": "wrist",
+            "goalModifier": "none",
+            "assists": [],
+            "homeTeamDefendingSide": "right",
+            "isHome": false
+          }
+        ]
       }
     ],
-    "threeStars": [],
+    "shootout": {
+      "liveScore": {
+        "home": 1,
+        "away": 2
+      },
+      "events": [
+        {
+          "sequence": 1,
+          "playerId": 8483890,
+          "teamAbbrev": {
+            "default": "VGK"
+          },
+          "firstName": {
+            "default": "Braeden"
+          },
+          "lastName": {
+            "default": "Bowman"
+          },
+          "shotType": "backhand",
+          "result": "save",
+          "headshot": "https://assets.nhle.com/mugs/nhl/20262027/VGK/8483890.png",
+          "gameWinner": false,
+          "homeScore": 0,
+          "awayScore": 0
+        },
+        {
+          "sequence": 2,
+          "playerId": 8474564,
+          "teamAbbrev": {
+            "default": "NSH"
+          },
+          "firstName": {
+            "default": "Steven"
+          },
+          "lastName": {
+            "default": "Stamkos"
+          },
+          "shotType": "backhand",
+          "result": "save",
+          "headshot": "https://assets.nhle.com/mugs/nhl/20262027/NSH/8474564.png",
+          "gameWinner": false,
+          "homeScore": 0,
+          "awayScore": 0
+        },
+        {
+          "sequence": 3,
+          "playerId": 8484803,
+          "teamAbbrev": {
+            "default": "VGK"
+          },
+          "firstName": {
+            "default": "Trevor"
+          },
+          "lastName": {
+            "default": "Connelly"
+          },
+          "shotType": "wrist",
+          "result": "goal",
+          "headshot": "https://assets.nhle.com/mugs/nhl/20262027/VGK/8484803.png",
+          "gameWinner": false,
+          "homeScore": 1,
+          "awayScore": 0
+        },
+        {
+          "sequence": 4,
+          "playerId": 8475158,
+          "teamAbbrev": {
+            "default": "NSH"
+          },
+          "firstName": {
+            "default": "Ryan"
+          },
+          "lastName": {
+            "default": "O'Reilly"
+          },
+          "shotType": "wrist",
+          "result": "save",
+          "headshot": "https://assets.nhle.com/mugs/nhl/20262027/NSH/8475158.png",
+          "gameWinner": false,
+          "homeScore": 1,
+          "awayScore": 0
+        },
+        {
+          "sequence": 5,
+          "playerId": 8478483,
+          "teamAbbrev": {
+            "default": "VGK"
+          },
+          "firstName": {
+            "default": "Mitch",
+            "cs": "Mitchell",
+            "de": "Mitchell",
+            "es": "Mitchell",
+            "fi": "Mitchell",
+            "sk": "Mitchell",
+            "sv": "Mitchell"
+          },
+          "lastName": {
+            "default": "Marner"
+          },
+          "shotType": "wrist",
+          "result": "save",
+          "headshot": "https://assets.nhle.com/mugs/nhl/20262027/VGK/8478483.png",
+          "gameWinner": false,
+          "homeScore": 1,
+          "awayScore": 0
+        },
+        {
+          "sequence": 6,
+          "playerId": 8476887,
+          "teamAbbrev": {
+            "default": "NSH"
+          },
+          "firstName": {
+            "default": "Filip"
+          },
+          "lastName": {
+            "default": "Forsberg"
+          },
+          "shotType": "wrist",
+          "result": "goal",
+          "headshot": "https://assets.nhle.com/mugs/nhl/20262027/NSH/8476887.png",
+          "gameWinner": false,
+          "homeScore": 1,
+          "awayScore": 1
+        },
+        {
+          "sequence": 7,
+          "playerId": 8478403,
+          "teamAbbrev": {
+            "default": "VGK"
+          },
+          "firstName": {
+            "default": "Jack"
+          },
+          "lastName": {
+            "default": "Eichel"
+          },
+          "result": "save",
+          "headshot": "https://assets.nhle.com/mugs/nhl/20262027/VGK/8478403.png",
+          "gameWinner": false,
+          "homeScore": 1,
+          "awayScore": 1
+        },
+        {
+          "sequence": 8,
+          "playerId": 8474600,
+          "teamAbbrev": {
+            "default": "NSH"
+          },
+          "firstName": {
+            "default": "Roman"
+          },
+          "lastName": {
+            "default": "Josi"
+          },
+          "shotType": "wrist",
+          "result": "goal",
+          "headshot": "https://assets.nhle.com/mugs/nhl/20262027/NSH/8474600.png",
+          "gameWinner": true,
+          "highlightClipSharingUrl": "https://nhl.com/video/josi-scores-shootout-winner-against-knights-6408370932112",
+          "highlightClipSharingUrlFr": "https://nhl.com/fr/video/josi-marque-le-but-decisif-en-tir-de-barrage-contre-les-go-lden-knights-6408368889112",
+          "highlightClip": 6408370932112,
+          "highlightClipFr": 6408368889112,
+          "discreteClip": 6408369673112,
+          "discreteClipFr": 6408369286112,
+          "homeScore": 1,
+          "awayScore": 2
+        }
+      ],
+      "fullVideoId": {
+        "default": 6408370159112,
+        "fr": 6408369675112
+      },
+      "fullShootoutSharingUrl": {
+        "default": "https://nhl.com/video/nsh-at-vgk-full-shootout-6408370159112",
+        "fr": "https://nhl.com/fr/video/nsh-vs-vgk-tirs-de-barrage-6408369675112"
+      }
+    },
+    "threeStars": [
+      {
+        "star": 1,
+        "playerId": 8477424,
+        "teamAbbrev": "NSH",
+        "headshot": "https://assets.nhle.com/mugs/nhl/20262027/NSH/8477424.png",
+        "name": {
+          "default": "J. Saros"
+        },
+        "sweaterNo": 74,
+        "position": "G",
+        "goalsAgainstAverage": 1.85,
+        "savePctg": 0.952
+      },
+      {
+        "star": 2,
+        "playerId": 8478499,
+        "teamAbbrev": "VGK",
+        "headshot": "https://assets.nhle.com/mugs/nhl/20262027/VGK/8478499.png",
+        "name": {
+          "default": "A. Hill"
+        },
+        "sweaterNo": 33,
+        "position": "G",
+        "goalsAgainstAverage": 1.85,
+        "savePctg": 0.938
+      },
+      {
+        "star": 3,
+        "playerId": 8474600,
+        "teamAbbrev": "NSH",
+        "headshot": "https://assets.nhle.com/mugs/nhl/20262027/NSH/8474600.png",
+        "name": {
+          "default": "R. Josi"
+        },
+        "sweaterNo": 59,
+        "position": "D",
+        "goals": 0,
+        "assists": 1,
+        "points": 1
+      }
+    ],
     "penalties": [
       {
         "periodDescriptor": {
@@ -574,6 +831,14 @@
             "descKey": "holding"
           }
         ]
+      },
+      {
+        "periodDescriptor": {
+          "number": 4,
+          "periodType": "OT",
+          "maxRegulationPeriods": 3
+        },
+        "penalties": []
       }
     ]
   },
