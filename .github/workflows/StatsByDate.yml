@@ -100,6 +100,10 @@ jobs:
         if: steps.schedule.outputs.mode != ''
         run: python statsByDate/scripts/getNHLGameRecaps.py
 
+      - name: Fetch NHL 10-minute condensed games
+        if: steps.schedule.outputs.mode != ''
+        run: python statsByDate/scripts/getNHLCondensedGames.py
+
       - name: Commit and push rolling data
         if: steps.schedule.outputs.mode != ''
         run: |

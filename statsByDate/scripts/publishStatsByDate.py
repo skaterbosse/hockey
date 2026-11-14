@@ -102,6 +102,11 @@ def main():
     if (root / recap).is_file():
         to_add.add(recap.as_posix())
 
+    # Preserve and publish the separate 10-minute condensed-game archive.
+    condensed = PROJECT / 'recaps' / 'NHL_CondensedGames.csv'
+    if (root / condensed).is_file():
+        to_add.add(condensed.as_posix())
+
     to_remove = set()
     if args.mode == 'daily':
         cutoff = today - timedelta(days=args.days_back)
