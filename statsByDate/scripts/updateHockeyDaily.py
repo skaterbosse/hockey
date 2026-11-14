@@ -59,6 +59,24 @@ def main():
     print(f'Mode: {"manual" if manual else args.mode}; reference: {anchor}; dates: {days[0]}..{days[-1]}', flush=True)
     started = time.monotonic()
     if not args.ep_only:
+        # Repair recently finished NHL games beyond the normal yesterday/today
+        # window. Use existing schedule CSVs; do not touch historical AHL rows.
+        if args.mode == 'regular' and not manual and 'NHL' in leagues.split(','):
+            for offset in (3, 2):
+                previous_day = anchor - timedelta(days=offset)
+                gamefile = PROJECT_DIR / 'data' / 'games' / f'Games_{previous_day}.csv'
+                if not gamefile.exists() and not args.dry_run:
+                    print(f'INFO NHL backfill {previous_day}: no game CSV, skipping', flush=True)
+                    continue
+                stats = [sys.executable, 'getGamePlayerStats.py', '-d',
+                         previous_day.isoformat(), '-l', 'NHL']
+                if not args.no_strict:
+                    stats.append('--strict')
+                if args.refresh_stats:
+                    stats.append('--refresh')
+                rc = run_step(f'NHL backfill {previous_day}', stats, args.dry_run)
+                if rc:
+                    return rc
         for day in days:
             schedule = [sys.executable, 'getGamesByDate.py', '-d', day.isoformat(), '-l', leagues]
             if not args.no_refresh:

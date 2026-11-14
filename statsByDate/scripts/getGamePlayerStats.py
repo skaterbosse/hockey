@@ -536,25 +536,43 @@ def main():
     for g in games:
         league=g['League'];gid=g['GameID']
         base=args.data_dir/'raw'/'games'/league/gid
-        # Always update ongoing games; reuse finished-game cache as before.
-        refresh_game = args.refresh or str(g.get('Status','')).strip().upper() in active_statuses
+        # NHL final scores and play-by-play may lag behind live snapshots.
+        # Always revalidate NHL when a date is processed. AHL caching stays unchanged.
+        refresh_game = (args.refresh or
+                        str(g.get('Status','')).strip().upper() in active_statuses or
+                        (league == 'NHL' and
+                         str(g.get('Status','')).strip().upper() in completed_statuses))
         try:
             if league=='NHL':
                 box,state1=cached(base/'boxscore.json',f'{NHL_URL}/{gid}/boxscore',None,refresh_game)
                 pbp,state2=cached(base/'play-by-play.json',f'{NHL_URL}/{gid}/play-by-play',None,refresh_game)
-                # A final OT game must contain every goal, including the winner in period 4.
-                # Older cached play-by-play can be a snapshot taken before that goal.
-                last_period=str((box.get('gameOutcome') or {}).get('lastPeriodType') or
-                                (box.get('periodDescriptor') or {}).get('periodType') or '').upper()
-                if not refresh_game and last_period=='OT':
-                    expected=sum(int((box.get(side+'Team') or {}).get('score') or 0)
-                                 for side in ('home','away'))
-                    actual=sum(e.get('typeDescKey')=='goal' and
-                               (e.get('periodDescriptor') or {}).get('periodType')!='SO'
-                               for e in pbp.get('plays',[]))
-                    if actual<expected:
-                        print(f'INFO NHL {gid}: incomplete cached OT goals ({actual}/{expected}); refreshing play-by-play')
-                        pbp,state2=cached(base/'play-by-play.json',f'{NHL_URL}/{gid}/play-by-play',None,True)
+                # Validate all completed NHL games, not only OT games.
+                # NHL shootout final scores include one awarded goal not present
+                # among regular play-by-play goals.
+                final_state = str(box.get('gameState') or '').upper() in ('OFF', 'FINAL')
+                if final_state:
+                    expected = sum(int((box.get(side+'Team') or {}).get('score') or 0)
+                                   for side in ('home', 'away'))
+                    last_period = str((box.get('gameOutcome') or {}).get('lastPeriodType') or
+                                      (box.get('periodDescriptor') or {}).get('periodType') or '').upper()
+                    if last_period == 'SO':
+                        expected -= 1
+                    actual = sum(e.get('typeDescKey') == 'goal' and
+                                 (e.get('periodDescriptor') or {}).get('periodType') != 'SO'
+                                 for e in pbp.get('plays', []))
+                    if actual != expected:
+                        print(f'WARNING NHL {gid}: goals {actual}/{expected} in play-by-play '
+                              f'(boxscore state={box.get("gameState")}); retrying fresh API',
+                              file=sys.stderr)
+                        # Retry once to handle temporarily inconsistent API endpoints.
+                        pbp,state2=cached(base/'play-by-play.json',
+                                          f'{NHL_URL}/{gid}/play-by-play',None,True)
+                        actual = sum(e.get('typeDescKey') == 'goal' and
+                                     (e.get('periodDescriptor') or {}).get('periodType') != 'SO'
+                                     for e in pbp.get('plays', []))
+                        if actual != expected:
+                            raise ValueError(f'NHL final goals mismatch: {actual}/{expected}; '
+                                             'preserving existing CSV for this game')
                 p=nhl_players(g,box,lookups);sc=nhl_goals(g,pbp);so=nhl_shootout(g,pbp)
                 try:
                     landing,landing_state=cached(base/'landing.json',f'{NHL_URL}/{gid}/landing',None,refresh_game)
