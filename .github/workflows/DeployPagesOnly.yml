@@ -55,7 +55,7 @@ jobs:
 
           cp StatsByDate.html _site/StatsByDate.html
 
-          for folder in games playerstats ep raw/games; do
+          for folder in games playerstats ep raw/games recaps; do
             if [ -d "statsByDate/data/$folder" ]; then
               mkdir -p "_site/statsByDate/data/$folder"
               cp -R "statsByDate/data/$folder/." \
@@ -71,8 +71,8 @@ jobs:
           done
 
           echo "StatsByDate publication contents:"
-          find _site/statsByDate -type f | sort    
-          
+          find _site/statsByDate -type f | sort
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
