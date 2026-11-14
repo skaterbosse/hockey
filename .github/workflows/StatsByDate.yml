@@ -10,11 +10,6 @@ on:
         options:
           - regular
           - daily
-  schedule:
-    # GitHub Actions cron uses UTC. The Python gate below uses Europe/Stockholm.
-    - cron: '0,30 * * * *'
-    - cron: '10,20,40,50 3-8 * * *'
-    - cron: '50 2,3 * * *'
 
 permissions:
   contents: write
