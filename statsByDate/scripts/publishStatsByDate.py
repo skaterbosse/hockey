@@ -96,6 +96,12 @@ def main():
             if folder.is_dir():
                 to_add.update(p.relative_to(root).as_posix() for p in folder.glob('*.json') if p.is_file())
 
+    # Keep the cumulative NHL recap archive in every automated publication.
+    # This file is intentionally excluded from rolling-data pruning.
+    recap = PROJECT / 'recaps' / 'NHL_Recaps.csv'
+    if (root / recap).is_file():
+        to_add.add(recap.as_posix())
+
     to_remove = set()
     if args.mode == 'daily':
         cutoff = today - timedelta(days=args.days_back)
