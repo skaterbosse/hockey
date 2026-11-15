@@ -15,7 +15,7 @@
   "venueUTCOffset": "-06:00",
   "venueTimezone": "US/Central",
   "periodDescriptor": {
-    "number": 1,
+    "number": 3,
     "periodType": "REG",
     "maxRegulationPeriods": 3
   },
@@ -58,8 +58,8 @@
       "default": "Florida",
       "fr": "de la Floride"
     },
-    "score": 2,
-    "sog": 10,
+    "score": 3,
+    "sog": 20,
     "logo": "https://assets.nhle.com/logos/nhl/svg/FLA_light.svg",
     "darkLogo": "https://assets.nhle.com/logos/nhl/svg/FLA_dark.svg",
     "radioLink": "https://d2igy0yla8zi0u.cloudfront.net/fla/20262027/fla-radio.m3u8"
@@ -78,7 +78,7 @@
       "fr": "de St. Louis"
     },
     "score": 0,
-    "sog": 2,
+    "sog": 11,
     "logo": "https://assets.nhle.com/logos/nhl/svg/STL_light.svg",
     "darkLogo": "https://assets.nhle.com/logos/nhl/svg/STL_dark.svg",
     "radioLink": "https://d2igy0yla8zi0u.cloudfront.net/stl/20262027/stl-radio.m3u8"
@@ -249,6 +249,76 @@
             "isHome": false
           }
         ]
+      },
+      {
+        "periodDescriptor": {
+          "number": 2,
+          "periodType": "REG",
+          "maxRegulationPeriods": 3
+        },
+        "goals": [
+          {
+            "situationCode": "1551",
+            "eventId": 445,
+            "strength": "ev",
+            "playerId": 8482113,
+            "firstName": {
+              "default": "Anton"
+            },
+            "lastName": {
+              "default": "Lundell"
+            },
+            "name": {
+              "default": "A. Lundell"
+            },
+            "teamAbbrev": {
+              "default": "FLA"
+            },
+            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/FLA/8482113.png",
+            "highlightClipSharingUrl": "https://nhl.com/video/fla-stl-lundell-scores-goal-against-joel-hofer-6408396033112",
+            "highlightClipSharingUrlFr": "https://nhl.com/fr/video/fla-stl-lundell-marque-un-but-contre-joel-hofer-6408396030112",
+            "highlightClip": 6408396033112,
+            "highlightClipFr": 6408396030112,
+            "discreteClip": 6408393842112,
+            "discreteClipFr": 6408396128112,
+            "goalsToDate": 7,
+            "awayScore": 3,
+            "homeScore": 0,
+            "leadingTeamAbbrev": {
+              "default": "FLA"
+            },
+            "timeInPeriod": "03:28",
+            "shotType": "snap",
+            "goalModifier": "none",
+            "assists": [
+              {
+                "playerId": 8480801,
+                "firstName": {
+                  "default": "Brady"
+                },
+                "lastName": {
+                  "default": "Tkachuk"
+                },
+                "name": {
+                  "default": "B. Tkachuk"
+                },
+                "assistsToDate": 12,
+                "sweaterNumber": 8
+              }
+            ],
+            "pptReplayUrl": "https://wsr.nhle.com/sprites/20262027/2026020320/ev445.json",
+            "homeTeamDefendingSide": "right",
+            "isHome": false
+          }
+        ]
+      },
+      {
+        "periodDescriptor": {
+          "number": 3,
+          "periodType": "REG",
+          "maxRegulationPeriods": 3
+        },
+        "goals": []
       }
     ],
     "threeStars": [],
@@ -327,29 +397,60 @@
             "descKey": "slashing"
           }
         ]
+      },
+      {
+        "periodDescriptor": {
+          "number": 2,
+          "periodType": "REG",
+          "maxRegulationPeriods": 3
+        },
+        "penalties": [
+          {
+            "timeInPeriod": "11:06",
+            "type": "MIN",
+            "duration": 2,
+            "committedByPlayer": {
+              "firstName": {
+                "default": "Radko"
+              },
+              "lastName": {
+                "default": "Gudas"
+              },
+              "sweaterNumber": 6
+            },
+            "teamAbbrev": {
+              "default": "FLA"
+            },
+            "drawnBy": {
+              "firstName": {
+                "default": "Pavel"
+              },
+              "lastName": {
+                "default": "Buchnevich",
+                "cs": "Bučněvič",
+                "fi": "Butshnevitsh",
+                "sk": "Bučněvič"
+              },
+              "sweaterNumber": 89
+            },
+            "descKey": "holding"
+          }
+        ]
+      },
+      {
+        "periodDescriptor": {
+          "number": 3,
+          "periodType": "REG",
+          "maxRegulationPeriods": 3
+        },
+        "penalties": []
       }
     ]
   },
   "clock": {
-    "timeRemaining": "01:45",
-    "secondsRemaining": 105,
+    "timeRemaining": "20:00",
+    "secondsRemaining": 1200,
     "running": false,
-    "inIntermission": true
-  },
-  "situation": {
-    "homeTeam": {
-      "abbrev": "STL",
-      "situationDescriptions": [
-        "PP"
-      ],
-      "strength": 5
-    },
-    "awayTeam": {
-      "abbrev": "FLA",
-      "strength": 4
-    },
-    "situationCode": "1451",
-    "timeRemaining": "02:00",
-    "secondsRemaining": 120
+    "inIntermission": false
   }
 }
