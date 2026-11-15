@@ -726,7 +726,7 @@ async function selectInitialDate(){
   try{
    const games=await fetchCsv(`statsByDate/data/games/Games_${dateKey(candidate)}.csv`);
    if(token!==loadToken)return;
-   if(games.some(g=>['NHL','AHL'].includes(leagueOf(g))&&['live','final'].includes(gamePhase(g)))){selected=candidate;break;}
+   if(games.some(g=>leagueOf(g)==='NHL'&&['live','final'].includes(gamePhase(g)))){selected=candidate;break;}
   }catch(e){if(token!==loadToken)return;console.warn('Matchdag saknas:',dateKey(candidate),e);}
  }
  if(token!==loadToken)return;
