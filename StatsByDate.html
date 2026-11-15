@@ -278,8 +278,7 @@ const dateKey=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(
 const parseDate=s=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return null;const [y,m,d]=s.split('-').map(Number),x=new Date(y,m-1,d,12);return dateKey(x)===s?x:null};
 const todayDate=()=>{let d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate(),12)};
 // Datum är inte begränsade till en fast lista. CSV-filer hämtas efter valt datum.
-const requested=parseDate(new URLSearchParams(location.search).get('date'));
-const initial=requested||todayDate();
+const initial=todayDate();
 let selected=initial,league='NHL',swe=true,sort='goals',data={games:[],players:[],goals:[],shootout:[]},opened=new Set(),loadToken=0,rawCache=new Map(),rawPending=new Map();
 // Sökvägar för utveckling respektive publicering i LocalSports webbrot.
 const CONFIG={logosPath:'logos/',teamsPath:'highlights/'};
@@ -701,10 +700,25 @@ async function loadEpProfiles(){
   render();
  }catch(e){console.warn('EliteProspects-länkar saknas:',e)}
 }
+async function selectInitialDate(){
+ const token=++loadToken, today=todayDate();
+ $('status').textContent='Söker senaste matchdag …';
+ for(let offset=0;offset<=2;offset++){
+  const candidate=new Date(today.getFullYear(),today.getMonth(),today.getDate()-offset,12);
+  try{
+   const games=await fetchCsv(`statsByDate/data/games/Games_${dateKey(candidate)}.csv`);
+   if(token!==loadToken)return;
+   if(games.some(g=>['NHL','AHL'].includes(leagueOf(g))&&['live','final'].includes(gamePhase(g)))){selected=candidate;break;}
+  }catch(e){if(token!==loadToken)return;console.warn('Matchdag saknas:',dateKey(candidate),e);}
+ }
+ if(token!==loadToken)return;
+ const u=new URL(location.href);u.searchParams.set('date',dateKey(selected));history.replaceState(null,'',u);
+ load();
+}
 async function load(){const token=++loadToken,key=dateKey(selected);opened.clear();data={games:[],players:[],goals:[],shootout:[]};$('status').textContent='Läser statistik för '+key+' …';render();const names={games:`statsByDate/data/games/Games_${key}.csv`,players:`statsByDate/data/playerstats/PlayerStats_${key}.csv`,goals:`statsByDate/data/playerstats/Goals_${key}.csv`,shootout:`statsByDate/data/playerstats/Shootout_${key}.csv`};const results=await Promise.allSettled(Object.entries(names).map(async([type,path])=>[type,await fetchCsv(path)]));if(token!==loadToken)return;let loaded=[];for(const result of results)if(result.status==='fulfilled'){const [type,rows]=result.value;data[type]=rows;loaded.push(type)}$('status').textContent=loaded.length?'':`${key} · Inga CSV-filer hittades för detta datum. Kontrollera att Games_${key}.csv, PlayerStats_${key}.csv och Goals_${key}.csv har genererats i data/games respektive data/playerstats.`;render();if(data.games.length)hydrateOutcomes(data.games,token)}
 function move(days){const candidate=new Date(selected.getFullYear(),selected.getMonth(),selected.getDate()+days,12);selected=candidate;const u=new URL(location.href);u.searchParams.set('date',dateKey(selected));history.replaceState(null,'',u);load()}
 $('prev').onclick=()=>move(-1);$('next').onclick=()=>move(1);$('today').onclick=()=>{selected=todayDate();const u=new URL(location.href);u.searchParams.delete('date');history.replaceState(null,'',u);load()};$('swe').onchange=e=>{swe=e.target.checked;render()};document.querySelectorAll('[data-league]').forEach(b=>b.onclick=()=>{league=b.dataset.league;render()});$('content').addEventListener('click',e=>{const sortButton=e.target.closest('[data-sort]');if(sortButton){sort=sortButton.dataset.sort;render();return}if(e.target.closest('a,button'))return;const tr=e.target.closest('[data-match]');if(tr){const key=tr.dataset.openKey||tr.dataset.match;const matchId=tr.dataset.match;opened.has(key)?opened.delete(key):opened.add(key);render();if(opened.has(key)){const match=data.games.find(g=>gameId(g)===matchId);if(match)expandRaw(match,loadToken)}}});$('content').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-match]')){e.preventDefault();e.target.click()}});window.addEventListener('resize',scheduleMatchLayout,{passive:true});if(document.fonts){document.fonts.ready.then(scheduleMatchLayout);document.fonts.addEventListener?.('loadingdone',scheduleMatchLayout)}loadEpProfiles();
-load();loadNhlHighlights();loadTeamLogos().then(scheduleMatchLayout);
+selectInitialDate();loadNhlHighlights();loadTeamLogos().then(scheduleMatchLayout);
 
 // NHL's cookie consent can loop inside a cross-site iframe.
 // Open the goal clip as a top-level NHL page in a separate tab instead.
