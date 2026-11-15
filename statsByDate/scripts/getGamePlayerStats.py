@@ -114,7 +114,7 @@ def nationality_name_key(name):
                             if not unicodedata.combining(c)).split())
 
 
-def load_nationalities(paths, ep_overrides=None):
+def load_nationalities(paths, ep_overrides=None, swe_register=None):
     ids={}; names={}; canonical={}
     for league,path in paths.items():
         if not path or not path.exists():
@@ -140,6 +140,21 @@ def load_nationalities(paths, ep_overrides=None):
         print(f'INFO Loaded preferred names from {ep_overrides}')
     elif ep_overrides:
         print(f'WARNING Preferred-name file not found: {ep_overrides}',file=sys.stderr)
+    if swe_register:
+        if not swe_register.exists():
+            raise FileNotFoundError(f'Permanent SWE register missing: {swe_register}')
+        with swe_register.open(encoding='utf-8-sig',newline='') as f:
+            for r in csv.DictReader(f,delimiter=';'):
+                if r['Nationality'] != 'SWE': continue
+                name=r['Name']
+                if full_name(name): names.setdefault(('SWE_REGISTER',nationality_name_key(name)),set()).add('SWE')
+                for league in ('NHL','AHL'):
+                    pid=r.get(league+'PlayerID','')
+                    if pid:
+                        if ids.get((league,pid),('SWE',''))[0]!='SWE':
+                            print(f'WARNING Nationality conflict: {league} {pid} {name}; keeping SWE',file=sys.stderr)
+                        ids[(league,pid)]=('SWE','SWE_REGISTER_ID')
+                        if full_name(name): canonical[(league,pid)]=name
     return ids,names,canonical
 
 
@@ -150,7 +165,14 @@ def canonical_name(league,pid,api_name,lookups):
 
 def nationality(league,pid,name,lookups):
     ids,names,_canonical=lookups
-    if (league,str(pid)) in ids: return ids[(league,str(pid))]
+    direct=ids.get((league,str(pid)))
+    if direct and direct[0]=='SWE': return direct
+    if full_name(name):
+        key=nationality_name_key(name)
+        if any('SWE' in names.get((lg,key),set()) for lg in ('SWE_REGISTER','NHL','AHL')):
+            if direct and direct[0]!='SWE': print(f'WARNING Nationality conflict: {league} {pid} {name}; keeping SWE',file=sys.stderr)
+            return ('SWE','SWE_REGISTER_NAME' if 'SWE' in names.get(('SWE_REGISTER',key),set()) else 'SWE_CROSS_LEAGUE_NAME')
+    if direct: return direct
     if not full_name(name): return ('','')
     key=nationality_name_key(name)
     found=names.get((league,key),set())
@@ -528,6 +550,7 @@ def main():
     ap.add_argument('--nhl-players',type=Path,default=PLAYERS_DIR / 'NHL_players_nationality_EP.csv')
     ap.add_argument('--ahl-players',type=Path,default=PLAYERS_DIR / 'AHL_players_nationality_v4_3.csv')
     ap.add_argument('--ep-overrides',type=Path,default=PLAYERS_DIR / 'EP_player_overrides.csv',help='Preferred full names by league/player ID')
+    ap.add_argument('--swe-register',type=Path,help='Permanent SWE registry (default: data-dir/players/SWE_players.csv)')
     ap.add_argument('--ahl-key',default=os.getenv('AHL_API_KEY',AHL_KEY))
     ap.add_argument('--refresh',action='store_true')
     ap.add_argument('--include-unfinished',action='store_true',help='Include LIVE/SCHEDULED games')
@@ -542,7 +565,7 @@ def main():
     completed_statuses = ('FINAL', 'OFF')
     games=[g for g in games if g.get('Date')==args.date and (args.league=='ALL' or g['League']==args.league)
            and (args.include_unfinished or str(g.get('Status','')).strip().upper() in completed_statuses + active_statuses)]
-    lookups=load_nationalities({'NHL':args.nhl_players,'AHL':args.ahl_players},args.ep_overrides)
+    lookups=load_nationalities({'NHL':args.nhl_players,'AHL':args.ahl_players},args.ep_overrides,args.swe_register or args.data_dir/'players'/'SWE_players.csv')
     players=[];goals=[];shootouts=[];errors=[];successful_games=set()
     for g in games:
         league=g['League'];gid=g['GameID']
