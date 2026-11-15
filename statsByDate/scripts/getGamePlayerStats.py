@@ -109,6 +109,11 @@ def full_name(name):
     return len(parts) >= 2 and not any(re.fullmatch(r"[A-Za-zÅÄÖåäö]\.?", x) for x in parts)
 
 
+def nationality_name_key(name):
+    return " ".join("".join(c for c in unicodedata.normalize("NFKD", str(name or "").casefold())
+                            if not unicodedata.combining(c)).split())
+
+
 def load_nationalities(paths, ep_overrides=None):
     ids={}; names={}; canonical={}
     for league,path in paths.items():
@@ -122,7 +127,7 @@ def load_nationalities(paths, ep_overrides=None):
                 name=first(r,'Name').strip()
                 if nat:
                     if pid: ids[(league,pid)]=(nat,first(r,'NationalitySource'))
-                    if name: names.setdefault((league,name.casefold()),set()).add(nat)
+                    if full_name(name): names.setdefault((league,nationality_name_key(name)),set()).add(nat)
                 if pid and full_name(name): canonical[(league,pid)]=name
     if ep_overrides and ep_overrides.exists():
         with ep_overrides.open(encoding='utf-8-sig',newline='') as f:
@@ -146,14 +151,20 @@ def canonical_name(league,pid,api_name,lookups):
 def nationality(league,pid,name,lookups):
     ids,names,_canonical=lookups
     if (league,str(pid)) in ids: return ids[(league,str(pid))]
-    found=names.get((league,str(name).casefold().strip()),set())
+    if not full_name(name): return ('','')
+    key=nationality_name_key(name)
+    found=names.get((league,key),set())
     if len(found)==1: return (next(iter(found)),'NAME_FALLBACK')
+    if found: return ('','')  # ambiguous local match
+    other='AHL' if league=='NHL' else 'NHL'
+    found=names.get((other,key),set())
+    if len(found)==1: return (next(iter(found)),f'NAME_FALLBACK_{other}')
     return ('','')
 
 
 def player_base(game,team,code,pid,name,pos,role,lookups,source):
-    nat,nat_src=nationality(game['League'],pid,name,lookups)
     name=canonical_name(game['League'],pid,name,lookups)
+    nat,nat_src=nationality(game['League'],pid,name,lookups)
     return dict(League=game['League'],Date=game['Date'],GameID=game['GameID'],Team=team,
                 TeamCode=code,PlayerID=str(pid or ''),Name=name,JerseyNumber='',Position=pos,Role=role,
                 Nationality=nat,NationalitySource=nat_src,Source=source)
