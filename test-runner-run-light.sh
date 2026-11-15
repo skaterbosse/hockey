@@ -177,6 +177,11 @@ PY
     RESULTS+=("${ID}|${TC_NAME}|PASS")
 done
 
+if [[ "$TOTAL" -eq 0 ]]; then
+    echo "[TEST] SKIPPED: No run-light test cases found."
+    exit 0
+fi
+
 ###############################################################################
 # Summary (table format like other runners)
 ###############################################################################
