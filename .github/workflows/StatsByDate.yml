@@ -87,9 +87,17 @@ jobs:
           fi
           python -m pip install requests beautifulsoup4
 
+      - name: Record update start
+        if: steps.schedule.outputs.mode != ''
+        run: echo "STATS_RUN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+
       - name: Fetch schedules and statistics
         if: steps.schedule.outputs.mode != ''
-        run: python statsByDate/scripts/updateHockeyDaily.py --mode "${{ steps.schedule.outputs.mode }}"
+        run: |
+          python statsByDate/scripts/updateHockeyDaily.py --mode regular
+          if [ "${{ steps.schedule.outputs.mode }}" = daily ]; then
+            python statsByDate/scripts/updateHockeyDaily.py --mode daily
+          fi
 
       - name: Fetch NHL 5-minute recaps
         if: steps.schedule.outputs.mode != ''
@@ -98,6 +106,14 @@ jobs:
       - name: Fetch NHL 10-minute condensed games
         if: steps.schedule.outputs.mode != ''
         run: python statsByDate/scripts/getNHLCondensedGames.py
+
+      - name: Generate dynamic schedule
+        if: steps.schedule.outputs.mode != ''
+        run: |
+          python statsByDate/scripts/generateUpdateSchedule.py --run-start "$STATS_RUN_START" || {
+            echo "::warning::Dynamic schedule generation failed; publishing statistics with expired schedule"
+            printf '{"schemaVersion":0}\n' > statsByDate/data/updateSchedule.json
+          }
 
       - name: Commit and push rolling data
         if: steps.schedule.outputs.mode != ''

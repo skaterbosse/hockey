@@ -76,14 +76,14 @@ def main():
     if not data_root.is_dir():
         p.error(f'Missing data directory: {data_root}')
     target_days = ([today - timedelta(days=1), today] if args.mode == 'regular' else
-                   [today + timedelta(days=i) for i in range(1, args.days_forward + 1)])
+                   [today + timedelta(days=i) for i in range(-1, args.days_forward + 1)])
     to_add = set()
     for day in target_days:
         rel = PROJECT / 'games' / f'Games_{day.isoformat()}.csv'
         if not (root / rel).is_file():
             p.error(f'Missing expected schedule (fetch must succeed first): {rel}')
         to_add.add(rel.as_posix())
-        if args.mode == 'regular':
+        if day <= today:
             for prefix in ('PlayerStats', 'Goals', 'Shootout'):
                 rel = PROJECT / 'playerstats' / f'{prefix}_{day.isoformat()}.csv'
                 if (root / rel).is_file():
@@ -106,6 +106,10 @@ def main():
     condensed = PROJECT / 'recaps' / 'NHL_CondensedGames.csv'
     if (root / condensed).is_file():
         to_add.add(condensed.as_posix())
+
+    schedule_state = PROJECT / "updateSchedule.json"
+    if (root / schedule_state).is_file():
+        to_add.add(schedule_state.as_posix())
 
     to_remove = set()
     if args.mode == 'daily':

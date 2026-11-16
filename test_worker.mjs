@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const source=fs.readFileSync(new URL('./LocalSport_Cloudflare_Scheduler_v3.js',import.meta.url),'utf8');
+const {fixedMode,dynamicMode}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+const d=s=>new Date(s);
+assert.equal(fixedMode(d('2026-11-16T03:50:00Z')),'daily');
+assert.equal(fixedMode(d('2026-07-16T02:50:00Z')),'daily');
+assert.equal(fixedMode(d('2026-11-16T04:10:00Z')),'regular');
+assert.equal(fixedMode(d('2026-11-16T12:00:00Z')),null);
+const state={schemaVersion:1,generatedUTC:'2026-11-16T00:00:00Z',validUntilUTC:'2026-11-17T00:00:00Z',nextDueUTC:'2026-11-16T01:02:00Z'};
+assert.equal(dynamicMode(d('2026-11-16T01:00:00Z'),state),null);
+assert.equal(dynamicMode(d('2026-11-16T01:05:00Z'),state),'regular');
+assert.equal(dynamicMode(d('2026-11-16T01:15:00Z'),state),'regular');
+assert.throws(()=>dynamicMode(d('2026-11-18T01:00:00Z'),state));
+console.log('8 worker assertions passed');
