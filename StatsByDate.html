@@ -629,17 +629,17 @@ function goalDetailsCsv(g){
  return html;
 }
 function playerLabel(id,roster){const p=roster.get(String(id));if(!p)return id?`Spelare ${id}`:'';const name=[p.firstName?.default||p.firstName,p.lastName?.default||p.lastName].filter(Boolean).join(' ');const n=p.sweaterNumber??p.jerseyNumber;return `${n!=null&&String(n)!==''?n+'. ':''}${name}`}
-// NHL situationCode: [bortamålvakt, bortautespelare, hemmautespelare, hemmamålvakt].
+// NHL situationCode: [hemmamålvakt, hemmautespelare, bortautespelare, bortamålvakt].
 // Visa ENG vid mål i tom bur; annars 6on5/6on4 när målskyttens lag
 // har plockat ut målvakten. Övriga mål får EQ/PP/SH.
 function nhlGoalStrength(goal,isHome){
   const d=goal.details||{}, code=String(goal.situationCode||'');
   if(goal.periodDescriptor?.periodType==='SO')return 'SO';
   const valid=/^[01][0-6][0-6][01]$/.test(code);
-  const ownGoalie=valid?code[isHome?3:0]:null;
-  const oppGoalie=valid?code[isHome?0:3]:null;
-  const own=valid?Number(code[isHome?2:1]):null;
-  const opp=valid?Number(code[isHome?1:2]):null;
+  const ownGoalie=valid?code[isHome?0:3]:null;
+  const oppGoalie=valid?code[isHome?3:0]:null;
+  const own=valid?Number(code[isHome?1:2]):null;
+  const opp=valid?Number(code[isHome?2:1]):null;
   const flaggedENG=d.emptyNet===true||d.emptyNet===1||String(d.emptyNet).toLowerCase()==='true';
   if(flaggedENG||(valid&&oppGoalie==='0'))return 'ENG';
   if(!valid)return '';
