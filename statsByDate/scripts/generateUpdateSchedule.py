@@ -75,7 +75,7 @@ def build(rows, previous, now, last_regular, config, goal_rows=None):
     return dict(schemaVersion=2, generatedUTC=stamp(now), lastRegularUTC=stamp(last_regular),
                 nextDueUTC=min((w['dueUTC'] for w in windows), default=None),
                 intervalMinutes=min(intervals, default=None), activeGames=active,
-                windows=windows, games=games,
+                windows=windows, games=games, nightMode=config['night_mode'],
                 validUntilUTC=stamp(now+timedelta(minutes=config['schedule_max_age_minutes'])))
 
 def main():
@@ -90,7 +90,7 @@ def main():
     last=datetime.fromtimestamp(int(last.timestamp())//300*300, UTC)
     config=json.loads(args.config.read_text())
     if any(config.get(k) != v for k,v in {'live_interval_minutes':10,'maximum_live_window_minutes':210,'highlights_interval_minutes':30,'highlights_window_minutes':130}.items()):
-        raise ValueError('Unexpected v4 policy')
+        raise ValueError('Unexpected v5 policy')
     out=args.data_dir/'updateSchedule.json'
     previous=json.loads(out.read_text()).get('games', {}) if out.exists() else {}
     today=now.astimezone(ZoneInfo('Europe/Stockholm')).date()

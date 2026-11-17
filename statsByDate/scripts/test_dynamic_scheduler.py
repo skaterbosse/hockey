@@ -41,6 +41,8 @@ class SchedulerTest(unittest.TestCase):
         r.update(HomeScore='0',AwayScore='0',Decision='REG')
         self.assertTrue(highlights_complete(r,[]))
         self.assertFalse(highlights_complete(r,None))
+    def test_night_policy_published(self):
+        self.assertEqual(self.calc([row()],10)["nightMode"], C["night_mode"])
     def test_ahl(self):
         self.assertIsNone(self.calc([row('FINAL',league='AHL')],180)['nextDueUTC'])
         self.assertEqual(self.calc([row('LIVE',league='AHL')],180)['intervalMinutes'],10)
