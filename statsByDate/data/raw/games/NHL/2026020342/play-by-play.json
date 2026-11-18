@@ -36,7 +36,7 @@
       "sequenceNumber": 19
     }
   ],
-  "gameState": "CRIT",
+  "gameState": "FINAL",
   "gameScheduleState": "OK",
   "periodDescriptor": {
     "number": 4,
@@ -49,11 +49,10 @@
       "default": "Stars"
     },
     "abbrev": "DAL",
-    "score": 3,
-    "sog": 20,
+    "score": 4,
+    "sog": 22,
     "logo": "https://assets.nhle.com/logos/nhl/svg/DAL_light.svg",
     "darkLogo": "https://assets.nhle.com/logos/nhl/svg/DAL_dark.svg",
-    "radioLink": "https://d2igy0yla8zi0u.cloudfront.net/dal/20262027/dal-radio.m3u8",
     "placeName": {
       "default": "Dallas"
     },
@@ -69,10 +68,9 @@
     },
     "abbrev": "VGK",
     "score": 3,
-    "sog": 26,
+    "sog": 27,
     "logo": "https://assets.nhle.com/logos/nhl/svg/VGK_light.svg",
     "darkLogo": "https://assets.nhle.com/logos/nhl/svg/VGK_dark.svg",
-    "radioLink": "https://d2igy0yla8zi0u.cloudfront.net/vgk/20262027/vgk-radio.m3u8",
     "placeName": {
       "default": "Vegas"
     },
@@ -84,13 +82,17 @@
   "shootoutInUse": true,
   "otInUse": true,
   "clock": {
-    "timeRemaining": "02:08",
-    "secondsRemaining": 128,
-    "running": true,
+    "timeRemaining": "01:24",
+    "secondsRemaining": 84,
+    "running": false,
     "inIntermission": false
   },
-  "displayPeriod": 4,
+  "displayPeriod": 1,
   "maxPeriods": 5,
+  "gameOutcome": {
+    "lastPeriodType": "OT",
+    "otPeriods": 1
+  },
   "plays": [
     {
       "eventId": 54,
@@ -6218,18 +6220,17 @@
       "timeRemaining": "04:19",
       "situationCode": "1451",
       "homeTeamDefendingSide": "right",
-      "typeCode": 507,
-      "typeDescKey": "missed-shot",
+      "typeCode": 508,
+      "typeDescKey": "blocked-shot",
       "sortOrder": 700,
       "details": {
-        "xCoord": -67,
-        "yCoord": 3,
-        "zoneCode": "O",
-        "reason": "wide-left",
-        "shotType": "tip-in",
+        "xCoord": -70,
+        "yCoord": 2,
+        "zoneCode": "D",
+        "blockingPlayerId": 8476902,
         "shootingPlayerId": 8476881,
-        "goalieInNetId": 8479979,
-        "eventOwnerTeamId": 54
+        "eventOwnerTeamId": 54,
+        "reason": "blocked"
       }
     },
     {
@@ -6579,11 +6580,11 @@
       "typeDescKey": "blocked-shot",
       "sortOrder": 732,
       "details": {
-        "xCoord": 74,
-        "yCoord": -7,
+        "xCoord": 80,
+        "yCoord": -5,
         "zoneCode": "D",
-        "blockingPlayerId": 8483890,
-        "shootingPlayerId": 8478449,
+        "blockingPlayerId": 8475188,
+        "shootingPlayerId": 8478420,
         "eventOwnerTeamId": 25,
         "reason": "blocked"
       }
@@ -6617,6 +6618,10 @@
         "goalieInNetId": 8478499,
         "awayScore": 2,
         "homeScore": 3,
+        "highlightClipSharingUrl": "https://nhl.com/video/dal-vgk-johnston-scores-goal-against-adin-hill-6408532818112",
+        "highlightClipSharingUrlFr": "https://nhl.com/fr/video/dal-vgk-johnston-marque-un-but-contre-adin-hill-6408532608112",
+        "highlightClip": 6408532818112,
+        "highlightClipFr": 6408532608112,
         "discreteClip": 6408534569112,
         "discreteClipFr": 6408533309112
       },
@@ -6705,12 +6710,12 @@
       "typeDescKey": "missed-shot",
       "sortOrder": 742,
       "details": {
-        "xCoord": 40,
-        "yCoord": -15,
+        "xCoord": 83,
+        "yCoord": -1,
         "zoneCode": "O",
-        "reason": "wide-left",
-        "shotType": "slap",
-        "shootingPlayerId": 8481581,
+        "reason": "wide-right",
+        "shotType": "tip-in",
+        "shootingPlayerId": 8478449,
         "goalieInNetId": 8478499,
         "eventOwnerTeamId": 25
       }
@@ -6743,7 +6748,13 @@
         "eventOwnerTeamId": 25,
         "goalieInNetId": 8478499,
         "awayScore": 3,
-        "homeScore": 3
+        "homeScore": 3,
+        "highlightClipSharingUrl": "https://nhl.com/video/dal-vgk-rantanen-scores-goal-against-adin-hill-6408534368112",
+        "highlightClipSharingUrlFr": "https://nhl.com/fr/video/dal-vgk-rantanen-marque-un-but-contre-adin-hill-6408533609112",
+        "highlightClip": 6408534368112,
+        "highlightClipFr": 6408533609112,
+        "discreteClip": 6408534367112,
+        "discreteClipFr": 6408535047112
       },
       "pptReplayUrl": "https://wsr.nhle.com/sprites/20262027/2026020342/ev1288.json"
     },
@@ -6894,9 +6905,142 @@
         "shootingPlayerId": 8478397,
         "goalieInNetId": 8479979,
         "eventOwnerTeamId": 54,
-        "awaySOG": 20,
-        "homeSOG": 26
+        "awaySOG": 17,
+        "homeSOG": 23
       }
+    },
+    {
+      "eventId": 1369,
+      "periodDescriptor": {
+        "number": 4,
+        "periodType": "OT",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "02:56",
+      "timeRemaining": "02:04",
+      "situationCode": "1331",
+      "homeTeamDefendingSide": "left",
+      "typeCode": 506,
+      "typeDescKey": "shot-on-goal",
+      "sortOrder": 775,
+      "details": {
+        "xCoord": 61,
+        "yCoord": -15,
+        "zoneCode": "O",
+        "shotType": "slap",
+        "shootingPlayerId": 8476448,
+        "goalieInNetId": 8479979,
+        "eventOwnerTeamId": 54,
+        "awaySOG": 17,
+        "homeSOG": 24
+      }
+    },
+    {
+      "eventId": 1374,
+      "periodDescriptor": {
+        "number": 4,
+        "periodType": "OT",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "03:30",
+      "timeRemaining": "01:30",
+      "situationCode": "1331",
+      "homeTeamDefendingSide": "left",
+      "typeCode": 506,
+      "typeDescKey": "shot-on-goal",
+      "sortOrder": 780,
+      "details": {
+        "xCoord": -76,
+        "yCoord": 9,
+        "zoneCode": "O",
+        "shotType": "wrist",
+        "shootingPlayerId": 8480027,
+        "goalieInNetId": 8478499,
+        "eventOwnerTeamId": 25,
+        "awaySOG": 18,
+        "homeSOG": 24
+      }
+    },
+    {
+      "eventId": 1375,
+      "periodDescriptor": {
+        "number": 4,
+        "periodType": "OT",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "03:36",
+      "timeRemaining": "01:24",
+      "situationCode": "1331",
+      "homeTeamDefendingSide": "left",
+      "typeCode": 505,
+      "typeDescKey": "goal",
+      "sortOrder": 781,
+      "details": {
+        "xCoord": -76,
+        "yCoord": -14,
+        "zoneCode": "O",
+        "shotType": "wrist",
+        "scoringPlayerId": 8480036,
+        "scoringPlayerTotal": 4,
+        "assist1PlayerId": 8478420,
+        "assist1PlayerTotal": 16,
+        "assist2PlayerId": 8480027,
+        "assist2PlayerTotal": 14,
+        "eventOwnerTeamId": 25,
+        "goalieInNetId": 8478499,
+        "awayScore": 4,
+        "homeScore": 3
+      },
+      "pptReplayUrl": "https://wsr.nhle.com/sprites/20262027/2026020342/ev1375.json"
+    },
+    {
+      "eventId": 1001,
+      "periodDescriptor": {
+        "number": 4,
+        "periodType": "OT",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "03:36",
+      "timeRemaining": "01:24",
+      "situationCode": "1331",
+      "homeTeamDefendingSide": "left",
+      "typeCode": 516,
+      "typeDescKey": "stoppage",
+      "sortOrder": 782,
+      "details": {
+        "reason": "video-review",
+        "secondaryReason": "video-review"
+      }
+    },
+    {
+      "eventId": 1002,
+      "periodDescriptor": {
+        "number": 4,
+        "periodType": "OT",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "03:36",
+      "timeRemaining": "01:24",
+      "situationCode": "1331",
+      "homeTeamDefendingSide": "left",
+      "typeCode": 521,
+      "typeDescKey": "period-end",
+      "sortOrder": 785
+    },
+    {
+      "eventId": 1006,
+      "periodDescriptor": {
+        "number": 4,
+        "periodType": "OT",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "03:36",
+      "timeRemaining": "01:24",
+      "situationCode": "0440",
+      "homeTeamDefendingSide": "left",
+      "typeCode": 524,
+      "typeDescKey": "game-end",
+      "sortOrder": 789
     }
   ],
   "rosterSpots": [
@@ -7433,106 +7577,5 @@
     }
   ],
   "regPeriods": 3,
-  "summary": {
-    "iceSurface": {
-      "awayTeam": {
-        "forwards": [
-          {
-            "playerId": 8482740,
-            "name": {
-              "default": "W. Johnston"
-            },
-            "sweaterNumber": 53,
-            "positionCode": "C",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/DAL/8482740.png",
-            "totalSOI": 1206
-          },
-          {
-            "playerId": 8478420,
-            "name": {
-              "default": "M. Rantanen"
-            },
-            "sweaterNumber": 96,
-            "positionCode": "R",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/DAL/8478420.png",
-            "totalSOI": 1372
-          }
-        ],
-        "defensemen": [
-          {
-            "playerId": 8481581,
-            "name": {
-              "default": "T. Harley"
-            },
-            "sweaterNumber": 55,
-            "positionCode": "D",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/DAL/8481581.png",
-            "totalSOI": 1577
-          }
-        ],
-        "goalies": [
-          {
-            "playerId": 8479979,
-            "name": {
-              "default": "J. Oettinger"
-            },
-            "sweaterNumber": 29,
-            "positionCode": "G",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/DAL/8479979.png",
-            "totalSOI": 3564
-          }
-        ],
-        "penaltyBox": []
-      },
-      "homeTeam": {
-        "forwards": [
-          {
-            "playerId": 8484803,
-            "name": {
-              "default": "T. Connelly"
-            },
-            "sweaterNumber": 24,
-            "positionCode": "L",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/VGK/8484803.png",
-            "totalSOI": 904
-          },
-          {
-            "playerId": 8478109,
-            "name": {
-              "default": "V. Olofsson"
-            },
-            "sweaterNumber": 95,
-            "positionCode": "L",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/VGK/8478109.png",
-            "totalSOI": 1141
-          }
-        ],
-        "defensemen": [
-          {
-            "playerId": 8478397,
-            "name": {
-              "default": "R. Andersson"
-            },
-            "sweaterNumber": 4,
-            "positionCode": "D",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/VGK/8478397.png",
-            "totalSOI": 1174
-          }
-        ],
-        "goalies": [
-          {
-            "playerId": 8478499,
-            "name": {
-              "default": "A. Hill"
-            },
-            "sweaterNumber": 33,
-            "positionCode": "G",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/VGK/8478499.png",
-            "totalSOI": 3701
-          }
-        ],
-        "penaltyBox": []
-      }
-    }
-  }
+  "summary": {}
 }
