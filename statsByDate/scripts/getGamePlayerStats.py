@@ -239,7 +239,7 @@ def nhl_goals(game,pbp):
 
 
 SHOOTOUT_FIELDS = ['League','Date','GameID','Attempt','Team','TeamCode','PlayerID','Player',
-                   'JerseyNumber','Result','Time','Source']
+                   'JerseyNumber','Result','Time','Source','Round','GameWinningGoal','OrderKnown']
 
 
 def attach_nhl_goal_videos(rows, landing):
@@ -318,8 +318,8 @@ def ahl_shootout(game, raw):
     """Extract AHL shootout attempts from HockeyTech gameSummary.
 
     AHL gameSummary groups attempts by home/visiting team rather than by
-    chronological order. Interleave the two lists, home first, to reconstruct
-    the alternating attempts. Only use this data when hasShootout is true.
+    chronological order. Group by round, home first for display only.
+    The starting team is not supplied.
     """
     root=ahl_root(raw)
     if not root.get('hasShootout'):
@@ -359,7 +359,8 @@ def ahl_shootout(game, raw):
             out.append(dict(League='AHL',Date=game['Date'],GameID=game['GameID'],
                 Attempt=len(out)+1,Team=team,TeamCode=code,PlayerID=str(pid or ''),
                 Player=name,JerseyNumber=str(shooter.get('jerseyNumber') or ''),
-                Result='Scored' if e['isGoal'] else 'Missed',Time='',Source='AHL_HOCKEYTECH'))
+                Result='Scored' if e['isGoal'] else 'NoGoal',Time='',Source='AHL_HOCKEYTECH',
+                Round=i+1,GameWinningGoal='1' if e.get('isGameWinningGoal') is True else '0',OrderKnown='0'))
     return out
 
 
@@ -445,7 +446,9 @@ def ahl_goals(game, raw):
             is_pp = str(props.get('isPowerPlay', '0')) == '1'
             is_sh = str(props.get('isShortHanded', '0')) == '1'
             is_ps = str(props.get('isPenaltyShot', '0')) == '1'
-            strength = 'PS' if is_ps else 'PP' if is_pp else 'SH' if is_sh else 'EQ'
+            own=len({p.get('id') for p in e.get('plus_players',[]) if isinstance(p,dict) and p.get('id') and p.get('position')!='G'})
+            opp=len({p.get('id') for p in e.get('minus_players',[]) if isinstance(p,dict) and p.get('id') and p.get('position')!='G'})
+            strength = 'PS' if is_ps else 'ENG' if str(props.get('isEmptyNet','0'))=='1' else f'6on{opp}' if own==6 and 3<=opp<=6 else 'PP2' if is_pp and own-opp==2 and opp>=3 else 'PP1' if is_pp and own-opp==1 and opp>=3 else 'PP' if is_pp else 'SH' if is_sh else 'EQ' 
             goals.append(dict(
                 League='AHL', Date=game['Date'], GameID=game['GameID'],
                 Period=period_number, Time=e.get('time') or '',
@@ -457,6 +460,41 @@ def ahl_goals(game, raw):
                 EmptyNet='1' if str(props.get('isEmptyNet', '0')) == '1' else '0',
                 Source='AHL_HOCKEYTECH'))
     return goals
+
+
+def ahl_final_problem(game, raw, players, goals, shootouts):
+    """Return reason a completed AHL snapshot cannot be reused, or None."""
+    root=ahl_root(raw)
+    details=root.get('details') or {}
+    if str(details.get('id'))!=str(game['GameID']) or str(details.get('final'))!='1':
+        return 'raw game not final or wrong game ID'
+    try:
+        so=root.get('hasShootout')
+        if not isinstance(so,bool): return 'missing shootout status'
+        if 'SO' in str(details.get('status','')).upper().split() and not so: return 'missing shootout'
+        winner=str(((root.get('shootoutDetails') or {}).get('winningTeam') or {}).get('id') or '')
+        for side,key in [('Home','homeTeam'),('Away','visitingTeam')]:
+            team=root[key]; stats=team['stats']; code=game[side+'Code']
+            if str(team['info']['id'])!=str(game[side+'TeamID']): return 'team ID mismatch'
+            score=int(game[side+'Score']); count=int(stats['goalCount'])
+            if int(stats['goals'])!=score or count!=score-int(so and winner==str(team['info']['id'])):
+                return f'{side} score mismatch'
+            if sum(r['TeamCode']==code for r in goals)!=count: return f'{side} goal events mismatch'
+            sk=[r for r in players if r['TeamCode']==code and r['Role']=='skater']
+            gs=[r for r in players if r['TeamCode']==code and r['Role']=='goalie' and r.get('TimeOnIce') not in (None,'','0:00')]
+            if not sk or not gs: return f'{side} missing player/goalie statistics'
+            if sum(int(r.get('Goals') or 0) for r in sk+gs)!=count: return f'{side} player goals mismatch'
+        if so:
+            if winner not in (str(game['HomeTeamID']),str(game['AwayTeamID'])): return 'missing shootout winner'
+            sd=root['shootoutDetails']; hs=sd['homeTeamShots']; vs=sd['visitingTeamShots']
+            if not hs or not vs or abs(len(hs)-len(vs))>1 or len(shootouts)!=len(hs)+len(vs): return 'incomplete shootout attempts'
+            winning=[r for r in shootouts if r.get('GameWinningGoal')=='1']
+            wc=game['HomeCode'] if winner==str(game['HomeTeamID']) else game['AwayCode']
+            if len(winning)!=1 or winning[0]['TeamCode']!=wc or winning[0]['Result']!='Scored': return 'missing winning shootout attempt'
+            if sum(r['Result']=='Scored' and r['TeamCode']==wc for r in shootouts)<=sum(r['Result']=='Scored' and r['TeamCode']!=wc for r in shootouts): return 'shootout score mismatch'
+        elif shootouts: return 'unexpected shootout attempts'
+    except (KeyError,TypeError,ValueError): return 'missing or invalid final statistics'
+    return None
 
 
 def ahl_find_player_groups(root):
@@ -618,8 +656,35 @@ def main():
             elif league=='AHL':
                 params=dict(feed='statviewfeed',view='gameSummary',key=args.ahl_key,
                             client_code='ahl',league_id='4',site_id='3',lang='en',game_id=gid)
-                box,state1=cached(base/'gameSummary.json',AHL_URL,params,refresh_game)
-                p=ahl_players(g,box,lookups);sc=ahl_goals(g,box);so=ahl_shootout(g,box)
+                path=base/'gameSummary.json'
+                final=str(g.get('Status','')).strip().upper() in completed_statuses
+                def parse_ahl(raw):
+                    return ahl_players(g,raw,lookups),ahl_goals(g,raw),ahl_shootout(g,raw)
+                if final:
+                    # Validate before replacing an existing snapshot or CSV rows.
+                    problem='refresh requested or cache missing'
+                    if path.exists() and not refresh_game:
+                        try:
+                            box=unpack_jsonp(path.read_text(encoding='utf-8'))
+                            p,sc,so=parse_ahl(box)
+                            problem=ahl_final_problem(g,box,p,sc,so)
+                        except Exception as err:
+                            problem=str(err)
+                    if problem:
+                        print(f'INFO AHL {gid}: refreshing final snapshot ({problem})')
+                        box=fetch(AHL_URL,params)
+                        p,sc,so=parse_ahl(box)
+                        problem=ahl_final_problem(g,box,p,sc,so)
+                        if problem: raise ValueError(f'AHL final validation: {problem}; preserving previous data')
+                        path.parent.mkdir(parents=True,exist_ok=True)
+                        tmp=path.with_suffix('.json.tmp')
+                        tmp.write_text(json.dumps(box,ensure_ascii=False,indent=2),encoding='utf-8')
+                        tmp.replace(path)
+                        state1='downloaded'
+                    else: state1='cached, validated'
+                else:
+                    box,state1=cached(path,AHL_URL,params,refresh_game)
+                    p,sc,so=parse_ahl(box)
                 state2=''
             else: continue
             if not p and not (refresh_game and (sc or so)):
@@ -629,7 +694,7 @@ def main():
             players.extend(p);goals.extend(sc);shootouts.extend(so)
             successful_games.add((league, gid))
             print(f'INFO {league} {gid}: {len(p)} players, {len(sc)} goals, {len(so)} shootout attempts ({state1}{", "+state2 if state2 else ""})')
-            if league=='AHL' and not sc:
+            if league=='AHL' and not sc and not final:
                 print(f'WARNING AHL {gid}: goal summary could not be parsed; raw gameSummary.json retained',file=sys.stderr)
         except Exception as e:
             msg=f'{league} {gid}: {e}';errors.append(msg)
