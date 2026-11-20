@@ -580,6 +580,20 @@ function goalRow(abbr,time,score,desc,videoUrl=''){
  const description=lines.map((line,i)=>`<span class="goal-person${i?' goal-assist':''}">${epLinkLine(line)}</span>`).join('');
  return `<div class="goal"><span class="goal-time">${escapeHtml(time||'–')}</span><span class="abbr">${escapeHtml(abbr||'–')}</span><span class="score">${escapeHtml(score||'–')}</span><span class="goal-play">${videoButton(videoUrl,`${abbr} ${time} ${score}`)}</span><span class="goal-desc">${description}</span></div>`;
 }
+// Legacy NHL CSV stores scored shootout clips in Goals, not Shootout.
+// Only use an unambiguous match within this game, team and shootout period.
+function shootoutVideo(g,r,attempts){
+ if(leagueOf(g)!=='NHL')return '';
+ const direct=get(r,'VideoURL');
+ if(direct)return direct;
+ if(get(r,'Result').toLowerCase()!=='scored')return '';
+ const pid=get(r,'PlayerID'),team=get(r,'TeamCode'),time=get(r,'Time');
+ if(!pid||!team||!time)return '';
+ const same=attempts.filter(a=>get(a,'Result').toLowerCase()==='scored'&&get(a,'PlayerID')===pid&&get(a,'TeamCode')===team&&get(a,'Time')===time);
+ if(same.length!==1)return '';
+ const clips=goalGame(g).filter(a=>leagueOf(a)==='NHL'&&['5','SO','GWS','SHOOTOUT'].includes(String(get(a,'Period')).toUpperCase())&&get(a,'ScorerID')===pid&&get(a,'TeamCode')===team&&get(a,'Time')===time);
+ return clips.length===1?get(clips[0],'VideoURL'):'';
+}
 function shootoutDetails(g){
  const attempts=shootoutGame(g);
  if(!attempts.length)return '';
@@ -590,7 +604,7 @@ function shootoutDetails(g){
   const number=get(r,'JerseyNumber'),name=get(r,'Player')||('Spelare '+get(r,'PlayerID'));
   const label=(number?number+'. ':'')+name;
   const result=get(r,'Result').toLowerCase()==='scored'?'Scored':leagueOf(g)==='AHL'?'No goal':'Missed';
-  html+=goalRow(get(r,'TeamCode','Team'),get(r,grouped?'Round':'Attempt'),'',label+' — '+result);
+  html+=goalRow(get(r,'TeamCode','Team'),get(r,grouped?'Round':'Attempt'),'',label+' — '+result,shootoutVideo(g,r,attempts));
  }
  // Sista raden: matchavgörande straff som en vanlig målrad, med GWS i tidskolumnen.
  // Lägg bara till när matchen är avslutad och straffläggningen har en vinnare.
@@ -607,7 +621,7 @@ function shootoutDetails(g){
    const number=get(winningAttempt,'JerseyNumber'),name=get(winningAttempt,'Player');
    const label=(number?number+'. ':'')+name;
    const score=scoreHome(g)+'–'+scoreAway(g);
-   html+=goalRow(winnerCode,'GWS',score,label);
+   html+=goalRow(winnerCode,'GWS',score,label,shootoutVideo(g,winningAttempt,attempts));
   }
  }
  return html;
