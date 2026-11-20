@@ -15,6 +15,8 @@ from pathlib import Path
 import re
 import sys
 import time
+import tempfile
+import shutil
 import unicodedata
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -630,10 +632,22 @@ def main():
                         str(g.get('Status','')).strip().upper() in active_statuses or
                         (league == 'NHL' and
                          str(g.get('Status','')).strip().upper() in completed_statuses))
+        staging=None
         try:
             if league=='NHL':
-                box,state1=cached(base/'boxscore.json',f'{NHL_URL}/{gid}/boxscore',None,refresh_game)
-                pbp,state2=cached(base/'play-by-play.json',f'{NHL_URL}/{gid}/play-by-play',None,refresh_game)
+                # Do not replace any raw endpoint until required endpoints and parsing succeed.
+                base.parent.mkdir(parents=True, exist_ok=True)
+                staging=tempfile.TemporaryDirectory(prefix='.nhl-refresh-',dir=base.parent)
+                work=Path(staging.name)
+                for name in ('boxscore.json','play-by-play.json','landing.json'):
+                    if (base/name).is_file(): shutil.copyfile(base/name,work/name)
+                box,state1=cached(work/'boxscore.json',f'{NHL_URL}/{gid}/boxscore',None,refresh_game)
+                pbp,state2=cached(work/'play-by-play.json',f'{NHL_URL}/{gid}/play-by-play',None,refresh_game)
+                if str(box.get('id')) != gid or str(pbp.get('id')) != gid:
+                    raise ValueError('NHL endpoint GameID mismatch')
+                if str(g.get('Status','')).upper() in completed_statuses and any(
+                    str(obj.get('gameState','')).upper() not in completed_statuses for obj in (box,pbp)):
+                    raise ValueError('NHL endpoint is not final')
                 # Validate all completed NHL games, not only OT games.
                 # NHL shootout final scores include one awarded goal not present
                 # among regular play-by-play goals.
@@ -653,8 +667,10 @@ def main():
                               f'(boxscore state={box.get("gameState")}); retrying fresh API',
                               file=sys.stderr)
                         # Retry once to handle temporarily inconsistent API endpoints.
-                        pbp,state2=cached(base/'play-by-play.json',
+                        pbp,state2=cached(work/'play-by-play.json',
                                           f'{NHL_URL}/{gid}/play-by-play',None,True)
+                        if str(pbp.get('id')) != gid or str(pbp.get('gameState','')).upper() not in completed_statuses:
+                            raise ValueError('NHL retry returned wrong GameID or non-final state')
                         actual = sum(e.get('typeDescKey') == 'goal' and
                                      (e.get('periodDescriptor') or {}).get('periodType') != 'SO'
                                      for e in pbp.get('plays', []))
@@ -663,12 +679,32 @@ def main():
                                              'preserving existing CSV for this game')
                 p=nhl_players(g,box,lookups);sc=nhl_goals(g,pbp);so=nhl_shootout(g,pbp)
                 try:
-                    landing,landing_state=cached(base/'landing.json',f'{NHL_URL}/{gid}/landing',None,refresh_game)
+                    landing,landing_state=cached(work/'landing.json',f'{NHL_URL}/{gid}/landing',None,refresh_game)
+                    if str(landing.get('id')) != gid: raise ValueError('NHL landing GameID mismatch')
                     matched=attach_nhl_goal_videos(sc,landing)
                     video_count=sum(bool(r.get('VideoURL')) for r in sc)
                     print(f'INFO NHL {gid}: matched {matched}/{len(sc)} landing goals; {video_count} video links ({landing_state})')
                 except Exception as video_error:
                     print(f'WARNING NHL {gid}: goal video links unavailable: {video_error}',file=sys.stderr)
+                    # A failed/malformed landing response must not replace the previous snapshot.
+                    (work/'landing.json').unlink(missing_ok=True)
+                    if (base/'landing.json').is_file():
+                        try:
+                            old=json.loads((base/'landing.json').read_text(encoding='utf-8'))
+                            if str(old.get('id'))==gid: attach_nhl_goal_videos(sc,old)
+                        except Exception: pass
+                # Retain previously linked clips only for uniquely matching goals.
+                old_goals=args.data_dir/'playerstats'/f'Goals_{args.date}.csv'
+                if old_goals.is_file():
+                    with old_goals.open(encoding='utf-8-sig',newline='') as f:
+                        previous=[r for r in csv.DictReader(f,delimiter=';') if r['League']=='NHL' and r['GameID']==gid]
+                    def clip_key(r): return tuple(str(r.get(k) or '') for k in ('Period','Time','ScorerID','TeamCode'))
+                    for row in sc:
+                        key=clip_key(row)
+                        matches=[r for r in previous if clip_key(r)==key]
+                        if not row.get('VideoURL') and len(matches)==1 and sum(clip_key(r)==key for r in sc)==1:
+                            if matches[0].get('VideoURL','').startswith(('https://nhl.com/video/','https://www.nhl.com/video/')):
+                                row['VideoURL']=matches[0]['VideoURL']; row['HighlightClipID']=matches[0].get('HighlightClipID','')
             elif league=='AHL':
                 params=dict(feed='statviewfeed',view='gameSummary',key=args.ahl_key,
                             client_code='ahl',league_id='4',site_id='3',lang='en',game_id=gid)
@@ -707,6 +743,10 @@ def main():
                 raise ValueError('No players parsed; ' + (diagnostic_structure(box) if league=='AHL' else 'inspect cached boxscore.json'))
             if league=='AHL' and any(not r.get('PlayerID') or not r.get('Name') for r in p):
                 raise ValueError('AHL player validation failed: missing PlayerID or Name')
+            if staging is not None:
+                base.mkdir(parents=True,exist_ok=True)
+                for name in ('boxscore.json','play-by-play.json','landing.json'):
+                    if (work/name).is_file(): (work/name).replace(base/name)
             players.extend(p);goals.extend(sc);shootouts.extend(so)
             successful_games.add((league, gid))
             print(f'INFO {league} {gid}: {len(p)} players, {len(sc)} goals, {len(so)} shootout attempts ({state1}{", "+state2 if state2 else ""})')
@@ -716,6 +756,8 @@ def main():
             msg=f'{league} {gid}: {e}';errors.append(msg)
             print(f'ERROR {msg}',file=sys.stderr)
             if args.strict: break
+        finally:
+            if staging is not None: staging.cleanup()
     fill_goal_names(goals,players,lookups)
     names={(r['League'],str(r['PlayerID'])):r for r in players if r.get('PlayerID')}
     for row in shootouts:

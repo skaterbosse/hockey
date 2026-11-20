@@ -36,7 +36,7 @@ class TargetedTests(unittest.TestCase):
         for league,gid in [('NHL','1'),('AHL','3')]:
             row=dict(League=league,Date=self.date,GameID=gid,PlayerID='99',Name='Test Player',Source='new')
             before=self.snapshot()
-            with patch.object(m,'load_nationalities',return_value=({}, {}, {})), patch.object(m,'cached',return_value=({},'downloaded')) as cache, patch.object(m,'fetch',return_value={}) as fetch, patch.object(m,'nhl_players',return_value=[row]), patch.object(m,'nhl_goals',return_value=[]), patch.object(m,'nhl_shootout',return_value=[]), patch.object(m,'attach_nhl_goal_videos',return_value=0), patch.object(m,'ahl_players',return_value=[row]), patch.object(m,'ahl_goals',return_value=[]), patch.object(m,'ahl_shootout',return_value=[]), patch.object(m,'ahl_final_problem',return_value=None):
+            with patch.object(m,'load_nationalities',return_value=({}, {}, {})), patch.object(m,'cached',return_value=({'id':gid,'gameState':'FINAL'},'downloaded')) as cache, patch.object(m,'fetch',return_value={}) as fetch, patch.object(m,'nhl_players',return_value=[row]), patch.object(m,'nhl_goals',return_value=[]), patch.object(m,'nhl_shootout',return_value=[]), patch.object(m,'attach_nhl_goal_videos',return_value=0), patch.object(m,'ahl_players',return_value=[row]), patch.object(m,'ahl_goals',return_value=[]), patch.object(m,'ahl_shootout',return_value=[]), patch.object(m,'ahl_final_problem',return_value=None):
                 self.assertEqual(self.run_main(gid,league),0)
                 if league=='NHL':
                     self.assertEqual(cache.call_count,3); fetch.assert_not_called()
