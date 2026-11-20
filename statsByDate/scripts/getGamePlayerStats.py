@@ -590,6 +590,7 @@ def main():
     ap.add_argument('--ep-overrides',type=Path,default=PLAYERS_DIR / 'EP_player_overrides.csv',help='Preferred full names by league/player ID')
     ap.add_argument('--swe-register',type=Path,help='Permanent SWE registry (default: data-dir/players/SWE_players.csv)')
     ap.add_argument('--ahl-key',default=os.getenv('AHL_API_KEY',AHL_KEY))
+    ap.add_argument('--game-id', help='Process exactly one GameID for the selected date and league')
     ap.add_argument('--refresh',action='store_true')
     ap.add_argument('--include-unfinished',action='store_true',help='Include LIVE/SCHEDULED games')
     ap.add_argument('--strict',action='store_true',help='Stop on first API or parsing error')
@@ -614,6 +615,10 @@ def main():
     completed_statuses = ('FINAL', 'OFF')
     games=[g for g in games if g.get('Date')==args.date and (args.league=='ALL' or g['League']==args.league)
            and (args.include_unfinished or str(g.get('Status','')).strip().upper() in completed_statuses + active_statuses)]
+    if args.game_id is not None:
+        games=[g for g in games if g.get('GameID')==args.game_id]
+        if len(games)!=1:
+            ap.error(f'Expected exactly one eligible game for --game-id {args.game_id} on {args.date} in {args.league}; found {len(games)}')
     lookups=load_nationalities({'NHL':args.nhl_players,'AHL':args.ahl_players},args.ep_overrides,args.swe_register or args.data_dir/'players'/'SWE_players.csv')
     players=[];goals=[];shootouts=[];errors=[];successful_games=set()
     for g in games:
