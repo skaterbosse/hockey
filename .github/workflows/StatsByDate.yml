@@ -107,6 +107,10 @@ jobs:
         if: steps.schedule.outputs.mode != ''
         run: python statsByDate/scripts/getNHLCondensedGames.py
 
+      - name: Validate game quality
+        if: steps.schedule.outputs.mode != ''
+        run: python statsByDate/scripts/validateGameQuality.py --recent --production
+
       - name: Generate dynamic schedule
         if: steps.schedule.outputs.mode != ''
         run: |

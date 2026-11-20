@@ -88,8 +88,20 @@ def main():
                 rel = PROJECT / 'playerstats' / f'{prefix}_{day.isoformat()}.csv'
                 if (root / rel).is_file():
                     to_add.add(rel.as_posix())
+    # Include NHL backfill snapshots and their reports in the same commit.
+    quality_days = [today - timedelta(days=i) for i in (3, 2, 1, 0)]
+    backfill_days = [day for day in quality_days[:2] if (data_root / 'games' / f'Games_{day.isoformat()}.csv').is_file()]
+    for day in backfill_days:
+        for prefix in ('PlayerStats', 'Goals', 'Shootout'):
+            rel = PROJECT / 'playerstats' / f'{prefix}_{day.isoformat()}.csv'
+            if (root / rel).is_file():
+                to_add.add(rel.as_posix())
+    for day in quality_days:
+        rel = PROJECT / 'quality' / f'Quality_{day.isoformat()}.json'
+        if (root / rel).is_file():
+            to_add.add(rel.as_posix())
     # Include raw JSON for games referenced by updated schedules, if available.
-    for day in target_days:
+    for day in target_days + backfill_days:
         schedule = data_root / 'games' / f'Games_{day.isoformat()}.csv'
         for league, gid in game_ids(schedule):
             folder = data_root / 'raw' / 'games' / league / gid
@@ -115,9 +127,13 @@ def main():
     if args.mode == 'daily':
         cutoff = today - timedelta(days=args.days_back)
         tracked = git(root, 'ls-files', '--', (PROJECT / 'games').as_posix(),
-                      (PROJECT / 'playerstats').as_posix(), (PROJECT / 'raw' / 'games').as_posix()).splitlines()
+                      (PROJECT / 'playerstats').as_posix(), (PROJECT / 'quality').as_posix(), (PROJECT / 'raw' / 'games').as_posix()).splitlines()
         for name in tracked:
             path = Path(name)
+            if path.parent == PROJECT / 'quality':
+                match = re.fullmatch(r'Quality_(\d{4}-\d{2}-\d{2})\.json', path.name)
+                if match and date.fromisoformat(match.group(1)) < cutoff:
+                    to_remove.add(name)
             if path.parent in (PROJECT / 'games', PROJECT / 'playerstats'):
                 match = DATE_FILE.fullmatch(path.name)
                 if match and date.fromisoformat(match.group(1)) < cutoff:
