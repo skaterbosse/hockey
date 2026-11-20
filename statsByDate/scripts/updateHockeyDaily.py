@@ -66,6 +66,7 @@ def main():
             [anchor + timedelta(days=i) for i in range(1, 7)])
     print(f'Mode: {"manual" if manual else args.mode}; reference: {anchor}; dates: {days[0]}..{days[-1]}', flush=True)
     started = time.monotonic()
+    quality_days = []
     if not args.ep_only:
         # Repair recently finished NHL games beyond the normal yesterday/today
         # window. Use existing schedule CSVs; do not touch historical AHL rows.
@@ -86,6 +87,7 @@ def main():
                 rc = run_step(f'NHL backfill {previous_day}', stats, args.dry_run)
                 if rc:
                     return rc
+                quality_days.append(previous_day)
         for day in days:
             schedule = [sys.executable, 'getGamesByDate.py', '-d', day.isoformat(), '-l', leagues]
             if args.test_mode: schedule.append("--test-mode")
@@ -103,6 +105,15 @@ def main():
             if args.refresh_stats:
                 stats.append('--refresh')
             rc = run_step(f'Player statistics {day}', stats, args.dry_run)
+            if rc:
+                return rc
+            quality_days.append(day)
+    # F7 v2 pilot: validate only local test snapshots, after statistics.
+    if args.test_mode:
+        for day in dict.fromkeys(quality_days):
+            rc = run_step(f"Game quality {day}", [sys.executable,
+                          "validateGameQuality.py", "-d", day.isoformat(),
+                          "--test-mode"], args.dry_run)
             if rc:
                 return rc
     if args.ep or args.ep_only:
