@@ -127,7 +127,14 @@ def main():
     p.add_argument('--output', type=Path, default=Path('statsByDate/data/recaps/NHL_Recaps.csv'))
     p.add_argument('--html-file', type=Path, help='Use a saved NHL HTML page for offline testing')
     p.add_argument('--timeout', type=int, default=25)
+    p.add_argument("--test-mode",action="store_true",help="Use only data_test; overrides ignored")
     args = p.parse_args()
+    if args.test_mode:
+        from test_data_mode import test_root
+        root=test_root(p)
+        args.games_dir=root/'games'
+        args.output=root/'recaps'/'NHL_Recaps.csv'
+        print(f'TEST MODE: {root}')
     if not args.games_dir.is_dir():
         p.error(f'Games directory does not exist: {args.games_dir}')
     if args.html_file:

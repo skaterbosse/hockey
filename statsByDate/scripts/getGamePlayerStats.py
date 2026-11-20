@@ -593,7 +593,18 @@ def main():
     ap.add_argument('--refresh',action='store_true')
     ap.add_argument('--include-unfinished',action='store_true',help='Include LIVE/SCHEDULED games')
     ap.add_argument('--strict',action='store_true',help='Stop on first API or parsing error')
+    ap.add_argument("--test-mode",action="store_true",help="Use only data_test; overrides ignored")
     args=ap.parse_args()
+    if args.test_mode:
+        from test_data_mode import test_root
+        root=test_root(ap)
+        args.data_dir=root
+        args.games_file=None
+        args.nhl_players=root/'players'/'NHL_players_nationality_EP.csv'
+        args.ahl_players=root/'players'/'AHL_players_nationality_v4_3.csv'
+        args.ep_overrides=root/'players'/'EP_player_overrides.csv'
+        args.swe_register=root/'players'/'SWE_players.csv'
+        print(f'TEST MODE: {root}')
     gamefile=args.games_file or args.data_dir/'games'/f'Games_{args.date}.csv'
     if not gamefile.exists(): ap.error(f'Games file not found: {gamefile}')
     with gamefile.open(encoding='utf-8-sig',newline='') as f:

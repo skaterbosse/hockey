@@ -44,7 +44,15 @@ def main():
     p.add_argument('--refresh-stats', action='store_true', help='Refresh cached raw game statistics')
     p.add_argument('--no-strict', action='store_true', help='Allow individual statistics errors')
     p.add_argument('--dry-run', action='store_true')
+    p.add_argument("--test-mode",action="store_true")
     args = p.parse_args()
+    data_root=PROJECT_DIR/'data'
+    if args.test_mode:
+        from test_data_mode import test_root
+        data_root=test_root(p)
+        if args.ep or args.ep_only:
+            p.error('EP rebuild is not supported in test mode yet')
+        print(f'TEST MODE: {data_root}')
     try:
         anchor = date.fromisoformat(args.date) if args.date else datetime.now(ZoneInfo('Europe/Stockholm')).date()
     except ValueError:
@@ -64,12 +72,13 @@ def main():
         if args.mode == 'regular' and not manual and 'NHL' in leagues.split(','):
             for offset in (3, 2):
                 previous_day = anchor - timedelta(days=offset)
-                gamefile = PROJECT_DIR / 'data' / 'games' / f'Games_{previous_day}.csv'
+                gamefile = data_root / 'games' / f'Games_{previous_day}.csv'
                 if not gamefile.exists() and not args.dry_run:
                     print(f'INFO NHL backfill {previous_day}: no game CSV, skipping', flush=True)
                     continue
                 stats = [sys.executable, 'getGamePlayerStats.py', '-d',
                          previous_day.isoformat(), '-l', 'NHL']
+                if args.test_mode: stats.append("--test-mode")
                 if not args.no_strict:
                     stats.append('--strict')
                 if args.refresh_stats:
@@ -79,6 +88,7 @@ def main():
                     return rc
         for day in days:
             schedule = [sys.executable, 'getGamesByDate.py', '-d', day.isoformat(), '-l', leagues]
+            if args.test_mode: schedule.append("--test-mode")
             if not args.no_refresh:
                 schedule.append('--refresh')
             rc = run_step(f'Schedule {day}', schedule, args.dry_run)
@@ -87,6 +97,7 @@ def main():
             if args.mode == 'daily' and not manual:
                 continue  # Future schedules only; never fetch future player stats.
             stats = [sys.executable, 'getGamePlayerStats.py', '-d', day.isoformat(), '-l', stats_league]
+            if args.test_mode: stats.append("--test-mode")
             if not args.no_strict:
                 stats.append('--strict')
             if args.refresh_stats:

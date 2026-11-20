@@ -251,7 +251,15 @@ def main():
     p.add_argument('--refresh',action='store_true',help='Re-download even if JSON is cached')
     p.add_argument('--ahl-season-id',action='append',help='Explicit AHL HockeyTech season ID; repeat as needed')
     p.add_argument('--ahl-key',default=os.environ.get('AHL_API_KEY',AHL_KEY),help='AHL public read-only API key')
+    p.add_argument("--test-mode",action="store_true",help="Use only data_test; overrides ignored")
     args=p.parse_args()
+    data_root=DATA_DIR
+    if args.test_mode:
+        from test_data_mode import test_root
+        data_root=test_root(p)
+        args.cache_dir=str(data_root/'raw'/'schedules')
+        args.out=None
+        print(f'TEST MODE: {data_root}')
     if len(args.date) not in (1,2):
         p.error('-d accepts one date or start and end dates')
     try:
@@ -290,7 +298,7 @@ def main():
             errors.append(f'Conflicting dates for {key}')
         unique[key]=row
     rows=sorted(unique.values(),key=lambda r:(r['Date'],r['League'],str(r['GameID'])))
-    default=str(DATA_DIR / 'games' / f'Games_{start.isoformat()}')+(f'_{end.isoformat()}' if start!=end else '')+'.csv'
+    default=str(data_root / 'games' / f'Games_{start.isoformat()}')+(f'_{end.isoformat()}' if start!=end else '')+'.csv'
     out=Path(args.out or default)
     out.parent.mkdir(parents=True,exist_ok=True)
     if not errors:

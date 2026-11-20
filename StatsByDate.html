@@ -295,6 +295,10 @@ main>header,.toolbar,.status{flex:0 0 auto}
 
 </main><script>
 'use strict';
+const TEST_MODE=['localhost','127.0.0.1','[::1]'].includes(location.hostname) && new URLSearchParams(location.search).get('test')==='1';
+const DATA_ROOT=TEST_MODE?'statsByDate/data_test':'statsByDate/data';
+if(TEST_MODE){const banner=document.createElement('div');banner.textContent='LOKALT TESTLÄGE – data_test';banner.style.cssText='background:#ffe39b;color:#704800;text-align:center;font-weight:bold;padding:5px;flex:0 0 auto';document.querySelector('main').prepend(banner);}
+
 const $=id=>document.getElementById(id), days=['Sön','Mån','Tis','Ons','Tors','Fre','Lör'],months=['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
 const dateKey=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
 const parseDate=s=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return null;const [y,m,d]=s.split('-').map(Number),x=new Date(y,m-1,d,12);return dateKey(x)===s?x:null};
@@ -535,8 +539,8 @@ function loadNhlHighlights(){
 }
 async function refreshNhlHighlights(){
  const files=[
-  ['recap','statsByDate/data/recaps/NHL_Recaps.csv'],
-  ['condensed','statsByDate/data/recaps/NHL_CondensedGames.csv']
+  ['recap',`${DATA_ROOT}/recaps/NHL_Recaps.csv`],
+  ['condensed',`${DATA_ROOT}/recaps/NHL_CondensedGames.csv`]
  ];
  await Promise.all(files.map(async ([type,path])=>{
   try{
@@ -733,7 +737,7 @@ function render(){const today=todayDate(),diff=Math.round((selected-today)/86400
 async function fetchCsv(path){const response=await fetch(path,{cache:'no-store'});if(!response.ok)throw Error(response.status);return csv(await response.text())}
 async function loadEpProfiles(){
  try{
-  const rows=await fetchCsv('statsByDate/data/ep/EP_profiles.csv');
+  const rows=await fetchCsv(`${DATA_ROOT}/ep/EP_profiles.csv`);
   epProfiles.clear();
   for(const r of rows)if(r.NameKey&&/^https:\/\/www\.eliteprospects\.com\/player\/\d+\/[a-z0-9-]+$/.test(r.EPProfile||''))epProfiles.set(r.NameKey,r.EPProfile);
   render();
@@ -745,7 +749,7 @@ async function selectInitialDate(){
  for(let offset=0;offset<=2;offset++){
   const candidate=new Date(today.getFullYear(),today.getMonth(),today.getDate()-offset,12);
   try{
-   const games=await fetchCsv(`statsByDate/data/games/Games_${dateKey(candidate)}.csv`);
+   const games=await fetchCsv(`${DATA_ROOT}/games/Games_${dateKey(candidate)}.csv`);
    if(token!==loadToken)return;
    if(games.some(g=>leagueOf(g)==='NHL'&&['live','final'].includes(gamePhase(g)))){selected=candidate;break;}
   }catch(e){if(token!==loadToken)return;console.warn('Matchdag saknas:',dateKey(candidate),e);}
@@ -754,7 +758,7 @@ async function selectInitialDate(){
  const u=new URL(location.href);u.searchParams.set('date',dateKey(selected));history.replaceState(null,'',u);
  load();
 }
-async function load(){loadNhlHighlights();const token=++loadToken,key=dateKey(selected);opened.clear();data={games:[],players:[],goals:[],shootout:[]};$('status').textContent='Läser statistik för '+key+' …';render();const names={games:`statsByDate/data/games/Games_${key}.csv`,players:`statsByDate/data/playerstats/PlayerStats_${key}.csv`,goals:`statsByDate/data/playerstats/Goals_${key}.csv`,shootout:`statsByDate/data/playerstats/Shootout_${key}.csv`};const results=await Promise.allSettled(Object.entries(names).map(async([type,path])=>[type,await fetchCsv(path)]));if(token!==loadToken)return;let loaded=[];for(const result of results)if(result.status==='fulfilled'){const [type,rows]=result.value;data[type]=rows;loaded.push(type)}$('status').textContent=loaded.length?'':`${key} · Inga CSV-filer hittades för detta datum. Kontrollera att Games_${key}.csv, PlayerStats_${key}.csv och Goals_${key}.csv har genererats i data/games respektive data/playerstats.`;render();if(data.games.length)hydrateOutcomes(data.games,token)}
+async function load(){loadNhlHighlights();const token=++loadToken,key=dateKey(selected);opened.clear();data={games:[],players:[],goals:[],shootout:[]};$('status').textContent='Läser statistik för '+key+' …';render();const names={games:`${DATA_ROOT}/games/Games_${key}.csv`,players:`${DATA_ROOT}/playerstats/PlayerStats_${key}.csv`,goals:`${DATA_ROOT}/playerstats/Goals_${key}.csv`,shootout:`${DATA_ROOT}/playerstats/Shootout_${key}.csv`};const results=await Promise.allSettled(Object.entries(names).map(async([type,path])=>[type,await fetchCsv(path)]));if(token!==loadToken)return;let loaded=[];for(const result of results)if(result.status==='fulfilled'){const [type,rows]=result.value;data[type]=rows;loaded.push(type)}$('status').textContent=loaded.length?'':`${key} · Inga CSV-filer hittades för detta datum. Kontrollera att Games_${key}.csv, PlayerStats_${key}.csv och Goals_${key}.csv har genererats i data/games respektive data/playerstats.`;render();if(data.games.length)hydrateOutcomes(data.games,token)}
 function move(days){const candidate=new Date(selected.getFullYear(),selected.getMonth(),selected.getDate()+days,12);selected=candidate;const u=new URL(location.href);u.searchParams.set('date',dateKey(selected));history.replaceState(null,'',u);load()}
 $('prev').onclick=()=>move(-1);$('next').onclick=()=>move(1);$('today').onclick=()=>{selected=todayDate();const u=new URL(location.href);u.searchParams.delete('date');history.replaceState(null,'',u);load()};$('swe').onchange=e=>{swe=e.target.checked;render()};document.querySelectorAll('[data-league]').forEach(b=>b.onclick=()=>{league=b.dataset.league;render()});$('content').addEventListener('click',e=>{const sortButton=e.target.closest('[data-sort]');if(sortButton){sort=sortButton.dataset.sort;render();return}if(e.target.closest('a,button'))return;const tr=e.target.closest('[data-match]');if(tr){const key=tr.dataset.openKey||tr.dataset.match;const matchId=tr.dataset.match;opened.has(key)?opened.delete(key):opened.add(key);render();if(opened.has(key)){const match=data.games.find(g=>gameId(g)===matchId);if(match)expandRaw(match,loadToken)}}});$('content').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-match]')){e.preventDefault();e.target.click()}});window.addEventListener('resize',scheduleMatchLayout,{passive:true});if(document.fonts){document.fonts.ready.then(scheduleMatchLayout);document.fonts.addEventListener?.('loadingdone',scheduleMatchLayout)}loadEpProfiles();
 selectInitialDate();loadNhlHighlights();loadTeamLogos().then(scheduleMatchLayout);
