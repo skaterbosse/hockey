@@ -67,7 +67,8 @@ jobs:
       - uses: actions/checkout@v4
         if: steps.schedule.outputs.mode != ''
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          # F7 v4.2c: shallow checkout; publisher commits and pushes on main.
           persist-credentials: true
 
       - uses: actions/setup-python@v5
