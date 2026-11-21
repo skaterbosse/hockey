@@ -90,7 +90,9 @@ jobs:
 
       - name: Record update start
         if: steps.schedule.outputs.mode != ''
-        run: echo "STATS_RUN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+        run: |
+          echo "STATS_RUN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+          echo "STATS_BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Fetch schedules and statistics
         if: steps.schedule.outputs.mode != ''
@@ -155,6 +157,25 @@ jobs:
           }
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
           echo "Published StatsByDate commit: $SHA"
+
+      - name: Generate read-only operations report
+        if: steps.schedule.outputs.mode != ''
+        shell: bash
+        run: |
+          python statsByDate/scripts/generateRunReport.py \
+            --started-at "$STATS_RUN_START" \
+            --base-sha "$STATS_BASE_SHA" \
+            --published-sha "${{ steps.published_commit.outputs.sha }}" \
+            --output "$RUNNER_TEMP/statsbydate-run-report.json" \
+            --summary-path "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload operations report
+        if: steps.schedule.outputs.mode != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: statsbydate-operations-report
+          path: ${{ runner.temp }}/statsbydate-run-report.json
+          retention-days: 30
 
   deploy:
     name: Deploy updated StatsByDate
