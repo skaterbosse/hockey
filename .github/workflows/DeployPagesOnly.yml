@@ -3,6 +3,12 @@ name: DeployPagesOnly
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      published_sha:
+        description: "Exact commit produced by the StatsByDate update job"
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -17,7 +23,22 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v5
         with:
-          ref: main
+          ref: ${{ inputs.published_sha || 'main' }}
+          persist-credentials: false
+
+      - name: Verify exact publication commit
+        if: inputs.published_sha != ''
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ inputs.published_sha }}
+        run: |
+          set -euo pipefail
+          ACTUAL_SHA="$(git rev-parse HEAD)"
+          if [[ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]]; then
+            echo "::error::Pages checkout $ACTUAL_SHA differs from published $EXPECTED_SHA"
+            exit 1
+          fi
+          echo "Verified Pages source commit: $ACTUAL_SHA"
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -62,6 +83,10 @@ jobs:
                     "_site/statsByDate/data/$folder/"
             fi
           done
+
+          if [[ -f statsByDate/data/updateSchedule.json ]]; then
+            cp statsByDate/data/updateSchedule.json _site/statsByDate/data/updateSchedule.json
+          fi
 
           mkdir -p _site/highlights
           for file in NHL_Teams.txt AHL_Teams.txt; do

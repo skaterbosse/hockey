@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       mode: ${{ steps.schedule.outputs.mode }}
+      published_sha: ${{ steps.published_commit.outputs.sha }}
     steps:
       - name: Decide run mode in Swedish time
         id: schedule
@@ -141,6 +142,20 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           python statsByDate/scripts/publishStatsByDate.py --mode "${{ steps.schedule.outputs.mode }}" --commit --push
 
+      - name: Record exact published commit
+        id: published_commit
+        if: steps.schedule.outputs.mode != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          git merge-base --is-ancestor "$SHA" origin/main || {
+            echo "::error::Published commit is not on origin/main"
+            exit 1
+          }
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Published StatsByDate commit: $SHA"
+
   deploy:
     name: Deploy updated StatsByDate
     needs: update
@@ -150,3 +165,5 @@ jobs:
       pages: write
       id-token: write
     uses: ./.github/workflows/DeployPagesOnly.yml
+    with:
+      published_sha: ${{ needs.update.outputs.published_sha }}
