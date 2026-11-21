@@ -94,7 +94,7 @@ jobs:
       - name: Fetch schedules and statistics
         if: steps.schedule.outputs.mode != ''
         run: |
-          python statsByDate/scripts/updateHockeyDaily.py --mode regular
+          python statsByDate/scripts/updateHockeyDaily.py --mode regular --managed-recovery
           if [ "${{ steps.schedule.outputs.mode }}" = daily ]; then
             python statsByDate/scripts/updateHockeyDaily.py --mode daily
           fi
@@ -108,6 +108,21 @@ jobs:
         run: python statsByDate/scripts/getNHLCondensedGames.py
 
       - name: Validate game quality
+        if: steps.schedule.outputs.mode != ''
+        run: python statsByDate/scripts/validateGameQuality.py --recent --production
+
+      # The quality report above is the input to the recovery decision.
+      # Production recovery catches per-game API failures and preserves its
+      # cooldown state in data/quality/recovery_state.json.
+      - name: Recover incomplete NHL and AHL statistics
+        if: steps.schedule.outputs.mode != ''
+        run: python statsByDate/scripts/recoverGameStats.py --production
+
+      - name: Recover missing NHL goal videos
+        if: steps.schedule.outputs.mode != ''
+        run: python statsByDate/scripts/recoverNHLGoalVideos.py --production
+
+      - name: Revalidate quality after recovery
         if: steps.schedule.outputs.mode != ''
         run: python statsByDate/scripts/validateGameQuality.py --recent --production
 
