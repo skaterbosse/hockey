@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
+from game_recovery import decision, end_reference, timestamp
 
 BASE = Path(__file__).resolve().parent
 UTC = timezone.utc
@@ -32,7 +33,52 @@ def highlights_complete(row, goals):
     return all(str(g.get('VideoURL') or '').strip().startswith(('https://', 'http://')) for g in goals)
 
 
-def build(rows, previous, now, last_regular, config, goal_rows=None):
+def recovery_windows(rows, data_dir, now, last_regular, config):
+    """Use the same quality/recovery policy as recoverGameStats.py."""
+    hours = config['maxStatsRecoveryHoursAfterFinal']
+    interval = config['statsRecoveryIntervalMinutes']
+    if not (0 < hours <= 48 and 0 < interval <= 1440 and interval % 5 == 0):
+        raise ValueError('Invalid stats recovery policy')
+    state_path = data_dir/'quality'/'recovery_state.json'
+    state = json.loads(state_path.read_text()) if state_path.exists() else {}
+    by_date = {}
+    for row in rows:
+        if row['Status'] in ('FINAL', 'OFF') and parse(row['StartUTC']) + timedelta(hours=hours + 12) > now:
+            by_date.setdefault(row['Date'], []).append(row)
+    windows = []
+    for day, games in by_date.items():
+        report_path = data_dir/'quality'/f'Quality_{day}.json'
+        if not report_path.exists():
+            # Fail closed: missing quality information must not silently suppress recovery.
+            raise FileNotFoundError(f'Missing quality report for finalized games: {report_path}')
+        report = json.loads(report_path.read_text())
+        if report.get('schemaVersion') != 1 or report.get('date') != day:
+            raise ValueError(f'Invalid quality report: {report_path}')
+        quality = {(q['league'], str(q['gameId'])): q for q in report['games']}
+        for row in games:
+            key = (row['League'], row['GameID'])
+            q = quality.get(key)
+            if q is None or q.get('gameDate') != day:
+                raise ValueError(f'Missing quality entry: {key} on {day}')
+            ref, _ = end_reference(row, data_dir)
+            last_value = state.get(':'.join(key), {}).get('lastAttempt')
+            last = timestamp(last_value) if last_value else None
+            action = decision(row, q, now, ref, hours, last, interval)
+            if action not in ('RECOVER', 'COOLDOWN'):
+                continue
+            expiry = ref + timedelta(hours=hours)
+            due = max(now, last_regular + timedelta(minutes=interval),
+                      last + timedelta(minutes=interval) if last else now)
+            slot = datetime.fromtimestamp((int(due.timestamp()) + 299)//300*300, UTC)
+            if slot >= expiry:
+                continue
+            windows.append(dict(game=':'.join(key), kind='stats_recovery',
+                                dueUTC=stamp(due), expiresUTC=stamp(expiry),
+                                intervalMinutes=interval))
+    return windows
+
+
+def build(rows, previous, now, last_regular, config, goal_rows=None, recovery=None):
     games, windows, active = {}, [], []
     for row in rows:
         key = row['League'] + ':' + row['GameID']
@@ -43,14 +89,14 @@ def build(rows, previous, now, last_regular, config, goal_rows=None):
         old = previous.get(key, {})
         final = None
         complete = None
-        if status == 'FINAL':
+        if status in ('FINAL', 'OFF'):
             final = old.get('finalObservedUTC') or stamp(now)
             # Only NHL currently has a goal-video provider in getGamePlayerStats.
             if row['League'] == 'NHL':
                 complete = highlights_complete(row, (goal_rows or {}).get(key))
         games[key] = dict(startUTC=stamp(start), status=status,
                           finalObservedUTC=final, highlightsComplete=complete)
-        if status == 'FINAL':
+        if status in ('FINAL', 'OFF'):
             if row['League'] != 'NHL' or complete:
                 continue
             anchor = parse(final)
@@ -71,6 +117,7 @@ def build(rows, previous, now, last_regular, config, goal_rows=None):
                             expiresUTC=stamp(expiry), intervalMinutes=interval))
         if kind == 'live' and start <= now:
             active.append(key)
+    windows.extend(recovery or [])
     intervals = [w['intervalMinutes'] for w in windows if parse(w['dueUTC']) <= now + timedelta(minutes=w['intervalMinutes']) and (w['kind'] != 'live' or w['game'] in active)]
     return dict(schemaVersion=2, generatedUTC=stamp(now), lastRegularUTC=stamp(last_regular),
                 nextDueUTC=min((w['dueUTC'] for w in windows), default=None),
@@ -96,11 +143,11 @@ def main():
     today=now.astimezone(ZoneInfo('Europe/Stockholm')).date()
     rows=[]
     goal_rows={}
-    for offset in range(-1,7):
+    for offset in range(-3,7):
         day=today+timedelta(days=offset)
         file=args.data_dir/'games'/f'Games_{day}.csv'
         if not file.exists():
-            if offset <= 0: raise FileNotFoundError(file)
+            if offset in (-1, 0): raise FileNotFoundError(file)
             continue
         with file.open(encoding='utf-8-sig',newline='') as f:
             daily_rows=list(csv.DictReader(f,delimiter=';'))
@@ -116,7 +163,8 @@ def main():
                         goal_rows.setdefault(r['League']+':'+r['GameID'], []).append(r)
     # Deduplicate by league and ID; retain prior observations only for present games.
     rows=list({(r['League'],r['GameID']):r for r in rows}.values())
-    result=build(rows,previous,now,last,config,goal_rows)
+    result=build(rows,previous,now,last,config,goal_rows,
+                 recovery_windows(rows,args.data_dir,now,last,config))
     tmp=out.with_suffix('.tmp'); tmp.write_text(json.dumps(result,indent=2)+'\n'); tmp.replace(out)
     print('Scheduler:',result['nextDueUTC'], 'interval:',result['intervalMinutes'])
 if __name__=='__main__': main()
