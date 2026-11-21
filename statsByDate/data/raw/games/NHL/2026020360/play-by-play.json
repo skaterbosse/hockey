@@ -50,7 +50,7 @@
     },
     "abbrev": "CHI",
     "score": 0,
-    "sog": 9,
+    "sog": 8,
     "logo": "https://assets.nhle.com/logos/nhl/svg/CHI_light.svg",
     "darkLogo": "https://assets.nhle.com/logos/nhl/svg/CHI_dark.svg",
     "radioLink": "https://d2igy0yla8zi0u.cloudfront.net/chi/20262027/chi-radio.m3u8",
@@ -69,7 +69,7 @@
     },
     "abbrev": "CGY",
     "score": 1,
-    "sog": 9,
+    "sog": 13,
     "logo": "https://assets.nhle.com/logos/nhl/svg/CGY_light.svg",
     "darkLogo": "https://assets.nhle.com/logos/nhl/svg/CGY_dark.svg",
     "radioLink": "https://d2igy0yla8zi0u.cloudfront.net/cgy/20262027/cgy-radio.m3u8",
@@ -84,10 +84,26 @@
   "shootoutInUse": true,
   "otInUse": true,
   "clock": {
-    "timeRemaining": "01:54",
-    "secondsRemaining": 114,
+    "timeRemaining": "10:50",
+    "secondsRemaining": 650,
     "running": false,
-    "inIntermission": false
+    "inIntermission": true
+  },
+  "situation": {
+    "homeTeam": {
+      "abbrev": "CGY",
+      "situationDescriptions": [
+        "PP"
+      ],
+      "strength": 5
+    },
+    "awayTeam": {
+      "abbrev": "CHI",
+      "strength": 4
+    },
+    "situationCode": "1451",
+    "timeRemaining": "01:00",
+    "secondsRemaining": 60
   },
   "displayPeriod": 1,
   "maxPeriods": 5,
@@ -770,7 +786,7 @@
       "homeTeamDefendingSide": "right",
       "typeCode": 503,
       "typeDescKey": "hit",
-      "sortOrder": 110,
+      "sortOrder": 109,
       "details": {
         "xCoord": -48,
         "yCoord": 40,
@@ -1371,6 +1387,7 @@
         "xCoord": -76,
         "yCoord": 11,
         "zoneCode": "O",
+        "shotType": "wrist",
         "scoringPlayerId": 8476458,
         "scoringPlayerTotal": 4,
         "assist1PlayerId": 8484768,
@@ -2018,6 +2035,29 @@
       }
     },
     {
+      "eventId": 435,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "16:40",
+      "timeRemaining": "03:20",
+      "situationCode": "1551",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 503,
+      "typeDescKey": "hit",
+      "sortOrder": 251,
+      "details": {
+        "xCoord": -85,
+        "yCoord": -38,
+        "zoneCode": "O",
+        "eventOwnerTeamId": 20,
+        "hittingPlayerId": 8484154,
+        "hitteePlayerId": 8482807
+      }
+    },
+    {
       "eventId": 402,
       "periodDescriptor": {
         "number": 1,
@@ -2030,7 +2070,7 @@
       "homeTeamDefendingSide": "right",
       "typeCode": 506,
       "typeDescKey": "shot-on-goal",
-      "sortOrder": 255,
+      "sortOrder": 254,
       "details": {
         "xCoord": 69,
         "yCoord": 0,
@@ -2056,7 +2096,7 @@
       "homeTeamDefendingSide": "right",
       "typeCode": 508,
       "typeDescKey": "blocked-shot",
-      "sortOrder": 257,
+      "sortOrder": 256,
       "details": {
         "xCoord": 80,
         "yCoord": 4,
@@ -2078,19 +2118,40 @@
       "timeRemaining": "03:00",
       "situationCode": "1551",
       "homeTeamDefendingSide": "right",
-      "typeCode": 506,
-      "typeDescKey": "shot-on-goal",
-      "sortOrder": 259,
+      "typeCode": 507,
+      "typeDescKey": "missed-shot",
+      "sortOrder": 258,
       "details": {
         "xCoord": 85,
         "yCoord": 38,
         "zoneCode": "O",
+        "reason": "wide-right",
         "shotType": "wrist",
         "shootingPlayerId": 8478233,
         "goalieInNetId": 8481692,
+        "eventOwnerTeamId": 16
+      }
+    },
+    {
+      "eventId": 466,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "17:10",
+      "timeRemaining": "02:50",
+      "situationCode": "1551",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 504,
+      "typeDescKey": "giveaway",
+      "sortOrder": 263,
+      "details": {
+        "xCoord": -93,
+        "yCoord": -6,
+        "zoneCode": "D",
         "eventOwnerTeamId": 16,
-        "awaySOG": 8,
-        "homeSOG": 7
+        "playerId": 8481519
       }
     },
     {
@@ -2115,8 +2176,30 @@
         "shootingPlayerId": 8478136,
         "goalieInNetId": 8481519,
         "eventOwnerTeamId": 20,
-        "awaySOG": 8,
+        "awaySOG": 7,
         "homeSOG": 8
+      }
+    },
+    {
+      "eventId": 467,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "17:56",
+      "timeRemaining": "02:04",
+      "situationCode": "1551",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 504,
+      "typeDescKey": "giveaway",
+      "sortOrder": 272,
+      "details": {
+        "xCoord": 68,
+        "yCoord": 36,
+        "zoneCode": "D",
+        "eventOwnerTeamId": 20,
+        "playerId": 8474150
       }
     },
     {
@@ -2132,7 +2215,7 @@
       "homeTeamDefendingSide": "right",
       "typeCode": 506,
       "typeDescKey": "shot-on-goal",
-      "sortOrder": 272,
+      "sortOrder": 273,
       "details": {
         "xCoord": 78,
         "yCoord": 27,
@@ -2141,8 +2224,8 @@
         "shootingPlayerId": 8474141,
         "goalieInNetId": 8481692,
         "eventOwnerTeamId": 16,
-        "awaySOG": 9,
-        "homeSOG": 9
+        "awaySOG": 8,
+        "homeSOG": 8
       }
     },
     {
@@ -2158,10 +2241,375 @@
       "homeTeamDefendingSide": "right",
       "typeCode": 516,
       "typeDescKey": "stoppage",
-      "sortOrder": 273,
+      "sortOrder": 274,
       "details": {
         "reason": "high-stick"
       }
+    },
+    {
+      "eventId": 423,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "18:06",
+      "timeRemaining": "01:54",
+      "situationCode": "1551",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 502,
+      "typeDescKey": "faceoff",
+      "sortOrder": 277,
+      "details": {
+        "eventOwnerTeamId": 20,
+        "losingPlayerId": 8483493,
+        "winningPlayerId": 8474150,
+        "xCoord": 69,
+        "yCoord": -22,
+        "zoneCode": "D"
+      }
+    },
+    {
+      "eventId": 468,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "18:17",
+      "timeRemaining": "01:43",
+      "situationCode": "1551",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 504,
+      "typeDescKey": "giveaway",
+      "sortOrder": 278,
+      "details": {
+        "xCoord": -76,
+        "yCoord": 40,
+        "zoneCode": "D",
+        "eventOwnerTeamId": 16,
+        "playerId": 8482176
+      }
+    },
+    {
+      "eventId": 428,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "18:20",
+      "timeRemaining": "01:40",
+      "situationCode": "1551",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 508,
+      "typeDescKey": "blocked-shot",
+      "sortOrder": 279,
+      "details": {
+        "xCoord": -63,
+        "yCoord": -1,
+        "zoneCode": "D",
+        "blockingPlayerId": 8483493,
+        "shootingPlayerId": 8484768,
+        "eventOwnerTeamId": 20,
+        "reason": "blocked"
+      }
+    },
+    {
+      "eventId": 429,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "18:35",
+      "timeRemaining": "01:25",
+      "situationCode": "1551",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 506,
+      "typeDescKey": "shot-on-goal",
+      "sortOrder": 280,
+      "details": {
+        "xCoord": -80,
+        "yCoord": 1,
+        "zoneCode": "O",
+        "shotType": "wrist",
+        "shootingPlayerId": 8480797,
+        "goalieInNetId": 8481519,
+        "eventOwnerTeamId": 20,
+        "awaySOG": 8,
+        "homeSOG": 9
+      }
+    },
+    {
+      "eventId": 455,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "18:37",
+      "timeRemaining": "01:23",
+      "situationCode": "1551",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 503,
+      "typeDescKey": "hit",
+      "sortOrder": 283,
+      "details": {
+        "xCoord": -91,
+        "yCoord": -12,
+        "zoneCode": "D",
+        "eventOwnerTeamId": 16,
+        "hittingPlayerId": 8483506,
+        "hitteePlayerId": 8480797
+      }
+    },
+    {
+      "eventId": 438,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "18:57",
+      "timeRemaining": "01:03",
+      "situationCode": "1551",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 508,
+      "typeDescKey": "blocked-shot",
+      "sortOrder": 289,
+      "details": {
+        "xCoord": -76,
+        "yCoord": -21,
+        "zoneCode": "D",
+        "blockingPlayerId": 8482176,
+        "shootingPlayerId": 8484234,
+        "eventOwnerTeamId": 20,
+        "reason": "blocked"
+      }
+    },
+    {
+      "eventId": 19,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "19:00",
+      "timeRemaining": "01:00",
+      "situationCode": "1551",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 516,
+      "typeDescKey": "stoppage",
+      "sortOrder": 290,
+      "details": {
+        "reason": "puck-in-netting"
+      }
+    },
+    {
+      "eventId": 447,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "19:00",
+      "timeRemaining": "01:00",
+      "situationCode": "1551",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 509,
+      "typeDescKey": "penalty",
+      "sortOrder": 292,
+      "details": {
+        "xCoord": -70,
+        "yCoord": -22,
+        "zoneCode": "D",
+        "typeCode": "MIN",
+        "descKey": "delaying-game-face-off-violation",
+        "duration": 2,
+        "committedByPlayerId": 8483450,
+        "eventOwnerTeamId": 16
+      }
+    },
+    {
+      "eventId": 450,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "19:00",
+      "timeRemaining": "01:00",
+      "situationCode": "1451",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 502,
+      "typeDescKey": "faceoff",
+      "sortOrder": 296,
+      "details": {
+        "eventOwnerTeamId": 16,
+        "losingPlayerId": 8480028,
+        "winningPlayerId": 8483493,
+        "xCoord": -69,
+        "yCoord": -22,
+        "zoneCode": "D"
+      }
+    },
+    {
+      "eventId": 465,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "19:14",
+      "timeRemaining": "00:46",
+      "situationCode": "1451",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 503,
+      "typeDescKey": "hit",
+      "sortOrder": 297,
+      "details": {
+        "xCoord": -60,
+        "yCoord": -23,
+        "zoneCode": "D",
+        "eventOwnerTeamId": 16,
+        "hittingPlayerId": 8483493,
+        "hitteePlayerId": 8480028
+      }
+    },
+    {
+      "eventId": 451,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "19:20",
+      "timeRemaining": "00:40",
+      "situationCode": "1451",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 506,
+      "typeDescKey": "shot-on-goal",
+      "sortOrder": 298,
+      "details": {
+        "xCoord": -71,
+        "yCoord": 21,
+        "zoneCode": "O",
+        "shotType": "wrist",
+        "shootingPlayerId": 8482679,
+        "goalieInNetId": 8481519,
+        "eventOwnerTeamId": 20,
+        "awaySOG": 8,
+        "homeSOG": 10
+      }
+    },
+    {
+      "eventId": 452,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "19:47",
+      "timeRemaining": "00:13",
+      "situationCode": "1451",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 506,
+      "typeDescKey": "shot-on-goal",
+      "sortOrder": 299,
+      "details": {
+        "xCoord": -55,
+        "yCoord": -23,
+        "zoneCode": "O",
+        "shotType": "wrist",
+        "shootingPlayerId": 8484768,
+        "goalieInNetId": 8481519,
+        "eventOwnerTeamId": 20,
+        "awaySOG": 8,
+        "homeSOG": 11
+      }
+    },
+    {
+      "eventId": 20,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "19:48",
+      "timeRemaining": "00:12",
+      "situationCode": "1451",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 516,
+      "typeDescKey": "stoppage",
+      "sortOrder": 300,
+      "details": {
+        "reason": "goalie-stopped-after-sog"
+      }
+    },
+    {
+      "eventId": 453,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "19:48",
+      "timeRemaining": "00:12",
+      "situationCode": "1451",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 502,
+      "typeDescKey": "faceoff",
+      "sortOrder": 303,
+      "details": {
+        "eventOwnerTeamId": 20,
+        "losingPlayerId": 8485391,
+        "winningPlayerId": 8481068,
+        "xCoord": -69,
+        "yCoord": -22,
+        "zoneCode": "O"
+      }
+    },
+    {
+      "eventId": 458,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "19:52",
+      "timeRemaining": "00:08",
+      "situationCode": "1451",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 506,
+      "typeDescKey": "shot-on-goal",
+      "sortOrder": 304,
+      "details": {
+        "xCoord": -40,
+        "yCoord": 7,
+        "zoneCode": "O",
+        "shotType": "wrist",
+        "shootingPlayerId": 8476458,
+        "goalieInNetId": 8481519,
+        "eventOwnerTeamId": 20,
+        "awaySOG": 8,
+        "homeSOG": 12
+      }
+    },
+    {
+      "eventId": 462,
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "20:00",
+      "timeRemaining": "00:00",
+      "situationCode": "1451",
+      "homeTeamDefendingSide": "right",
+      "typeCode": 521,
+      "typeDescKey": "period-end",
+      "sortOrder": 305
     }
   ],
   "rosterSpots": [
@@ -2713,141 +3161,15 @@
   "summary": {
     "iceSurface": {
       "awayTeam": {
-        "forwards": [
-          {
-            "playerId": 8484197,
-            "name": {
-              "default": "O. Moore"
-            },
-            "sweaterNumber": 11,
-            "positionCode": "C",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/CHI/8484197.png",
-            "totalSOI": 321
-          },
-          {
-            "playerId": 8474141,
-            "name": {
-              "default": "P. Kane"
-            },
-            "sweaterNumber": 88,
-            "positionCode": "R",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/CHI/8474141.png",
-            "totalSOI": 295
-          },
-          {
-            "playerId": 8484390,
-            "name": {
-              "default": "R. Kantserov"
-            },
-            "sweaterNumber": 80,
-            "positionCode": "R",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/CHI/8484390.png",
-            "totalSOI": 252
-          }
-        ],
-        "defensemen": [
-          {
-            "playerId": 8482176,
-            "name": {
-              "default": "W. Kaiser"
-            },
-            "sweaterNumber": 44,
-            "positionCode": "D",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/CHI/8482176.png",
-            "totalSOI": 338
-          },
-          {
-            "playerId": 8483506,
-            "name": {
-              "default": "S. Rinzel"
-            },
-            "sweaterNumber": 6,
-            "positionCode": "D",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/CHI/8483506.png",
-            "totalSOI": 347
-          }
-        ],
-        "goalies": [
-          {
-            "playerId": 8481519,
-            "name": {
-              "default": "S. Knight"
-            },
-            "sweaterNumber": 30,
-            "positionCode": "G",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/CHI/8481519.png",
-            "totalSOI": 1072
-          }
-        ],
+        "forwards": [],
+        "defensemen": [],
+        "goalies": [],
         "penaltyBox": []
       },
       "homeTeam": {
-        "forwards": [
-          {
-            "playerId": 8482679,
-            "name": {
-              "default": "M. Coronato"
-            },
-            "sweaterNumber": 27,
-            "positionCode": "R",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/CGY/8482679.png",
-            "totalSOI": 328
-          },
-          {
-            "playerId": 8474150,
-            "name": {
-              "default": "M. Backlund"
-            },
-            "sweaterNumber": 11,
-            "positionCode": "C",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/CGY/8474150.png",
-            "totalSOI": 300
-          },
-          {
-            "playerId": 8480797,
-            "name": {
-              "default": "J. Farabee"
-            },
-            "sweaterNumber": 86,
-            "positionCode": "L",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/CGY/8480797.png",
-            "totalSOI": 282
-          }
-        ],
-        "defensemen": [
-          {
-            "playerId": 8480727,
-            "name": {
-              "default": "Z. Whitecloud"
-            },
-            "sweaterNumber": 28,
-            "positionCode": "D",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/CGY/8480727.png",
-            "totalSOI": 388
-          },
-          {
-            "playerId": 8478136,
-            "name": {
-              "default": "J. Middleton"
-            },
-            "sweaterNumber": 55,
-            "positionCode": "D",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/CGY/8478136.png",
-            "totalSOI": 370
-          }
-        ],
-        "goalies": [
-          {
-            "playerId": 8481692,
-            "name": {
-              "default": "D. Wolf"
-            },
-            "sweaterNumber": 32,
-            "positionCode": "G",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/CGY/8481692.png",
-            "totalSOI": 1072
-          }
-        ],
+        "forwards": [],
+        "defensemen": [],
+        "goalies": [],
         "penaltyBox": []
       }
     }
