@@ -43,6 +43,7 @@ def main():
     p.add_argument('--no-refresh', action='store_true', help='Use cached schedules')
     p.add_argument('--refresh-stats', action='store_true', help='Refresh cached raw game statistics')
     p.add_argument('--no-strict', action='store_true', help='Allow individual statistics errors')
+    p.add_argument('--managed-recovery',action='store_true',help='Opt in to active-only regular stats; run recovery separately')
     p.add_argument('--dry-run', action='store_true')
     p.add_argument("--test-mode",action="store_true")
     args = p.parse_args()
@@ -61,6 +62,8 @@ def main():
     stats_league = 'ALL' if ',' in leagues else leagues
     # -d without an explicit mode preserves the previous one-day behavior.
     manual = args.date is not None and not any(a == '--mode' or a.startswith('--mode=') for a in sys.argv[1:])
+    if args.managed_recovery and (manual or args.mode != 'regular' or args.refresh_stats):
+        p.error('--managed-recovery requires regular mode without --refresh-stats')
     days = ([anchor] if manual else
             [anchor - timedelta(days=1), anchor] if args.mode == 'regular' else
             [anchor + timedelta(days=i) for i in range(1, 7)])
@@ -70,7 +73,7 @@ def main():
     if not args.ep_only:
         # Repair recently finished NHL games beyond the normal yesterday/today
         # window. Use existing schedule CSVs; do not touch historical AHL rows.
-        if args.mode == 'regular' and not manual and 'NHL' in leagues.split(','):
+        if not args.managed_recovery and args.mode == 'regular' and not manual and 'NHL' in leagues.split(','):
             for offset in (3, 2):
                 previous_day = anchor - timedelta(days=offset)
                 gamefile = data_root / 'games' / f'Games_{previous_day}.csv'
@@ -100,12 +103,13 @@ def main():
                 continue  # Future schedules only; never fetch future player stats.
             stats = [sys.executable, 'getGamePlayerStats.py', '-d', day.isoformat(), '-l', stats_league]
             if args.test_mode: stats.append("--test-mode")
-            if not args.no_strict:
+            if args.managed_recovery: stats.append('--active-only')
+            if not args.no_strict and not args.managed_recovery:
                 stats.append('--strict')
             if args.refresh_stats:
                 stats.append('--refresh')
             rc = run_step(f'Player statistics {day}', stats, args.dry_run)
-            if rc:
+            if rc and not args.managed_recovery:
                 return rc
             quality_days.append(day)
     # F7 v2 pilot: validate only local test snapshots, after statistics.

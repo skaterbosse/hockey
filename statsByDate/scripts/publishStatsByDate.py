@@ -100,6 +100,9 @@ def main():
         rel = PROJECT / 'quality' / f'Quality_{day.isoformat()}.json'
         if (root / rel).is_file():
             to_add.add(rel.as_posix())
+    recovery_state = PROJECT / 'quality' / 'recovery_state.json'
+    if (root / recovery_state).is_file():
+        to_add.add(recovery_state.as_posix())
     # Include raw JSON for games referenced by updated schedules, if available.
     for day in target_days + backfill_days:
         schedule = data_root / 'games' / f'Games_{day.isoformat()}.csv'
