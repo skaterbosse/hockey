@@ -13,7 +13,28 @@ def utc(value):
     return datetime.fromisoformat(value.replace('Z', '+00:00')).astimezone(timezone.utc)
 
 
-def report(root, started, finished, base_sha=None, published_sha=None):
+def read_metrics(path):
+    if path is None or not Path(path).is_file():
+        return None
+    stages = {}
+    sources = {}
+    invalid = 0
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        try:
+            e = json.loads(line)
+            if e.get("kind") == "stage":
+                stages[e["stage"]] = e["durationSeconds"]
+            elif e.get("kind") == "http":
+                src = e["source"]
+                v = sources.setdefault(src, {"calls": 0, "successful": 0, "failed": 0})
+                v["calls"] += 1
+                v["successful" if e["success"] else "failed"] += 1
+        except (ValueError, KeyError, TypeError):
+            invalid += 1
+    return {"stages": stages, "sources": sources, "invalidEvents": invalid}
+
+
+def report(root, started, finished, base_sha=None, published_sha=None, metrics_path=None):
     data = root / 'statsByDate/data'
     counts = Counter()
     reasons = Counter()
@@ -54,8 +75,9 @@ def report(root, started, finished, base_sha=None, published_sha=None):
                               cwd=root, text=True, capture_output=True)
         if proc.returncode == 0:
             changed = len([line for line in proc.stdout.splitlines() if line.strip()])
+    metrics = read_metrics(metrics_path)
     return {
-        'schemaVersion': 1, 'startedAt': started.isoformat(), 'finishedAt': finished.isoformat(),
+        'schemaVersion': 2, 'startedAt': started.isoformat(), 'finishedAt': finished.isoformat(),
         'durationSeconds': round((finished - started).total_seconds(), 2),
         'baseSha': base_sha, 'publishedSha': published_sha,
         'quality': {'scope': 'final games in four most recent available quality reports',
@@ -64,9 +86,12 @@ def report(root, started, finished, base_sha=None, published_sha=None):
                     'reasons': dict(sorted(reasons.items()))},
         'recovery': {'attemptsRecordedInState': attempts, 'failedFetchesRecordedInState': failures},
         'publication': {'changedDataFiles': changed},
-        'efficiency': {'apiRequests': None, 'requestsWithoutDataChange': None,
-                       'stageDurationsSeconds': None,
-                       'note': 'API request counts and per-stage timings are not instrumented yet.'},
+        'efficiency': {'apiRequests': sum(v['calls'] for v in metrics['sources'].values()) if metrics else None,
+                       'apiRequestsBySource': metrics['sources'] if metrics else None,
+                       'requestsWithoutDataChange': None,
+                       'stageDurationsSeconds': metrics['stages'] if metrics else None,
+                       'invalidMetricEvents': metrics['invalidEvents'] if metrics else None,
+                       'note': 'HTTP counts cover instrumented Python requests and urllib calls only; redirects and other clients may not be counted. Requests without data change are not yet measurable.'},
     }
 
 
@@ -87,9 +112,21 @@ def markdown(r):
     lines.extend(f'| {k} | {v} |' for k, v in sorted(q['reasons'].items()))
     if not q['reasons']:
         lines.append('| Inga | 0 |')
+    e = r['efficiency']
     lines += ['', '### Effektiviseringsindikatorer',
-              '- API-anrop: **ej mätt**', '- Anrop utan dataförändring: **ej mätt**',
-              '- Körtid per arbetssteg: **ej mätt**',
+              f"- Instrumenterade HTTP-anrop: **{e['apiRequests'] if e['apiRequests'] is not None else 'ej mätt'}**",
+              '- Anrop utan dataförändring: **ej mätt**',
+              '', '#### HTTP-anrop per källa', '| Källa | Anrop | Lyckade | Misslyckade |', '|---|---:|---:|---:|']
+    for source, counts in sorted((e['apiRequestsBySource'] or {}).items()):
+        lines.append(f"| {source} | {counts['calls']} | {counts['successful']} | {counts['failed']} |")
+    if not e['apiRequestsBySource']:
+        lines.append('| Ej mätt / inga registrerade | – | – | – |')
+    lines += ['', '#### Körtid per arbetssteg', '| Steg | Sekunder |', '|---|---:|']
+    for stage, duration in (e['stageDurationsSeconds'] or {}).items():
+        lines.append(f'| {stage} | {duration} |')
+    if not e['stageDurationsSeconds']:
+        lines.append('| Ej mätt | – |')
+    lines += ['', '_HTTP-räkningen är partiell och omfattar instrumenterade Python-anrop, inte alla nätverksanrop._',
               '', '_Rapporten är observationsbaserad. Kvalitetsstatus och källdata ändras inte._']
     return '\n'.join(lines) + '\n'
 
@@ -103,12 +140,13 @@ def main():
     ap.add_argument('--published-sha')
     ap.add_argument('--output', type=Path)
     ap.add_argument('--summary-path', type=Path)
+    ap.add_argument('--metrics-path', type=Path)
     a = ap.parse_args()
     start = utc(a.started_at)
     finish = utc(a.finished_at) if a.finished_at else datetime.now(timezone.utc)
     if finish < start:
         ap.error('finished-at must be >= started-at')
-    r = report(a.repo_dir.resolve(), start, finish, a.base_sha, a.published_sha)
+    r = report(a.repo_dir.resolve(), start, finish, a.base_sha, a.published_sha, a.metrics_path)
     if a.output:
         a.output.parent.mkdir(parents=True, exist_ok=True)
         a.output.write_text(json.dumps(r, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')

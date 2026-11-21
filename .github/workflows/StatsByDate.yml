@@ -93,46 +93,47 @@ jobs:
         run: |
           echo "STATS_RUN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
           echo "STATS_BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "STATS_METRICS_LOG=$RUNNER_TEMP/statsbydate-metrics.jsonl" >> "$GITHUB_ENV"
 
       - name: Fetch schedules and statistics
         if: steps.schedule.outputs.mode != ''
         run: |
-          python statsByDate/scripts/updateHockeyDaily.py --mode regular --managed-recovery
+          python statsByDate/scripts/runMeasuredStep.py --stage fetch_regular -- python statsByDate/scripts/updateHockeyDaily.py --mode regular --managed-recovery
           if [ "${{ steps.schedule.outputs.mode }}" = daily ]; then
-            python statsByDate/scripts/updateHockeyDaily.py --mode daily
+            python statsByDate/scripts/runMeasuredStep.py --stage fetch_daily -- python statsByDate/scripts/updateHockeyDaily.py --mode daily
           fi
 
       - name: Fetch NHL 5-minute recaps
         if: steps.schedule.outputs.mode != ''
-        run: python statsByDate/scripts/getNHLGameRecaps.py
+        run: python statsByDate/scripts/runMeasuredStep.py --stage recaps -- python statsByDate/scripts/getNHLGameRecaps.py
 
       - name: Fetch NHL 10-minute condensed games
         if: steps.schedule.outputs.mode != ''
-        run: python statsByDate/scripts/getNHLCondensedGames.py
+        run: python statsByDate/scripts/runMeasuredStep.py --stage condensed -- python statsByDate/scripts/getNHLCondensedGames.py
 
       - name: Validate game quality
         if: steps.schedule.outputs.mode != ''
-        run: python statsByDate/scripts/validateGameQuality.py --recent --production
+        run: python statsByDate/scripts/runMeasuredStep.py --stage quality_before -- python statsByDate/scripts/validateGameQuality.py --recent --production
 
       # The quality report above is the input to the recovery decision.
       # Production recovery catches per-game API failures and preserves its
       # cooldown state in data/quality/recovery_state.json.
       - name: Recover incomplete NHL and AHL statistics
         if: steps.schedule.outputs.mode != ''
-        run: python statsByDate/scripts/recoverGameStats.py --production
+        run: python statsByDate/scripts/runMeasuredStep.py --stage recover_stats -- python statsByDate/scripts/recoverGameStats.py --production
 
       - name: Recover missing NHL goal videos
         if: steps.schedule.outputs.mode != ''
-        run: python statsByDate/scripts/recoverNHLGoalVideos.py --production
+        run: python statsByDate/scripts/runMeasuredStep.py --stage recover_videos -- python statsByDate/scripts/recoverNHLGoalVideos.py --production
 
       - name: Revalidate quality after recovery
         if: steps.schedule.outputs.mode != ''
-        run: python statsByDate/scripts/validateGameQuality.py --recent --production
+        run: python statsByDate/scripts/runMeasuredStep.py --stage quality_after -- python statsByDate/scripts/validateGameQuality.py --recent --production
 
       - name: Generate dynamic schedule
         if: steps.schedule.outputs.mode != ''
         run: |
-          python statsByDate/scripts/generateUpdateSchedule.py --run-start "$STATS_RUN_START" || {
+          python statsByDate/scripts/runMeasuredStep.py --stage schedule -- python statsByDate/scripts/generateUpdateSchedule.py --run-start "$STATS_RUN_START" || {
             echo "::warning::Dynamic schedule generation failed; publishing statistics with expired schedule"
             printf '{"schemaVersion":0}\n' > statsByDate/data/updateSchedule.json
           }
@@ -142,7 +143,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          python statsByDate/scripts/publishStatsByDate.py --mode "${{ steps.schedule.outputs.mode }}" --commit --push
+          python statsByDate/scripts/runMeasuredStep.py --stage publish -- python statsByDate/scripts/publishStatsByDate.py --mode "${{ steps.schedule.outputs.mode }}" --commit --push
 
       - name: Record exact published commit
         id: published_commit
@@ -167,7 +168,8 @@ jobs:
             --base-sha "$STATS_BASE_SHA" \
             --published-sha "${{ steps.published_commit.outputs.sha }}" \
             --output "$RUNNER_TEMP/statsbydate-run-report.json" \
-            --summary-path "$GITHUB_STEP_SUMMARY"
+            --summary-path "$GITHUB_STEP_SUMMARY" \
+            --metrics-path "$STATS_METRICS_LOG"
 
       - name: Upload operations report
         if: steps.schedule.outputs.mode != ''
