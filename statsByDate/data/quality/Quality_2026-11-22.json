@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "date": "2026-11-22",
-  "generatedAt": "2026-11-22T22:31:08.083231+00:00",
+  "generatedAt": "2026-11-22T22:41:09.194395+00:00",
   "summary": {
-    "INCOMPLETE": 11,
-    "COMPLETE": 2
+    "INCOMPLETE": 10,
+    "COMPLETE": 3
   },
   "games": [
     {
@@ -47,18 +47,29 @@
       "gameId": "1029367",
       "league": "AHL",
       "gameDate": "2026-11-22",
-      "gameStatus": "LIVE",
-      "qualityStatus": "INCOMPLETE",
+      "gameStatus": "FINAL",
+      "qualityStatus": "COMPLETE",
       "checks": {
-        "final": "FAIL"
+        "final": "PASS",
+        "ahlSnapshot": "PASS",
+        "rawIdentity": "PASS",
+        "rawFinal": "PASS",
+        "rawScore": "PASS",
+        "score": "PASS",
+        "goalEvents": "PASS",
+        "duplicateGoals": "PASS",
+        "goalTimes": "PASS",
+        "goalIdentities": "PASS",
+        "playerStats": "PASS",
+        "individualScoring": "PASS",
+        "goalies": "PASS",
+        "shootout": "PASS",
+        "goalVideos": "NA",
+        "recap": "NA",
+        "condensed": "NA"
       },
-      "reasons": [
-        "GAME_NOT_FINAL"
-      ],
-      "requiredActions": [
-        "FETCH_MATCH_DATA",
-        "FETCH_SCHEDULE"
-      ],
+      "reasons": [],
+      "requiredActions": [],
       "details": {}
     },
     {
@@ -130,19 +141,37 @@
       "gameId": "1029371",
       "league": "AHL",
       "gameDate": "2026-11-22",
-      "gameStatus": "LIVE",
+      "gameStatus": "FINAL",
       "qualityStatus": "INCOMPLETE",
       "checks": {
-        "final": "FAIL"
+        "final": "PASS",
+        "ahlSnapshot": "FAIL",
+        "rawIdentity": "PASS",
+        "rawFinal": "FAIL",
+        "rawScore": "PASS",
+        "score": "PASS",
+        "goalEvents": "PASS",
+        "duplicateGoals": "PASS",
+        "goalTimes": "PASS",
+        "goalIdentities": "PASS",
+        "playerStats": "PASS",
+        "individualScoring": "PASS",
+        "goalies": "PASS",
+        "shootout": "PASS",
+        "goalVideos": "NA",
+        "recap": "NA",
+        "condensed": "NA"
       },
       "reasons": [
-        "GAME_NOT_FINAL"
+        "RAW_STATS_MISMATCH",
+        "RAW_NOT_FINAL"
       ],
       "requiredActions": [
-        "FETCH_MATCH_DATA",
-        "FETCH_SCHEDULE"
+        "FETCH_MATCH_DATA"
       ],
-      "details": {}
+      "details": {
+        "ahlSnapshot": "raw game not final or wrong game ID"
+      }
     },
     {
       "gameId": "1029372",
