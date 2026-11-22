@@ -290,10 +290,26 @@ main>header,.toolbar,.status{flex:0 0 auto}
 .skaters-table td.icons{white-space:normal}
 .point-symbol-line{display:block;overflow-wrap:anywhere;line-height:1.35}
 .player-team .team-logo{flex-shrink:0}
+
+/* v51: Eliteprospects i stängbart överlägg. Videolänkar oförändrade. */
+.ep-overlay[hidden]{display:none}
+.ep-overlay{position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:10px;padding-top:max(10px,env(safe-area-inset-top));padding-bottom:max(10px,env(safe-area-inset-bottom))}
+.ep-panel{width:min(100%,1050px);height:92vh;height:92dvh;display:flex;flex-direction:column;min-height:0;overflow:hidden;background:white;border:2px solid #769746;border-radius:10px}
+.ep-header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 10px;background:#10170b;color:#d6f379}
+.ep-title{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ep-close{min-height:44px;min-width:95px;background:#d6f379;color:#10170b;border:0;border-radius:7px;font-size:1rem;font-weight:700;cursor:pointer}
+.ep-frame{flex:1 1 auto;width:100%;min-height:0;border:0;background:#fff}
+.ep-footer{padding:9px 11px;color:#26351c;background:#f1f4ec;font-size:.83rem;line-height:1.5}
+.ep-footer a{color:#185a9e;font-weight:700}
+@media(max-width:650px){.ep-overlay{padding:4px;padding-top:max(4px,env(safe-area-inset-top));padding-bottom:max(4px,env(safe-area-inset-bottom))}.ep-panel{height:98vh;height:98dvh}.ep-footer{padding:7px 9px}}
 </style></head><body><div class="localsport-brand"><a href="index.html" aria-label="LocalSport startsida"><img src="icons/local_sport_full_logo_night_mode_vad_hande_inatt.svg" alt="LocalSport – Vad hände inatt?"></a></div><main><header><div class="datebar"><button id="prev" aria-label="Föregående dag">‹</button><div class="datebox"><strong id="relative">Idag</strong><small id="dateLabel"></small></div><button id="next" aria-label="Nästa dag">›</button></div><nav class="tabs" aria-label="Välj liga"><button data-league="NHL" class="active">NHL</button><button data-league="AHL">AHL</button></nav></header>
 <div class="toolbar"><label><input type="checkbox" id="swe" checked> SWE</label><button class="today" id="today">Till idag</button></div><div class="status" id="status" aria-live="polite"></div><section id="content"></section>
 
-</main><script>
+</main><div id="epOverlay" class="ep-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="epTitle">
+ <div class="ep-panel"><div class="ep-header"><span id="epTitle" class="ep-title">Eliteprospects</span><button id="epClose" class="ep-close" type="button">✕ Stäng</button></div>
+ <iframe id="epFrame" class="ep-frame" title="Eliteprospects spelarprofil" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+ <div class="ep-footer">Om Eliteprospects inte tillåter visning här: <a id="epExternal" target="_blank" rel="noopener noreferrer">öppna spelarprofilen i en ny flik</a>. LocalSport ligger kvar i denna flik.</div></div>
+</div><script>
 'use strict';
 const TEST_MODE=['localhost','127.0.0.1','[::1]'].includes(location.hostname) && new URLSearchParams(location.search).get('test')==='1';
 const DATA_ROOT=TEST_MODE?'statsByDate/data_test':'statsByDate/data';
@@ -790,5 +806,41 @@ document.addEventListener('click',event=>{
  const url=play.dataset.videoUrl;
  if(!/^https:\/\/(?:www\.)?nhl\.com\/video\/[a-z0-9-]+$/i.test(url))return;
  window.open(url,'_blank','noopener,noreferrer');
+});
+
+// v51: endast EP-länkar hanteras i överlägg. Ursprunglig videokod är orörd.
+let epPreviousFocus=null;
+function closeEpOverlay(){
+ const layer=$('epOverlay');
+ if(layer.hidden)return;
+ layer.hidden=true;
+ $('epFrame').src='about:blank';
+ if(epPreviousFocus&&epPreviousFocus.isConnected)epPreviousFocus.focus({preventScroll:true});
+ epPreviousFocus=null;
+}
+document.addEventListener('click',event=>{
+ const link=event.target.closest('a.ep-player');
+ if(!link)return;
+ event.preventDefault();event.stopPropagation();
+ let url;
+ try{url=new URL(link.href)}catch{return}
+ if(url.protocol!=='https:'||url.hostname!=='www.eliteprospects.com'||!/^\/player\/\d+\/[a-z0-9-]+$/.test(url.pathname))return;
+ epPreviousFocus=document.activeElement;
+ $('epTitle').textContent=link.textContent.trim()+' – Eliteprospects';
+ $('epExternal').href=url.href;
+ $('epFrame').src=url.href;
+ $('epOverlay').hidden=false;
+ $('epClose').focus({preventScroll:true});
+},true);
+$('epClose').addEventListener('click',closeEpOverlay);
+$('epOverlay').addEventListener('click',e=>{if(e.target===$('epOverlay'))closeEpOverlay()});
+document.addEventListener('keydown',e=>{
+ if($('epOverlay').hidden)return;
+ if(e.key==='Escape'){e.preventDefault();closeEpOverlay()}
+ if(e.key==='Tab'){
+  const items=[$('epClose'),$('epFrame'),$('epExternal')];
+  if(e.shiftKey&&document.activeElement===items[0]){e.preventDefault();items[2].focus()}
+  else if(!e.shiftKey&&document.activeElement===items[2]){e.preventDefault();items[0].focus()}
+ }
 });
 </script></body></html>
