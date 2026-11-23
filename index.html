@@ -249,6 +249,41 @@
       .service-desc{ font-size:0.98rem; }
       .service-logo-wrap img{ height:112px; }
     }
+
+    /* Four equal-width services. Height just below one quarter of screen width. */
+    .service-nav{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:0;
+      padding:0;
+      background:#000;
+      border-top:1px solid #252525;
+      width:100%;
+    }
+    .service-nav a{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-width:0;
+      height:23vw; /* Slightly less than total viewport width / 4 */
+      padding:3px;
+      overflow:hidden;
+      border:0;
+    }
+    /* Three light LocalSport-green dividers, across the full service row height. */
+    .service-nav a:not(:last-child){
+      border-right:3px solid var(--green);
+    }
+    .service-nav a:hover,.service-nav a:focus-visible{
+      outline:2px solid var(--green);
+      outline-offset:-2px;
+    }
+    .service-nav img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
   </style>
   <script>
     function showPage(id, updateHash = true){
@@ -294,18 +329,20 @@
       <a href="#om" data-target="om">Om</a>
       <a href="#installningar" data-target="installningar">Inställningar</a>
     </nav>
+    <div class="service-nav" aria-label="LocalSports tjänster">
+      <a href="LocalSports.html" title="Live sport i en hall nära dig" aria-label="Live sport i en hall nära dig"><img src="icons/local_sport_promotional_poster_1024x1024.png" alt="Live sport i en hall nära dig"></a>
+      <a href="StatsByDate.html" title="Vad hände inatt – Svenska insatser i NHL och AHL" aria-label="Vad hände inatt – Svenska insatser i NHL och AHL"><img src="icons/StatsByDate_efficient.jpg" alt="Vad hände inatt"></a>
+      <a href="highlights.html" title="Hockey Highlights" aria-label="Hockey Highlights"><img src="icons/Highlights_efficient.jpg" alt="Highlights"></a>
+      <a href="SeriesAndTeams.html" title="Hockey Silly Season" aria-label="Hockey Silly Season"><img src="icons/Silly_26_27_efficient.jpg" alt="Hockey Silly Season"></a>
+    </div>
   </div>
 
   <main>
     <section id="start" class="page active">
-      <p class="intro">
-        LocalSport.se hjälper dig hitta sport nära dig – och ger dig dessutom hockey highlights och silly season i svenska ligor.
-      </p>
-
       <div class="hero-stack">
         <article class="service-card primary">
           <div class="service-logo-wrap">
-            <img src="icons/local_sport_full_logo_night_mode.svg" alt="Local Sport - Live sport i en hall nära dig">
+            <img src="icons/local_sport_promotional_poster_1024x1024.png" alt="Local Sport - Live sport i en hall nära dig">
           </div>
           <div>
             <div class="service-title">Live sport i en hall nära dig</div>
@@ -329,7 +366,21 @@
 
         <article class="service-card">
           <div class="service-logo-wrap">
-            <img src="icons/Highlights.png" alt="Hockey Highlights">
+            <img src="icons/StatsByDate_efficient.jpg" alt="Vad hände inatt – Svenska insatser i NHL och AHL">
+          </div>
+          <div>
+            <div class="service-title">Vad hände inatt?</div>
+            <p class="service-desc">Svenska insatser i NHL och AHL – följ mål, assist och matchresultat per datum.</p>
+            <div class="service-footer">
+              <a class="service-link" href="StatsByDate.html">Öppna StatsByDate <span class="arrow">→</span></a>
+              <span class="service-badge">NHL &amp; AHL</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="service-card">
+          <div class="service-logo-wrap">
+            <img src="icons/Highlights_efficient.jpg" alt="Hockey Highlights">
           </div>
           <div>
             <div class="service-title">Hockey Highlights</div>
@@ -351,7 +402,7 @@
 
         <article class="service-card">
           <div class="service-logo-wrap">
-            <img src="icons/Silly_26_27.png" alt="Hockey Silly Season 2026/2027">
+            <img src="icons/Silly_26_27_efficient.jpg" alt="Hockey Silly Season 2026/2027">
           </div>
           <div>
             <div class="service-title">Hockey Silly Season 2026/2027</div>
