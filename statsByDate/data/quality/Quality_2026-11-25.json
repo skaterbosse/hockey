@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-11-25",
-  "generatedAt": "2026-11-26T02:01:08.958244+00:00",
+  "generatedAt": "2026-11-26T02:31:10.864198+00:00",
   "summary": {
     "COMPLETE": 2,
     "INCOMPLETE": 22
@@ -195,19 +195,39 @@
       "gameId": "1029385",
       "league": "AHL",
       "gameDate": "2026-11-25",
-      "gameStatus": "LIVE",
+      "gameStatus": "FINAL",
       "qualityStatus": "INCOMPLETE",
       "checks": {
-        "final": "FAIL"
+        "final": "PASS",
+        "ahlSnapshot": "FAIL",
+        "rawIdentity": "PASS",
+        "rawFinal": "FAIL",
+        "rawScore": "FAIL",
+        "score": "FAIL",
+        "goalEvents": "PASS",
+        "duplicateGoals": "PASS",
+        "goalTimes": "PASS",
+        "goalIdentities": "PASS",
+        "playerStats": "PASS",
+        "individualScoring": "PASS",
+        "goalies": "PASS",
+        "shootout": "PASS",
+        "goalVideos": "NA",
+        "recap": "NA",
+        "condensed": "NA"
       },
       "reasons": [
-        "GAME_NOT_FINAL"
+        "RAW_STATS_MISMATCH",
+        "RAW_NOT_FINAL",
+        "SCORE_MISMATCH"
       ],
       "requiredActions": [
         "FETCH_MATCH_DATA",
         "FETCH_SCHEDULE"
       ],
-      "details": {}
+      "details": {
+        "ahlSnapshot": "raw game not final or wrong game ID"
+      }
     },
     {
       "gameId": "2026020386",
