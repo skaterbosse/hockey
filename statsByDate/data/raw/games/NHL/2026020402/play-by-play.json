@@ -36,7 +36,7 @@
       "sequenceNumber": 657
     }
   ],
-  "gameState": "CRIT",
+  "gameState": "FINAL",
   "gameScheduleState": "OK",
   "periodDescriptor": {
     "number": 5,
@@ -49,11 +49,10 @@
       "default": "Mammoth"
     },
     "abbrev": "UTA",
-    "score": 5,
+    "score": 6,
     "sog": 35,
     "logo": "https://assets.nhle.com/logos/nhl/svg/UTA_light.svg",
     "darkLogo": "https://assets.nhle.com/logos/nhl/svg/UTA_dark.svg",
-    "radioLink": "https://d2igy0yla8zi0u.cloudfront.net/uta/20262027/uta-radio.m3u8",
     "placeName": {
       "default": "Utah"
     },
@@ -72,7 +71,6 @@
     "sog": 21,
     "logo": "https://assets.nhle.com/logos/nhl/svg/NSH_light.svg",
     "darkLogo": "https://assets.nhle.com/logos/nhl/svg/NSH_dark.svg",
-    "radioLink": "https://d2igy0yla8zi0u.cloudfront.net/nsh/20262027/nsh-radio.m3u8",
     "placeName": {
       "default": "Nashville"
     },
@@ -89,8 +87,11 @@
     "running": false,
     "inIntermission": false
   },
-  "displayPeriod": 5,
+  "displayPeriod": 1,
   "maxPeriods": 5,
+  "gameOutcome": {
+    "lastPeriodType": "SO"
+  },
   "plays": [
     {
       "eventId": 52,
@@ -6717,7 +6718,7 @@
         "yCoord": 7,
         "zoneCode": "O",
         "reason": "wide-right",
-        "shotType": "tip-in",
+        "shotType": "deflected",
         "shootingPlayerId": 8478474,
         "goalieInNetId": 8477424,
         "eventOwnerTeamId": 68
@@ -7448,6 +7449,129 @@
         "awayScore": 5,
         "homeScore": 5
       }
+    },
+    {
+      "eventId": 605,
+      "periodDescriptor": {
+        "number": 5,
+        "periodType": "SO",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "00:00",
+      "timeRemaining": "00:00",
+      "situationCode": "1010",
+      "homeTeamDefendingSide": "left",
+      "typeCode": 506,
+      "typeDescKey": "shot-on-goal",
+      "sortOrder": 848,
+      "details": {
+        "xCoord": 78,
+        "yCoord": -3,
+        "zoneCode": "O",
+        "shotType": "backhand",
+        "shootingPlayerId": 8475158,
+        "goalieInNetId": 8478872,
+        "eventOwnerTeamId": 18,
+        "awaySOG": 30,
+        "homeSOG": 17
+      }
+    },
+    {
+      "eventId": 158,
+      "periodDescriptor": {
+        "number": 5,
+        "periodType": "SO",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "00:00",
+      "timeRemaining": "00:00",
+      "situationCode": "0101",
+      "homeTeamDefendingSide": "left",
+      "typeCode": 506,
+      "typeDescKey": "shot-on-goal",
+      "sortOrder": 849,
+      "details": {
+        "xCoord": -75,
+        "yCoord": 0,
+        "zoneCode": "O",
+        "shotType": "wrist",
+        "shootingPlayerId": 8479343,
+        "goalieInNetId": 8477424,
+        "eventOwnerTeamId": 68,
+        "awaySOG": 31,
+        "homeSOG": 17
+      }
+    },
+    {
+      "eventId": 606,
+      "periodDescriptor": {
+        "number": 5,
+        "periodType": "SO",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "00:00",
+      "timeRemaining": "00:00",
+      "situationCode": "1010",
+      "homeTeamDefendingSide": "left",
+      "typeCode": 506,
+      "typeDescKey": "shot-on-goal",
+      "sortOrder": 850,
+      "details": {
+        "xCoord": 71,
+        "yCoord": 0,
+        "zoneCode": "O",
+        "shotType": "wrist",
+        "shootingPlayerId": 8474600,
+        "goalieInNetId": 8478872,
+        "eventOwnerTeamId": 18,
+        "awaySOG": 31,
+        "homeSOG": 18
+      }
+    },
+    {
+      "eventId": 607,
+      "periodDescriptor": {
+        "number": 5,
+        "periodType": "SO",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "00:00",
+      "timeRemaining": "00:00",
+      "situationCode": "1010",
+      "homeTeamDefendingSide": "left",
+      "typeCode": 523,
+      "typeDescKey": "shootout-complete",
+      "sortOrder": 851
+    },
+    {
+      "eventId": 427,
+      "periodDescriptor": {
+        "number": 5,
+        "periodType": "SO",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "00:00",
+      "timeRemaining": "00:00",
+      "situationCode": "1010",
+      "homeTeamDefendingSide": "left",
+      "typeCode": 521,
+      "typeDescKey": "period-end",
+      "sortOrder": 854
+    },
+    {
+      "eventId": 431,
+      "periodDescriptor": {
+        "number": 5,
+        "periodType": "SO",
+        "maxRegulationPeriods": 3
+      },
+      "timeInPeriod": "00:00",
+      "timeRemaining": "00:00",
+      "situationCode": "1010",
+      "homeTeamDefendingSide": "left",
+      "typeCode": 524,
+      "typeDescKey": "game-end",
+      "sortOrder": 856
     }
   ],
   "rosterSpots": [
@@ -7994,42 +8118,5 @@
     }
   ],
   "regPeriods": 3,
-  "summary": {
-    "iceSurface": {
-      "awayTeam": {
-        "forwards": [],
-        "defensemen": [],
-        "goalies": [
-          {
-            "playerId": 8478872,
-            "name": {
-              "default": "K. Vejmelka"
-            },
-            "sweaterNumber": 70,
-            "positionCode": "G",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/UTA/8478872.png",
-            "totalSOI": 3900
-          }
-        ],
-        "penaltyBox": []
-      },
-      "homeTeam": {
-        "forwards": [],
-        "defensemen": [],
-        "goalies": [
-          {
-            "playerId": 8477424,
-            "name": {
-              "default": "J. Saros"
-            },
-            "sweaterNumber": 74,
-            "positionCode": "G",
-            "headshot": "https://assets.nhle.com/mugs/nhl/20262027/NSH/8477424.png",
-            "totalSOI": 3900
-          }
-        ],
-        "penaltyBox": []
-      }
-    }
-  }
+  "summary": {}
 }
