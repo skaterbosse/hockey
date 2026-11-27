@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "date": "2026-11-27",
-  "generatedAt": "2026-11-27T22:51:13.459766+00:00",
+  "generatedAt": "2026-11-27T23:01:06.630358+00:00",
   "summary": {
-    "INCOMPLETE": 23,
-    "COMPLETE": 4
+    "INCOMPLETE": 20,
+    "COMPLETE": 7
   },
   "games": [
     {
@@ -348,7 +348,7 @@
       "league": "NHL",
       "gameDate": "2026-11-27",
       "gameStatus": "FINAL",
-      "qualityStatus": "INCOMPLETE",
+      "qualityStatus": "COMPLETE",
       "checks": {
         "final": "PASS",
         "rawIdentity": "PASS",
@@ -364,17 +364,11 @@
         "goalies": "PASS",
         "shootout": "PASS",
         "goalVideos": "PASS",
-        "recap": "FAIL",
-        "condensed": "FAIL"
+        "recap": "PASS",
+        "condensed": "PASS"
       },
-      "reasons": [
-        "MISSING_RECAP",
-        "MISSING_CONDENSED"
-      ],
-      "requiredActions": [
-        "FETCH_CONDENSED",
-        "FETCH_RECAP"
-      ],
+      "reasons": [],
+      "requiredActions": [],
       "details": {
         "missingGoalVideos": []
       }
@@ -384,7 +378,7 @@
       "league": "NHL",
       "gameDate": "2026-11-27",
       "gameStatus": "FINAL",
-      "qualityStatus": "INCOMPLETE",
+      "qualityStatus": "COMPLETE",
       "checks": {
         "final": "PASS",
         "rawIdentity": "PASS",
@@ -400,67 +394,17 @@
         "goalies": "PASS",
         "shootout": "PASS",
         "goalVideos": "PASS",
-        "recap": "FAIL",
-        "condensed": "FAIL"
+        "recap": "PASS",
+        "condensed": "PASS"
       },
-      "reasons": [
-        "MISSING_RECAP",
-        "MISSING_CONDENSED"
-      ],
-      "requiredActions": [
-        "FETCH_CONDENSED",
-        "FETCH_RECAP"
-      ],
+      "reasons": [],
+      "requiredActions": [],
       "details": {
         "missingGoalVideos": []
       }
     },
     {
       "gameId": "2026020406",
-      "league": "NHL",
-      "gameDate": "2026-11-27",
-      "gameStatus": "FINAL",
-      "qualityStatus": "INCOMPLETE",
-      "checks": {
-        "final": "PASS",
-        "rawIdentity": "PASS",
-        "rawFinal": "PASS",
-        "rawScore": "PASS",
-        "score": "PASS",
-        "goalEvents": "PASS",
-        "duplicateGoals": "PASS",
-        "goalTimes": "PASS",
-        "goalIdentities": "PASS",
-        "playerStats": "PASS",
-        "individualScoring": "PASS",
-        "goalies": "PASS",
-        "shootout": "PASS",
-        "goalVideos": "FAIL",
-        "recap": "FAIL",
-        "condensed": "FAIL"
-      },
-      "reasons": [
-        "MISSING_GOAL_VIDEOS",
-        "MISSING_RECAP",
-        "MISSING_CONDENSED"
-      ],
-      "requiredActions": [
-        "FETCH_CONDENSED",
-        "FETCH_GOAL_VIDEOS",
-        "FETCH_RECAP"
-      ],
-      "details": {
-        "missingGoalVideos": [
-          {
-            "period": "3",
-            "time": "19:36",
-            "scorerId": "8477935"
-          }
-        ]
-      }
-    },
-    {
-      "gameId": "2026020407",
       "league": "NHL",
       "gameDate": "2026-11-27",
       "gameStatus": "FINAL",
@@ -489,6 +433,36 @@
       "requiredActions": [
         "FETCH_CONDENSED"
       ],
+      "details": {
+        "missingGoalVideos": []
+      }
+    },
+    {
+      "gameId": "2026020407",
+      "league": "NHL",
+      "gameDate": "2026-11-27",
+      "gameStatus": "FINAL",
+      "qualityStatus": "COMPLETE",
+      "checks": {
+        "final": "PASS",
+        "rawIdentity": "PASS",
+        "rawFinal": "PASS",
+        "rawScore": "PASS",
+        "score": "PASS",
+        "goalEvents": "PASS",
+        "duplicateGoals": "PASS",
+        "goalTimes": "PASS",
+        "goalIdentities": "PASS",
+        "playerStats": "PASS",
+        "individualScoring": "PASS",
+        "goalies": "PASS",
+        "shootout": "PASS",
+        "goalVideos": "PASS",
+        "recap": "PASS",
+        "condensed": "PASS"
+      },
+      "reasons": [],
+      "requiredActions": [],
       "details": {
         "missingGoalVideos": []
       }
