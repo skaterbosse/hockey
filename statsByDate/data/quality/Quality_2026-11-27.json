@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-11-27",
-  "generatedAt": "2026-11-27T20:31:05.158186+00:00",
+  "generatedAt": "2026-11-27T20:41:06.036253+00:00",
   "summary": {
     "INCOMPLETE": 27
   },
@@ -226,37 +226,81 @@
       "gameId": "2026020400",
       "league": "NHL",
       "gameDate": "2026-11-27",
-      "gameStatus": "LIVE",
+      "gameStatus": "FINAL",
       "qualityStatus": "INCOMPLETE",
       "checks": {
-        "final": "FAIL"
+        "final": "PASS",
+        "rawIdentity": "PASS",
+        "rawFinal": "PASS",
+        "rawScore": "PASS",
+        "score": "PASS",
+        "goalEvents": "PASS",
+        "duplicateGoals": "PASS",
+        "goalTimes": "PASS",
+        "goalIdentities": "PASS",
+        "playerStats": "PASS",
+        "individualScoring": "PASS",
+        "goalies": "PASS",
+        "shootout": "PASS",
+        "goalVideos": "PASS",
+        "recap": "FAIL",
+        "condensed": "FAIL"
       },
       "reasons": [
-        "GAME_NOT_FINAL"
+        "MISSING_RECAP",
+        "MISSING_CONDENSED"
       ],
       "requiredActions": [
-        "FETCH_MATCH_DATA",
-        "FETCH_SCHEDULE"
+        "FETCH_CONDENSED",
+        "FETCH_RECAP"
       ],
-      "details": {}
+      "details": {
+        "missingGoalVideos": []
+      }
     },
     {
       "gameId": "2026020401",
       "league": "NHL",
       "gameDate": "2026-11-27",
-      "gameStatus": "LIVE",
+      "gameStatus": "FINAL",
       "qualityStatus": "INCOMPLETE",
       "checks": {
-        "final": "FAIL"
+        "final": "PASS",
+        "rawIdentity": "PASS",
+        "rawFinal": "PASS",
+        "rawScore": "PASS",
+        "score": "PASS",
+        "goalEvents": "PASS",
+        "duplicateGoals": "PASS",
+        "goalTimes": "PASS",
+        "goalIdentities": "PASS",
+        "playerStats": "PASS",
+        "individualScoring": "PASS",
+        "goalies": "PASS",
+        "shootout": "PASS",
+        "goalVideos": "FAIL",
+        "recap": "FAIL",
+        "condensed": "FAIL"
       },
       "reasons": [
-        "GAME_NOT_FINAL"
+        "MISSING_GOAL_VIDEOS",
+        "MISSING_RECAP",
+        "MISSING_CONDENSED"
       ],
       "requiredActions": [
-        "FETCH_MATCH_DATA",
-        "FETCH_SCHEDULE"
+        "FETCH_CONDENSED",
+        "FETCH_GOAL_VIDEOS",
+        "FETCH_RECAP"
       ],
-      "details": {}
+      "details": {
+        "missingGoalVideos": [
+          {
+            "period": "3",
+            "time": "19:49",
+            "scorerId": "8482684"
+          }
+        ]
+      }
     },
     {
       "gameId": "2026020402",
