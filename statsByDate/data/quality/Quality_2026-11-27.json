@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-11-27",
-  "generatedAt": "2026-11-28T01:01:07.597304+00:00",
+  "generatedAt": "2026-11-28T01:31:03.427657+00:00",
   "summary": {
     "COMPLETE": 14,
     "INCOMPLETE": 13
@@ -40,7 +40,7 @@
       "gameId": "1029387",
       "league": "AHL",
       "gameDate": "2026-11-27",
-      "gameStatus": "UNKNOWN",
+      "gameStatus": "LIVE",
       "qualityStatus": "INCOMPLETE",
       "checks": {
         "final": "FAIL"
@@ -94,7 +94,7 @@
       "gameId": "1029390",
       "league": "AHL",
       "gameDate": "2026-11-27",
-      "gameStatus": "UNKNOWN",
+      "gameStatus": "LIVE",
       "qualityStatus": "INCOMPLETE",
       "checks": {
         "final": "FAIL"
@@ -206,7 +206,7 @@
       "gameId": "1029395",
       "league": "AHL",
       "gameDate": "2026-11-27",
-      "gameStatus": "UNKNOWN",
+      "gameStatus": "LIVE",
       "qualityStatus": "INCOMPLETE",
       "checks": {
         "final": "FAIL"
@@ -590,19 +590,35 @@
       "gameId": "2026020411",
       "league": "NHL",
       "gameDate": "2026-11-27",
-      "gameStatus": "LIVE",
+      "gameStatus": "FINAL",
       "qualityStatus": "INCOMPLETE",
       "checks": {
-        "final": "FAIL"
+        "final": "PASS",
+        "rawIdentity": "PASS",
+        "rawFinal": "PASS",
+        "rawScore": "PASS",
+        "score": "PASS",
+        "goalEvents": "PASS",
+        "duplicateGoals": "PASS",
+        "goalTimes": "PASS",
+        "goalIdentities": "PASS",
+        "playerStats": "PASS",
+        "individualScoring": "PASS",
+        "goalies": "PASS",
+        "shootout": "PASS",
+        "goalVideos": "PASS",
+        "recap": "FAIL",
+        "condensed": "PASS"
       },
       "reasons": [
-        "GAME_NOT_FINAL"
+        "MISSING_RECAP"
       ],
       "requiredActions": [
-        "FETCH_MATCH_DATA",
-        "FETCH_SCHEDULE"
+        "FETCH_RECAP"
       ],
-      "details": {}
+      "details": {
+        "missingGoalVideos": []
+      }
     },
     {
       "gameId": "2026020412",
@@ -626,7 +642,7 @@
       "gameId": "2026020413",
       "league": "NHL",
       "gameDate": "2026-11-27",
-      "gameStatus": "SCHEDULED",
+      "gameStatus": "LIVE",
       "qualityStatus": "INCOMPLETE",
       "checks": {
         "final": "FAIL"
@@ -644,7 +660,7 @@
       "gameId": "2026020414",
       "league": "NHL",
       "gameDate": "2026-11-27",
-      "gameStatus": "SCHEDULED",
+      "gameStatus": "LIVE",
       "qualityStatus": "INCOMPLETE",
       "checks": {
         "final": "FAIL"
