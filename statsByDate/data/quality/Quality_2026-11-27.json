@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "date": "2026-11-27",
-  "generatedAt": "2026-11-28T03:31:03.961494+00:00",
+  "generatedAt": "2026-11-28T03:51:03.267617+00:00",
   "summary": {
-    "COMPLETE": 20,
-    "INCOMPLETE": 7
+    "COMPLETE": 22,
+    "INCOMPLETE": 5
   },
   "games": [
     {
@@ -40,18 +40,29 @@
       "gameId": "1029387",
       "league": "AHL",
       "gameDate": "2026-11-27",
-      "gameStatus": "LIVE",
-      "qualityStatus": "INCOMPLETE",
+      "gameStatus": "FINAL",
+      "qualityStatus": "COMPLETE",
       "checks": {
-        "final": "FAIL"
+        "final": "PASS",
+        "ahlSnapshot": "PASS",
+        "rawIdentity": "PASS",
+        "rawFinal": "PASS",
+        "rawScore": "PASS",
+        "score": "PASS",
+        "goalEvents": "PASS",
+        "duplicateGoals": "PASS",
+        "goalTimes": "PASS",
+        "goalIdentities": "PASS",
+        "playerStats": "PASS",
+        "individualScoring": "PASS",
+        "goalies": "PASS",
+        "shootout": "PASS",
+        "goalVideos": "NA",
+        "recap": "NA",
+        "condensed": "NA"
       },
-      "reasons": [
-        "GAME_NOT_FINAL"
-      ],
-      "requiredActions": [
-        "FETCH_MATCH_DATA",
-        "FETCH_SCHEDULE"
-      ],
+      "reasons": [],
+      "requiredActions": [],
       "details": {}
     },
     {
@@ -105,19 +116,37 @@
       "gameId": "1029390",
       "league": "AHL",
       "gameDate": "2026-11-27",
-      "gameStatus": "LIVE",
+      "gameStatus": "FINAL",
       "qualityStatus": "INCOMPLETE",
       "checks": {
-        "final": "FAIL"
+        "final": "PASS",
+        "ahlSnapshot": "FAIL",
+        "rawIdentity": "PASS",
+        "rawFinal": "FAIL",
+        "rawScore": "PASS",
+        "score": "PASS",
+        "goalEvents": "PASS",
+        "duplicateGoals": "PASS",
+        "goalTimes": "PASS",
+        "goalIdentities": "PASS",
+        "playerStats": "PASS",
+        "individualScoring": "PASS",
+        "goalies": "PASS",
+        "shootout": "PASS",
+        "goalVideos": "NA",
+        "recap": "NA",
+        "condensed": "NA"
       },
       "reasons": [
-        "GAME_NOT_FINAL"
+        "RAW_STATS_MISMATCH",
+        "RAW_NOT_FINAL"
       ],
       "requiredActions": [
-        "FETCH_MATCH_DATA",
-        "FETCH_SCHEDULE"
+        "FETCH_MATCH_DATA"
       ],
-      "details": {}
+      "details": {
+        "ahlSnapshot": "raw game not final or wrong game ID"
+      }
     },
     {
       "gameId": "1029391",
@@ -239,24 +268,6 @@
       "gameId": "1029395",
       "league": "AHL",
       "gameDate": "2026-11-27",
-      "gameStatus": "LIVE",
-      "qualityStatus": "INCOMPLETE",
-      "checks": {
-        "final": "FAIL"
-      },
-      "reasons": [
-        "GAME_NOT_FINAL"
-      ],
-      "requiredActions": [
-        "FETCH_MATCH_DATA",
-        "FETCH_SCHEDULE"
-      ],
-      "details": {}
-    },
-    {
-      "gameId": "1029396",
-      "league": "AHL",
-      "gameDate": "2026-11-27",
       "gameStatus": "FINAL",
       "qualityStatus": "INCOMPLETE",
       "checks": {
@@ -288,6 +299,35 @@
       "details": {
         "ahlSnapshot": "raw game not final or wrong game ID"
       }
+    },
+    {
+      "gameId": "1029396",
+      "league": "AHL",
+      "gameDate": "2026-11-27",
+      "gameStatus": "FINAL",
+      "qualityStatus": "COMPLETE",
+      "checks": {
+        "final": "PASS",
+        "ahlSnapshot": "PASS",
+        "rawIdentity": "PASS",
+        "rawFinal": "PASS",
+        "rawScore": "PASS",
+        "score": "PASS",
+        "goalEvents": "PASS",
+        "duplicateGoals": "PASS",
+        "goalTimes": "PASS",
+        "goalIdentities": "PASS",
+        "playerStats": "PASS",
+        "individualScoring": "PASS",
+        "goalies": "PASS",
+        "shootout": "PASS",
+        "goalVideos": "NA",
+        "recap": "NA",
+        "condensed": "NA"
+      },
+      "reasons": [],
+      "requiredActions": [],
+      "details": {}
     },
     {
       "gameId": "1029397",
@@ -730,19 +770,37 @@
       "gameId": "2026020414",
       "league": "NHL",
       "gameDate": "2026-11-27",
-      "gameStatus": "LIVE",
+      "gameStatus": "FINAL",
       "qualityStatus": "INCOMPLETE",
       "checks": {
-        "final": "FAIL"
+        "final": "PASS",
+        "rawIdentity": "PASS",
+        "rawFinal": "PASS",
+        "rawScore": "PASS",
+        "score": "PASS",
+        "goalEvents": "PASS",
+        "duplicateGoals": "PASS",
+        "goalTimes": "PASS",
+        "goalIdentities": "PASS",
+        "playerStats": "PASS",
+        "individualScoring": "PASS",
+        "goalies": "PASS",
+        "shootout": "PASS",
+        "goalVideos": "PASS",
+        "recap": "FAIL",
+        "condensed": "FAIL"
       },
       "reasons": [
-        "GAME_NOT_FINAL"
+        "MISSING_RECAP",
+        "MISSING_CONDENSED"
       ],
       "requiredActions": [
-        "FETCH_MATCH_DATA",
-        "FETCH_SCHEDULE"
+        "FETCH_CONDENSED",
+        "FETCH_RECAP"
       ],
-      "details": {}
+      "details": {
+        "missingGoalVideos": []
+      }
     }
   ]
 }
